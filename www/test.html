@@ -1,0 +1,48 @@
+<html>
+<head>
+<title>WS Broadcast Test</title>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script> <!-- JQuery from Google CDN -->
+<script src="https://ajax.googleapis.com/ajax/libs/swfobject/2.2/swfobject.js"></script> <!-- SWFObject from Google CDN [Flash fallback for web_socket_js] -->
+<script src="res/web-socket-js/web_socket.js"></script> <!-- git.com/gimite/web-socket-js WebSockets Compatibility Fall-Back library -->
+<script>WEB_SOCKET_SWF_LOCATION = "res/web-socket-js/WebSocketMain.swf";</script>
+</head>
+
+<body>
+<div id="header">
+<h1>WS Broadcast Test</h1>
+</div>
+
+<div id="content">
+<div id="wsdata">
+<strong>THIS SITE REQUIRES JAVASCRIPT!</strong>
+</div>
+</div>
+
+<div id="footer">
+<hr />
+&copy; Copyright 2015.<br />
+ALL RIGHTS RESERVED!
+</div>
+</body>
+<script>
+<!-- BUG: I'm not sure this is kosher after the body tag -->
+var wsdisplay = $("#wsdata");
+wsdisplay.html("<strong>Connecting...</strong>");
+
+var ws = new WebSocket("ws://localhost:1228/");
+ws.onopen = function() {
+	wsdisplay.html("<strong>Connected</strong>");
+}
+ws.onmessage = function(e) {
+	var data = JSON.parse(e.data);
+	wsdisplay.html("<em>" + data.message + "</em>, It has been " + data.counter + " seconds since " + data.epoch + ".");
+}
+ws.onclose = function() {
+	wsdisplay.html("<strong>Disconnected</strong>");
+}
+ws.onerror = function() {
+	wsdisplay.html("<strong>WebSockets Error!</strong>");
+	ws.close(); // BUG: Unknown if needed
+}
+</script>
+</html>
