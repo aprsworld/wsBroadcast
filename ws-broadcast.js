@@ -59,15 +59,25 @@ if (httpserv_port == 0)
 if (httpserv_port > 0) {
 	var finalhandler = require('finalhandler');
 	var http = require('http');
+	var serveIndex = require('serve-index')
 	var serveStatic = require('serve-static');
 
+	// allow indexes in static directories
+	var index = serveIndex('www', {'icons': true})
 	// Create static server for www directory
 	var serve = serveStatic('www', {'index': 'test.html'});
 
 	// Create HTTP server
 	var httpserv = http.createServer(function(req, res) {
-		var done = finalhandler(req, res);
-		serve(req, res, done);
+//		var done = finalhandler(req, res);
+//		serve(req, res, done);
+//		// serve(req, res, done);
+		var done = finalhandler(req, res)
+		serve(req, res, function onNext(err) {
+			if (err) 
+				return done(err)
+			index(req, res, done)
+		})
 	});
 
 	// Start HTTP Server

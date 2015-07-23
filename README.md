@@ -32,6 +32,7 @@ The www directory currently contains some static html files for demonstration an
 * Install Node.js
 * `npm install --save ws`
 * `npm install serve-static`
+* `npm install serve-index`
 * `npm install finalhandler`
 * `npm install -g wscat` _(OPTIONAL FOR DEBUGGING)_
 * `git clone http://github.com/aprsworld/wsBroadcast`
