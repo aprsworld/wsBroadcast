@@ -137,6 +137,7 @@ function merge_objects(o1, o2) {
 /*
  * HTTP Server
  */
+<<<<<<< HEAD
 var HTTPDataServerConfigDefaults = {
 	server_name:		'Server_HTTP',
 	port:			8888,
@@ -144,15 +145,21 @@ var HTTPDataServerConfigDefaults = {
 };
 var finalhandler = require('finalhandler');
 var http = require('http');
+var serveIndex = require('serve-index');
 var serveStatic = require('serve-static');
 function HTTPDataServer(manager, config) {
 	HTTPDataServer.super_.call(this);
 	config = this.setup(manager, HTTPDataServerConfigDefaults, config);
 	if (config.port <= 0) return false; // BUG: ?
+	var indexserv = serveIndex('www', {'icons': true});
 	var staticserv = serveStatic(config.root_dir, {'index': ['index.html', 'index.htm', 'test.html']});
 	this.serv = http.createServer(function(req, res) {
 		var done = finalhandler(req, res);
-		staticserv(req, res, done);
+		staticserv(req, res, function onNext(err) {
+			if (err)
+				return done(err);
+			index(req, res, done);
+		});
 	});
 	this.hook(ds_handlers);
 	this.serv.listen(config.port);
