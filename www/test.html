@@ -29,7 +29,7 @@ ALL RIGHTS RESERVED!
 var wsdisplay = $("#wsdata");
 wsdisplay.html("<strong>Connecting...</strong>");
 
-var ws = new WebSocket("ws://localhost:1228/");
+var ws = new WebSocket("ws://" + window.location.hostname + ":1228/");
 ws.onopen = function() {
 	wsdisplay.html("<strong>Connected</strong>");
 }
