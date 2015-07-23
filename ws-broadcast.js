@@ -137,7 +137,6 @@ function merge_objects(o1, o2) {
 /*
  * HTTP Server
  */
-<<<<<<< HEAD
 var HTTPDataServerConfigDefaults = {
 	server_name:		'Server_HTTP',
 	port:			8888,
