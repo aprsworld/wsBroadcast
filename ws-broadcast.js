@@ -1,129 +1,216 @@
-/*
- * Server Ports
- *	Set to 0 for default or -1 to disable
- */
-var httpserv_port = 8888;
-var wsserv_port = 1228;
-var tcpserv_port = 1229;
+var util = require('util');
+
 
 /*
- * Globals
+ * Data Manager
  */
-var wsserv;
+function DataManager() {
+	this.data = {
+		_bserver_: {
+			uptime: 0,
+			start: new Date().toString(),
+			message: "Hello"
+		}
+	};
+	this.servers = [];
+
+	var self = this;
+	setInterval(function() { self.timer.call(self) }, 1000);
+}
+DataManager.prototype.timer = function() {
+	this.data._bserver_.uptime++;
+	return this.update({'_bserver_': this.data._bserver_});
+};
+DataManager.prototype.update = function(data) {
+	this.data = merge_objects(this.data, data);
+	data = this.data;
+	this.servers.forEach(function(serv) {
+		serv.broadcast(data);
+	});
+	return true;
+};
+DataManager.prototype.server_attach = function(serv) {
+	if (this.servers.indexOf(serv) >= 0) {
+		console.log('# ERROR: Attaching already attached server - ' + JSON.stringify(serv.info));
+		return false;
+	}
+	this.servers.push(serv);
+	return true;
+};
+DataManager.prototype.server_detach = function(serv) {
+	this.servers = this.servers.filter(function(serv_cur, serv_index, servers) {
+		if (serv_cur == serv)
+			return false;
+		return true;
+	});
+	return true;
+};
+var dm = new DataManager();
+
 
 /*
- * Base Data Connection Server Class
+ * Event Handlers
+ */
+function log_event(name) {
+	var message = '';
+	for (var i = 1; i < arguments.length; i++) {
+		message += ' - ' + JSON.stringify(arguments[i]);
+	}
+	// XXX: TODO: DEBUG: BUG:
+	//for (p in this) console.log(p);
+	console.log('# ' + name + message);
+	//console.log('# ' + this.dserv.info.name + ': ' + name + message);
+}
+// DataServer Handlers
+var ds_handlers = {
+	'listening': function() { log_event('Started', this.info); },
+	'close': function() { log_event('Stopped'); },
+	'connection': function() { log_event('Client Open', this.info); }
+	// TODO: XXX: 'error'
+};
+// DataClient Handlers
+var dc_handlers = {
+	/*'open': function() { log_event('Client Open', this.info); },*/
+	'close': function(had_error) {
+		if (had_error)
+			log_event('Client Close', this.info, '[UNCLEAN]');
+		else
+			log_event('Client Close', this.info);
+	},
+	'error': function(e) { log_event('Client Error', this.info, e); }
+	// TODO: XXX: 'message'
+};
+// Install Handlers
+function Handlers_Install(emitter, handlers) {
+	for (var prop in handlers)
+		emitter.on(prop, handlers[prop]);
+}
+
+
+/*
+ * Data Server Base
  */
 function DataServer() {
-	this.name = '0xDEADBABEBEEFCAFE';
-	this.listen_info = '0xDEADBABEBEEFCAFE';
+	this.manager = null;
+	this.dserv = null;
+	this.serv = null;
+	this.info = { name: '0xDEADBABE' };
+	this.config = null;
 }
-DataServer.prototype.on_start = function() {
-	console.log("# " + this.name + ': Started - ' + JSON.stringify(this.listen_info));
+DataServer.prototype.setup = function(manager, defaults, config) {
+	this.manager = manager;
+	this.dserv = this;
+	this.config = merge_objects(defaults, config);
+	this.info.name = this.config.server_name;
+	this.manager.server_attach(this);
+	return this.config;
 }
-DataServer.prototype.on_stop = function() {
-	console.log("# " + this.name + ': Stopped - ' + JSON.stringify(this.listen_info));
+DataServer.prototype.hook = function(handlers) {
+	this.serv.dserv = this;
+	Handlers_Install(this.serv, handlers);
 }
-DataServer.prototype.on_error = function(e) {
-	console.log("# " + this.name + ': Error - ' + JSON.stringify(e));
+DataServer.prototype.broadcast = function(data) {
 }
-DataServer.prototype.on_connection = function(c) {
-	console.log("# " + this.name + ': Connection - ' + JSON.stringify(c.client_info));
+function merge_objects(o1, o2) {
+	var out = {};
+
+	for (var p in o1) {
+		if (typeof o1[p] != 'object')
+			out[p] = o1[p];
+		else
+			out[p] = merge_objects({}, o1[p]);
+	}
+
+	for (var p in o2) {
+		if (typeof o1[p] != 'object')
+			out[p] = o2[p];
+		else if (typeof o2[p] == 'object')
+			out[p] = merge_objects(o1[p], o2[p]);
+		else
+			out[p] = o2[p];
+	}
+
+	return out;
 }
 
-/*
- * Base Data Connection Client Class
- */
-function DataClient(s) {
-	this.server = s;
-	this.client_info = '0xDEADBABEBEEFCAFE'; 
-	this.on('close', this.on_close);
-	this.on('error', this.on_error);
-	this.on_connect();
-}
-DataClient.prototype.on_connect = function() {
-	console.log("# " + this.server.name + ': Client Connected - ' + JSON.stringify(this.client_info));
-}
-DataClient.prototype.on_disconnect = function() {
-	console.log("# " + this.server.name + ': Client Disconnected - ' + JSON.stringify(this.client_info));
-}
-DataClient.prototype.on_error = function(e) {
-	console.log("# " + this.server.name + ': Client Error - ' + JSON.stringify(this.client_info) + ' - ' + JSON.stringify(e));
-}
 
 /*
  * HTTP Server
  */
-if (httpserv_port == 0)
-	httpserv_port = 8888;	// TODO: Default web server port
-if (httpserv_port > 0) {
-	var finalhandler = require('finalhandler');
-	var http = require('http');
-	var serveStatic = require('serve-static');
-
-	// Create static server for www directory
-	var serve = serveStatic('www', {'index': 'test.html'});
-
-	// Create HTTP server
-	var httpserv = http.createServer(function(req, res) {
+var HTTPDataServerConfigDefaults = {
+	server_name:		'Server_HTTP',
+	port:			8888,
+	root_dir:		'www'
+};
+var finalhandler = require('finalhandler');
+var http = require('http');
+var serveStatic = require('serve-static');
+function HTTPDataServer(manager, config) {
+	HTTPDataServer.super_.call(this);
+	config = this.setup(manager, HTTPDataServerConfigDefaults, config);
+	if (config.port <= 0) return false; // BUG: ?
+	var staticserv = serveStatic(config.root_dir, {'index': ['index.html', 'index.htm', 'test.html']});
+	this.serv = http.createServer(function(req, res) {
 		var done = finalhandler(req, res);
-		serve(req, res, done);
+		staticserv(req, res, done);
 	});
-
-	// Start HTTP Server
-	httpserv.listen(httpserv_port);
-	console.log("# " + 'Server_HTTP: Listening Port - ' + httpserv_port);
+	this.hook(ds_handlers);
+	this.serv.listen(config.port);
+	return this;
 }
+util.inherits(HTTPDataServer, DataServer);
+var serv_http = new HTTPDataServer(dm, {});
+
 
 /*
  * WebSockets Server
  */
-if (wsserv_port == 0)
-	wsserv_port = 1228;	// TODO: default port
-if (wsserv_port > 0) {
-	console.log("# " + 'WS Port: Listening Port - ' + wsserv_port);
-
-
-	var WebSocketServer = require('ws').Server;
-	wsserv = new WebSocketServer({ port: wsserv_port });
-
-	wsserv.on('connection', function connection(ws) {
-		ws.client_info = { "addr": ws._socket.remoteAddress, "port": ws._socket.remotePort };
-		console.log("# " + 'Server_WS: Client Connected - ' + JSON.stringify(ws.client_info)); 
-		ws.on('message', function incoming(message) {
-			// TODO, handle incoming data
-		});
-		ws.on('close', function close() {
-			console.log("# " + 'Server_WS: Client Disconnected - ' + JSON.stringify(this.client_info));
-		});
-		ws.on('error', function error(e) {
-			console.log("# " + 'Server_WS: Client Error - ' + JSON.stringify(this.client_info) + ' - ' + JSON.stringify(e));
-		});
+var WebSocketDataServerConfigDefaults = {
+	server_name:		'Server_WS',
+	port:			1228
+};
+var WebSocketServer = require('ws').Server;
+function WebSocketDataServer(manager, config) {
+	DataServer.call(this);
+	config = this.setup(manager, WebSocketDataServerConfigDefaults, config);
+	if (config.port <= 0) return false; // BUG: ?
+	this.serv = new WebSocketServer({ port: config.port });
+	this.hook(ds_handlers);
+	this.serv.on('connection', function(ws) {
+		ws.dserv = this.dserv;
+		Handlers_Install(ws, dc_handlers);
 	});
-
-	wsserv.broadcast = function broadcast(data) {
-		wsserv.clients.forEach(function each(client) {
-			client.send(data, function ack(error) {
-				// TODO, handle error
-			});
-		});
-	};
+	return this;
 }
+util.inherits(WebSocketDataServer, DataServer);
+WebSocketDataServer.prototype.broadcast = function(data) {
+	this.serv.clients.forEach(function each(client) {
+		client.send(JSON.stringify(data));
+	});
+};
+var serv_ws = new WebSocketDataServer(dm, {});
 
 /*
  * TCP Server
  */
-if (tcpserv_port == 0)
-	tcpserv_port = 1229;	// TODO: Default tcpserv port
-if (tcpserv_port > 0) {
-	var net = require('net');
-	var tcpserv = net.createServer(function(c) {
-		c.client_info = { 'addr': c.remoteAddress, 'port': c.remotePort };
+var TCPDataServerConfigDefaults = {
+	server_name:		'Server_TCP',
+	port:			1229,
+	term:			0x0	// 0x0A for newline testing w/ telnet
+};
+var net = require('net');
+function TCPDataServer(manager, config) {
+	TCPDataServer.super_.call(this);
+	config = this.setup(manager, TCPDataServerConfigDefaults, config);
+	if (config.port <= 0) return false; // BUG: ?
+	this.serv = net.createServer(function(c) {
+		c.dserv = this.dserv;
+		Handlers_Install(c, dc_handlers);
 		c.message_buffer = new Buffer(0);
-		c.process_buffer = function () {
+		c.process_buffer = function() {
 			var start = 0;
 			for (var i = 0; i < this.message_buffer.length; i++) {
-				if (this.message_buffer[i] == 0x0) {
+				if (this.message_buffer[i] == config.term) {
 					var message = this.message_buffer.toString('utf8', start, i);
 					start = i + 1;
 					this.emit('message', message);
@@ -139,37 +226,25 @@ if (tcpserv_port > 0) {
 				}
 			}
 		};
-		console.log("# " + 'Server_TCP: Client Connected - ' + JSON.stringify(c.client_info));
-		c.on('end', function() {
-			console.log("# " + 'Server_TCP: Client Disconnected - ' + JSON.stringify(this.client_info));
-		});
-		c.on('error', function() {
-			console.log("# " + 'Server_TCP: Client Error - ' + JSON.stringify(this.client_info));
-		});
+
 		c.on('data', function (data) {
 			this.message_buffer = Buffer.concat([this.message_buffer, data], this.message_buffer.length + data.length);
 			this.process_buffer();
 		});
-		c.on('message', function(data) {
-			// TODO - 
-			console.log(data);
+		c.on('timeout', function() {
+			c.close();
+		});
+		c.on('message', function(message) {
+			var data = JSON.parse(message);
+			this.dserv.manager.update(data);
 		});
 	});
-	tcpserv.listen(tcpserv_port, function() {
-		console.log("# " + 'Server_TCP: Listening Port - ' + tcpserv_port);
-	});
+	this.hook(ds_handlers);
+	this.serv.listen(config.port);
+	return this;
 }
+util.inherits(TCPDataServer, DataServer);
+var serv_tcp = new TCPDataServer(dm, {});
 
-/*
- * Actual Logic
- */
-var ds = {
-	counter: 0,
-	epoch: new Date().toString(),
-	message: "Hello"
-};
-setInterval(function timer() {
-	ds.counter++;
-	if (wsserv != null)
-		wsserv.broadcast(JSON.stringify(ds));
-}, 1000);
+
+/* EOF */

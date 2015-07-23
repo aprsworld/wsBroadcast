@@ -35,7 +35,7 @@ ws.onopen = function() {
 }
 ws.onmessage = function(e) {
 	var data = JSON.parse(e.data);
-	wsdisplay.html("<em>" + data.message + "</em>, It has been " + data.counter + " seconds since " + data.epoch + ".");
+	wsdisplay.html("<em>" + data._bserver_.message + "</em>, It has been " + data._bserver_.uptime + " seconds since " + data._bserver_.start + ".");
 }
 ws.onclose = function() {
 	wsdisplay.html("<strong>Disconnected</strong>");
