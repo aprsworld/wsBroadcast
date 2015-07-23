@@ -19,16 +19,16 @@ function DataServer() {
 	this.listen_info = '0xDEADBABEBEEFCAFE';
 }
 DataServer.prototype.on_start = function() {
-	console.log(this.name + ': Started - ' + JSON.stringify(this.listen_info));
+	console.log("# " + this.name + ': Started - ' + JSON.stringify(this.listen_info));
 }
 DataServer.prototype.on_stop = function() {
-	console.log(this.name + ': Stopped - ' + JSON.stringify(this.listen_info));
+	console.log("# " + this.name + ': Stopped - ' + JSON.stringify(this.listen_info));
 }
 DataServer.prototype.on_error = function(e) {
-	console.log(this.name + ': Error - ' + JSON.stringify(e));
+	console.log("# " + this.name + ': Error - ' + JSON.stringify(e));
 }
 DataServer.prototype.on_connection = function(c) {
-	console.log(this.name + ': Connection - ' + JSON.stringify(c.client_info));
+	console.log("# " + this.name + ': Connection - ' + JSON.stringify(c.client_info));
 }
 
 /*
@@ -42,13 +42,13 @@ function DataClient(s) {
 	this.on_connect();
 }
 DataClient.prototype.on_connect = function() {
-	console.log(this.server.name + ': Client Connected - ' + JSON.stringify(this.client_info));
+	console.log("# " + this.server.name + ': Client Connected - ' + JSON.stringify(this.client_info));
 }
 DataClient.prototype.on_disconnect = function() {
-	console.log(this.server.name + ': Client Disconnected - ' + JSON.stringify(this.client_info));
+	console.log("# " + this.server.name + ': Client Disconnected - ' + JSON.stringify(this.client_info));
 }
 DataClient.prototype.on_error = function(e) {
-	console.log(this.server.name + ': Client Error - ' + JSON.stringify(this.client_info) + ' - ' + JSON.stringify(e));
+	console.log("# " + this.server.name + ': Client Error - ' + JSON.stringify(this.client_info) + ' - ' + JSON.stringify(e));
 }
 
 /*
@@ -72,7 +72,7 @@ if (httpserv_port > 0) {
 
 	// Start HTTP Server
 	httpserv.listen(httpserv_port);
-	console.log('Server_HTTP: Listening Port - ' + httpserv_port);
+	console.log("# " + 'Server_HTTP: Listening Port - ' + httpserv_port);
 }
 
 /*
@@ -81,20 +81,23 @@ if (httpserv_port > 0) {
 if (wsserv_port == 0)
 	wsserv_port = 1228;	// TODO: default port
 if (wsserv_port > 0) {
+	console.log("# " + 'WS Port: Listening Port - ' + wsserv_port);
+
+
 	var WebSocketServer = require('ws').Server;
 	wsserv = new WebSocketServer({ port: wsserv_port });
 
 	wsserv.on('connection', function connection(ws) {
 		ws.client_info = { "addr": ws._socket.remoteAddress, "port": ws._socket.remotePort };
-		console.log('Server_WS: Client Connected - ' + JSON.stringify(ws.client_info)); 
+		console.log("# " + 'Server_WS: Client Connected - ' + JSON.stringify(ws.client_info)); 
 		ws.on('message', function incoming(message) {
 			// TODO, handle incoming data
 		});
 		ws.on('close', function close() {
-			console.log('Server_WS: Client Disconnected - ' + JSON.stringify(this.client_info));
+			console.log("# " + 'Server_WS: Client Disconnected - ' + JSON.stringify(this.client_info));
 		});
 		ws.on('error', function error(e) {
-			console.log('Server_WS: Client Error - ' + JSON.stringify(this.client_info) + ' - ' + JSON.stringify(e));
+			console.log("# " + 'Server_WS: Client Error - ' + JSON.stringify(this.client_info) + ' - ' + JSON.stringify(e));
 		});
 	});
 
@@ -136,12 +139,12 @@ if (tcpserv_port > 0) {
 				}
 			}
 		};
-		console.log('Server_TCP: Client Connected - ' + JSON.stringify(c.client_info));
+		console.log("# " + 'Server_TCP: Client Connected - ' + JSON.stringify(c.client_info));
 		c.on('end', function() {
-			console.log('Server_TCP: Client Disconnected - ' + JSON.stringify(this.client_info));
+			console.log("# " + 'Server_TCP: Client Disconnected - ' + JSON.stringify(this.client_info));
 		});
 		c.on('error', function() {
-			console.log('Server_TCP: Client Error - ' + JSON.stringify(this.client_info));
+			console.log("# " + 'Server_TCP: Client Error - ' + JSON.stringify(this.client_info));
 		});
 		c.on('data', function (data) {
 			this.message_buffer = Buffer.concat([this.message_buffer, data], this.message_buffer.length + data.length);
@@ -153,7 +156,7 @@ if (tcpserv_port > 0) {
 		});
 	});
 	tcpserv.listen(tcpserv_port, function() {
-		console.log('Server_TCP: Listening Port - ' + tcpserv_port);
+		console.log("# " + 'Server_TCP: Listening Port - ' + tcpserv_port);
 	});
 }
 

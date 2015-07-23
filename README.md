@@ -40,6 +40,9 @@ To execute:
 
 `node ws-broadcast.js` and point a web-browser at http://localhost:8888/.
 
+## Using wscat
+`wscat -c http://hostname:1228`
+
 Copyright (C) APRS World, LLC. 2015
 ALL RIGHTS RESERVED!
 david@aprsworld.com
