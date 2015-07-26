@@ -1,5 +1,30 @@
 var util = require('util');
 
+function merge_objects(o1, o2) {
+	var out = {};
+
+	for (var p in o1) {
+		if (typeof o1[p] !== 'object') {
+			out[p] = o1[p];
+		} else {
+			out[p] = merge_objects({}, o1[p]);
+		}
+	}
+
+	for (var q in o2) {
+		if (typeof o1[q] !== 'object') {
+			out[q] = o2[q];
+		} else if (typeof o2[q] === 'object') {
+			out[q] = merge_objects(o1[q], o2[q]);
+		} else {
+			out[q] = o2[q];
+		}
+	}
+
+	return out;
+}
+
+
 
 /*
  * Data Manager
@@ -14,7 +39,7 @@ function DataManager() {
 	this.servers = [];
 
 	var self = this;
-	setInterval(function() { self.timer.call(self) }, 10*1000);
+	setInterval(function() { self.timer.call(self); }, 10*1000);
 }
 DataManager.prototype.timer = function() {
 	this.data._bserver_.uptime+=10;
@@ -42,8 +67,9 @@ DataManager.prototype.server_attach = function(serv) {
 };
 DataManager.prototype.server_detach = function(serv) {
 	this.servers = this.servers.filter(function(serv_cur, serv_index, servers) {
-		if (serv_cur == serv)
+		if (serv_cur === serv) {
 			return false;
+		}
 		return true;
 	});
 	return true;
@@ -86,18 +112,20 @@ var ds_handlers = {
 var dc_handlers = {
 	/*'open': function() { log_event('Client Open', this.info); },*/
 	'close': function(had_error) {
-		if (had_error)
+		if (had_error) {
 			log_event('Client Close', this.info, '[UNCLEAN]');
-		else
+		} else {
 			log_event('Client Close', this.info);
+		}
 	},
 	'error': function(e) { log_event('Client Error', this.info, e); }
 	// TODO: XXX: 'message'
 };
 // Install Handlers
 function Handlers_Install(emitter, handlers) {
-	for (var prop in handlers)
+	for (var prop in handlers) {
 		emitter.on(prop, handlers[prop]);
+	}
 }
 
 
@@ -111,6 +139,7 @@ function DataServer() {
 	this.info = { name: '0xDEADBABE' };
 	this.config = null;
 }
+
 DataServer.prototype.setup = function(manager, defaults, config) {
 	this.manager = manager;
 	this.dserv = this;
@@ -118,34 +147,18 @@ DataServer.prototype.setup = function(manager, defaults, config) {
 	this.info.name = this.config.server_name;
 	this.manager.server_attach(this);
 	return this.config;
-}
+};
+
 DataServer.prototype.hook = function(handlers) {
 	this.serv.dserv = this;
 	Handlers_Install(this.serv, handlers);
-}
+};
+
 DataServer.prototype.broadcast = function(data) {
-}
-function merge_objects(o1, o2) {
-	var out = {};
-
-	for (var p in o1) {
-		if (typeof o1[p] != 'object')
-			out[p] = o1[p];
-		else
-			out[p] = merge_objects({}, o1[p]);
-	}
-
-	for (var p in o2) {
-		if (typeof o1[p] != 'object')
-			out[p] = o2[p];
-		else if (typeof o2[p] == 'object')
-			out[p] = merge_objects(o1[p], o2[p]);
-		else
-			out[p] = o2[p];
-	}
-
-	return out;
-}
+	console.log('DataServer.prototype.broadcast() called but nothing is implemented in this stub');
+	console.log('data=' + data);
+	console.log('typeof data=' + typeof(data));
+};
 
 
 /*
@@ -162,15 +175,20 @@ var serveIndex = require('serve-index');
 var serveStatic = require('serve-static');
 function HTTPDataServer(manager, config) {
 	HTTPDataServer.super_.call(this);
+
 	config = this.setup(manager, HTTPDataServerConfigDefaults, config);
-	if (config.port <= 0) return false; // BUG: ?
+	if (config.port <= 0) { 
+		return false; // BUG: ?
+	}
+
 	var indexserv = serveIndex('www', {'icons': true});
 	var staticserv = serveStatic(config.root_dir, {'index': ['index.html']});
 	this.serv = http.createServer(function(req, res) {
 		var done = finalhandler(req, res);
 		staticserv(req, res, function onNext(err) {
-			if (err)
+			if (err) {
 				return done(err);
+			}
 			indexserv(req, res, done);
 		});
 	});
@@ -194,9 +212,10 @@ function WebSocketDataServer(manager, config) {
 	DataServer.call(this);
 	config = this.setup(manager, WebSocketDataServerConfigDefaults, config);
 
-	if (config.port <= 0) 
+	if (config.port <= 0) { 
 		return false; // BUG: ?
-
+	}
+	
 	this.serv = new WebSocketServer({ port: config.port });
 	this.hook(ds_handlers);
 	this.serv.on('connection', function(ws) {
@@ -226,8 +245,12 @@ var TCPDataServerConfigDefaults = {
 var net = require('net');
 function TCPDataServer(manager, config) {
 	TCPDataServer.super_.call(this);
+
 	config = this.setup(manager, TCPDataServerConfigDefaults, config);
-	if (config.port <= 0) return false; // BUG: ?
+	if (config.port <= 0) { 
+		return false; // BUG: ?
+	}
+	
 	this.serv = net.createServer(function(c) {
 		c.dserv = this.dserv;
 		Handlers_Install(c, dc_handlers);
@@ -235,13 +258,13 @@ function TCPDataServer(manager, config) {
 		c.process_buffer = function() {
 			var start = 0;
 			for (var i = 0; i < this.message_buffer.length; i++) {
-				if (this.message_buffer[i] == config.term) {
+				if (this.message_buffer[i] === config.term) {
 					var message = this.message_buffer.toString('utf8', start, i);
 					start = i + 1;
 					this.emit('message', message);
 				}
 			}
-			if (start != 0) {
+			if (start !== 0) {
 				if (start >= this.message_buffer.length) {
 					this.message_buffer = new Buffer(0);
 				} else {
@@ -260,7 +283,7 @@ function TCPDataServer(manager, config) {
 			c.close();
 		});
 		c.on('message', function(message) {
-			var data = ''
+			var data = '';
 			console.log("# got a message: " + message);
 			try {
 				data = JSON.parse(message);
