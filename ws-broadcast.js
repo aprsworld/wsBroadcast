@@ -7,28 +7,31 @@ var util = require('util');
 function DataManager() {
 	this.data = {
 		_bserver_: {
-			uptime: 0,
-			start: new Date().toString(),
-			message: "Hello"
+			uptime: 0//,
+//			start: new Date().toString(),
 		}
 	};
 	this.servers = [];
 
 	var self = this;
-	setInterval(function() { self.timer.call(self) }, 1000);
+	setInterval(function() { self.timer.call(self) }, 10*1000);
 }
 DataManager.prototype.timer = function() {
-	this.data._bserver_.uptime++;
+	this.data._bserver_.uptime+=10;
 	return this.update({'_bserver_': this.data._bserver_});
 };
+
 DataManager.prototype.update = function(data) {
-	this.data = merge_objects(this.data, data);
-	data = this.data;
+//	this.data = merge_objects(this.data, data);
+//	data = this.data;
+
+	/* send data to each server to broadcast */
 	this.servers.forEach(function(serv) {
 		serv.broadcast(data);
 	});
 	return true;
 };
+
 DataManager.prototype.server_attach = function(serv) {
 	if (this.servers.indexOf(serv) >= 0) {
 		console.log('# ERROR: Attaching already attached server - ' + JSON.stringify(serv.info));
@@ -53,19 +56,30 @@ var dm = new DataManager();
  */
 function log_event(name) {
 	var message = '';
-	for (var i = 1; i < arguments.length; i++) {
-		message += ' - ' + JSON.stringify(arguments[i]);
-	}
+//	console.log('arguments=' + arguments);
+//	console.log('arguments.length=' + arguments.length);
+//	console.log('arguments[0]=' + arguments[0]);
+//	console.log('arguments[1]=' + arguments[1]);
+//	console.log('arguments[2]=' + arguments[2]);
+
+//	var args = arguments || {}
+//	console.log('args=' + args);
+
+	message = JSON.stringify(arguments);
+//	for (var i = 1; i < arguments.length; i++) {
+		//message += ' - ' + JSON.stringify(arguments[i]);
+		//message += ' - ' + arguments[i];
+//	}
 	// XXX: TODO: DEBUG: BUG:
 	//for (p in this) console.log(p);
-	console.log('# ' + name + message);
+	console.log('# ' + name + ' ' + message);
 	//console.log('# ' + this.dserv.info.name + ': ' + name + message);
 }
 // DataServer Handlers
 var ds_handlers = {
 	'listening': function() { log_event('Started', this.info); },
 	'close': function() { log_event('Stopped'); },
-	'connection': function() { log_event('Client Open', this.info); }
+	'connection': function() { log_event('Client Open', this.info, 'fuck the police'); }
 	// TODO: XXX: 'error'
 };
 // DataClient Handlers
@@ -157,7 +171,7 @@ function HTTPDataServer(manager, config) {
 		staticserv(req, res, function onNext(err) {
 			if (err)
 				return done(err);
-			index(req, res, done);
+			indexserv(req, res, done);
 		});
 	});
 	this.hook(ds_handlers);
@@ -179,13 +193,18 @@ var WebSocketServer = require('ws').Server;
 function WebSocketDataServer(manager, config) {
 	DataServer.call(this);
 	config = this.setup(manager, WebSocketDataServerConfigDefaults, config);
-	if (config.port <= 0) return false; // BUG: ?
+
+	if (config.port <= 0) 
+		return false; // BUG: ?
+
 	this.serv = new WebSocketServer({ port: config.port });
 	this.hook(ds_handlers);
 	this.serv.on('connection', function(ws) {
 		ws.dserv = this.dserv;
 		Handlers_Install(ws, dc_handlers);
 	});
+
+
 	return this;
 }
 util.inherits(WebSocketDataServer, DataServer);
@@ -202,7 +221,7 @@ var serv_ws = new WebSocketDataServer(dm, {});
 var TCPDataServerConfigDefaults = {
 	server_name:		'Server_TCP',
 	port:			1229,
-	term:			0x0	// 0x0A for newline testing w/ telnet
+	term:			0x0a	// 0x0A for newline testing w/ telnet
 };
 var net = require('net');
 function TCPDataServer(manager, config) {
@@ -241,7 +260,13 @@ function TCPDataServer(manager, config) {
 			c.close();
 		});
 		c.on('message', function(message) {
-			var data = JSON.parse(message);
+			var data = ''
+			console.log("# got a message: " + message);
+			try {
+				data = JSON.parse(message);
+			} catch (e) {
+				console.log("# exception e=" + e);
+			}
 			this.dserv.manager.update(data);
 		});
 	});
