@@ -79,7 +79,7 @@ function log_event(name) {
 var ds_handlers = {
 	'listening': function() { log_event('Started', this.info); },
 	'close': function() { log_event('Stopped'); },
-	'connection': function() { log_event('Client Open', this.info, 'fuck the police'); }
+	'connection': function() { log_event('Client Open', this.info, 'another message'); }
 	// TODO: XXX: 'error'
 };
 // DataClient Handlers
@@ -165,7 +165,7 @@ function HTTPDataServer(manager, config) {
 	config = this.setup(manager, HTTPDataServerConfigDefaults, config);
 	if (config.port <= 0) return false; // BUG: ?
 	var indexserv = serveIndex('www', {'icons': true});
-	var staticserv = serveStatic(config.root_dir, {'index': ['index.html', 'index.htm', 'test.html']});
+	var staticserv = serveStatic(config.root_dir, {'index': ['index.html']});
 	this.serv = http.createServer(function(req, res) {
 		var done = finalhandler(req, res);
 		staticserv(req, res, function onNext(err) {
