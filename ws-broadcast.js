@@ -37,6 +37,7 @@ function DataManager() {
 		}
 	};
 	this.servers = [];
+	this.servers_count = 0;
 
 	var self = this;
 	setInterval(function() { self.timer.call(self); }, 10*1000);
@@ -64,6 +65,7 @@ DataManager.prototype.server_attach = function(serv) {
 		return false;
 	}
 	this.servers.push(serv);
+	serv.info.server = ++this.servers_count;
 	return true;
 };
 DataManager.prototype.server_detach = function(serv) {
@@ -79,31 +81,14 @@ var dm = new DataManager();
 
 
 /*
- * Logging System
- */
-// XXX: TODO: DEBUG: BUG:
-function log_event() {
-	var args = arguments || {}
-
-	var message = '';
-//	for (var i = 1; i < args.length; i++) {
-		//message += ' - ' + JSON.stringify(args[i]);
-		//message += ' - ' + args[i];
-//	}
-
-	var message = JSON.stringify(args);
-	console.log('# ' + message);
-}
-
-
-/*
  * Data Server Base
  */
 function DataServer() {
 	this.manager = null;
 	this.dserv = null;
 	this.serv = null;
-	this.info = { name: '0xDEADBABE' };
+	this.info = { name: '0xDEADBABE', server: 0 };
+	this.client_count = 0;
 	this.config = null;
 }
 
@@ -119,6 +104,13 @@ DataServer.prototype.setup = function(manager, defaults, config) {
 };
 
 DataServer.prototype.log = function () {
+	var args = arguments || {};
+	var message = '';
+	for (var i = 1; i < args.length; i++) {
+		message += ' - ' + JSON.stringify(args[i]);
+	}
+	console.log('# DS(' + this.info.server + ') "' + this.info.name + '": '
+		+ args[0] + message);
 };
 
 DataServer.prototype.hook = function() {
@@ -128,18 +120,19 @@ DataServer.prototype.hook = function() {
 		if (typeof this.address === 'function') {
 			this.dserv.info.net = this.address();
 		}
-		log_event(this.dserv.name, 'Started', this.dserv.info);
+		this.dserv.log('Started', this.dserv.info);
 	});
 
 	this.serv.on('close', function() {
-		log_event(this.dserv.name, 'Stopped');
+		this.dserv.log('Stopped');
 	});
 	
 	// TODO: XXX: c.on('error',
 	
 	this.serv.on('connection', function(c) {
 		c.dserv = this.dserv;
-		c.info = {};
+		c.info = { client: ++this.dserv.client_count};
+		c.client_string = 'Client(' + c.info.client + ')';
 		if (c.remoteAddress) {	// XXX: Better test
 			c.info.net = {
 				address: c.remoteAddress,
@@ -147,27 +140,26 @@ DataServer.prototype.hook = function() {
 				family: c.remoteFamily
 			};
 		}
-		log_event(this.dserv.name, 'Client Open', c.info);
-
-		// TODO: XXX:
-		//c.on('open', function() {
-		//	log_event('Client Open', this.info);
-		//});
+		this.dserv.log(c.client_string + ' Open', c.info);
 
 		c.on('close', function(had_error) {
 			if (had_error) {
-				log_event('Client Close', this.info, '[ERR]');
+				this.dserv.log(c.client_string
+					+ ' Close', '[Unclean!]');
 			} else {
-				log_event('Client Close', this.info);
+				this.dserv.log(c.client_string + ' Close');
 			}
 		});
 		
 		c.on('error', function(e) {
-			// XXX:  Unclear from documentation if safe to JSON e
-			log_event('Client Error', this.info, e);
+			// XXX: BUG: Unclear from docs if safe to JSON e
+			this.dserv.log(c.client_string + ' Error',
+				this.info, e);
 		});
 
-		// TODO: XXX: c.on('message'
+		// TODO:
+		// c.on('message'
+		// c.on('open',
 	});
 };
 
@@ -199,18 +191,24 @@ function HTTPDataServer(manager, config) {
 	}
 
 	var indexserv = serveIndex('www', {'icons': true});
-	var staticserv = serveStatic(config.root_dir, {'index': ['index.html']});
+	var staticserv = serveStatic(config.root_dir, {
+		'index': ['index.html']
+	});
 	this.serv = http.createServer(function(req, res) {
-		log_event('Client Request', req.socket.info, req.method, req.url);
+		req.socket.dserv.log(req.socket.client_string + ' Request',
+			req.method, req.url);
 
 		// Request for data
 		var rurl = url.parse(req.url);
 		if (rurl.pathname == '/.data') {
 			if (req.method == 'GET') {
 				res.writeHead(200, {
+					// XXX: BUG:
 					'Content-Type': 'text/plain',
 				});
-				res.write(JSON.stringify(this.dserv.manager.data));
+				res.write(JSON.stringify(
+					this.dserv.manager.data
+				));
 				res.end();
 				return;
 			}
@@ -236,6 +234,7 @@ var serv_http = new HTTPDataServer(dm, {});
 
 /*
  * WebSockets Server
+ * XXX: BUG: Logging doesn't work right due to encapsulation.
  */
 var WebSocketDataServerConfigDefaults = {
 	server_name:		'Server_WS',
@@ -251,6 +250,9 @@ function WebSocketDataServer(manager, config) {
 	
 	this.serv = new WebSocketServer({ port: config.port });
 	this.hook();
+	this.serv.on('connection', function(c) {
+		c.send(JSON.stringify(this.dserv.manager.data));
+	});
 
 	return this;
 }
@@ -270,6 +272,7 @@ var TCPDataServerConfigDefaults = {
 	server_name:		'Server_TCP',
 	port:			1229,
 	term:			0x0a	// 0x0A for newline testing w/ telnet
+					// 0x00 for real release
 };
 var net = require('net');
 function TCPDataServer(manager, config) {
@@ -283,39 +286,47 @@ function TCPDataServer(manager, config) {
 		c.message_buffer = new Buffer(0);
 		c.process_buffer = function() {
 			var start = 0;
-			for (var i = 0; i < this.message_buffer.length; i++) {
-				if (this.message_buffer[i] === config.term) {
-					var message = this.message_buffer.toString('utf8', start, i);
+			var mb = this.message_buffer;
+			for (var i = 0; i < mb.length; i++) {
+				if (mb[i] === config.term) {
+					var message = mb.toString('utf8', start, i);
 					start = i + 1;
 					this.emit('message', message);
 				}
 			}
 			if (start !== 0) {
-				if (start >= this.message_buffer.length) {
+				if (start >= mb.length) {
 					this.message_buffer = new Buffer(0);
 				} else {
-					var buffer_new = new Buffer(this.message_buffer.length - start);
-					this.message_buffer.copy(buffer_new, 0, start);
+					var buffer_new = new Buffer(mb.length - start);
+					mb.copy(buffer_new, 0, start);
 					this.message_buffer = buffer_new;
 				}
 			}
 		};
 
 		c.on('data', function (data) {
-			this.message_buffer = Buffer.concat([this.message_buffer, data], this.message_buffer.length + data.length);
+			this.message_buffer = Buffer.concat(
+				[this.message_buffer, data],
+				this.message_buffer.length + data.length);
 			this.process_buffer();
 		});
+
 		c.on('timeout', function() {
 			c.close();
 		});
+
 		c.on('message', function(message) {
 			var data = '';
-			console.log("# got a message: " + message);
 			try {
 				data = JSON.parse(message);
 			} catch (e) {
-				console.log("# exception e=" + e);
+				var error = '[JSON Parse Error!]'; // XXX: e
+				this.dserv.log(this.client_string + ' Message',
+					message, error);
+				return;
 			}
+			this.dserv.log(this.client_string + ' Message', data);
 			this.dserv.manager.update(data);
 		});
 	});
