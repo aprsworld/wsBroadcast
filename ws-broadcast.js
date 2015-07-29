@@ -49,6 +49,7 @@ DataManager.prototype.timer = function() {
 DataManager.prototype.update = function(data) {
 //	this.data = merge_objects(this.data, data);
 //	data = this.data;
+	this.data = data;
 
 	/* send data to each server to broadcast */
 	this.servers.forEach(function(serv) {
@@ -137,7 +138,7 @@ DataServer.prototype.hook = function() {
 	// TODO: XXX: c.on('error',
 	
 	this.serv.on('connection', function(c) {
-		c.dserv = this;
+		c.dserv = this.dserv;
 		c.info = {};
 		if (c.remoteAddress) {	// XXX: Better test
 			c.info.net = {
@@ -189,6 +190,7 @@ var finalhandler = require('finalhandler');
 var http = require('http');
 var serveIndex = require('serve-index');
 var serveStatic = require('serve-static');
+var url = require('url');
 function HTTPDataServer(manager, config) {
 	HTTPDataServer.super_.call(this);
 	config = this.setup(manager, HTTPDataServerConfigDefaults, config);
@@ -199,6 +201,22 @@ function HTTPDataServer(manager, config) {
 	var indexserv = serveIndex('www', {'icons': true});
 	var staticserv = serveStatic(config.root_dir, {'index': ['index.html']});
 	this.serv = http.createServer(function(req, res) {
+		log_event('Client Request', req.socket.info, req.method, req.url);
+
+		// Request for data
+		var rurl = url.parse(req.url);
+		if (rurl.pathname == '/.data') {
+			if (req.method == 'GET') {
+				res.writeHead(200, {
+					'Content-Type': 'text/plain',
+				});
+				res.write(JSON.stringify(this.dserv.manager.data));
+				res.end();
+				return;
+			}
+		}
+
+		// Static web request
 		var done = finalhandler(req, res);
 		staticserv(req, res, function onNext(err) {
 			if (err) {
@@ -207,9 +225,10 @@ function HTTPDataServer(manager, config) {
 			indexserv(req, res, done);
 		});
 	});
+
+	// start the server
 	this.hook();
 	this.serv.listen(config.port);
-	return this;
 }
 util.inherits(HTTPDataServer, DataServer);
 var serv_http = new HTTPDataServer(dm, {});

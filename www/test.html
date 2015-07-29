@@ -19,7 +19,7 @@
 </div>
 
 <div id="footer">
-<hr />
+<br /><hr />
 &copy; Copyright 2015.<br />
 ALL RIGHTS RESERVED!
 </div>
@@ -44,35 +44,66 @@ function table_generate(data) {
 	return $dtable;
 }
 
-var ws_delay = 0;
-var ws = null;
+var poll_frequency = 30;
+var delay = 0;
+var delay_max = 60 * 5;
+var delay_inc = 10;
+function ajax_connect () {
+	$.ajax("http://" + window.location.hostname + ":8888/.data", {
+		cache: 'false',
+		dataType: 'json',
+		error: function (XHR, status, error) {
+			delay = (delay >= delay_max)
+				? delay_max : delay + delay_inc;
+			$('#wsdata').html("<strong>AJAX Error:</strong>"
+				+ status + ": " + error
+				+ "<br><em>Retrying in " + delay + "s.</em>");
+			setTimeout(ajax_connect, delay * 1000);
+		},
+		success: function (data, status, XHR) {
+			$('#wsdata').html(table_generate(data));
+			setTimeout(ajax_connect, poll_frequency * 1000);
+		}
+	});
+}
+
 function ws_connect () {
-	if (ws) {
+	$('#wsdata').html("<strong>Connecting...</strong>");
+	var ws = null;
+
+	try {
+		ws = new WebSocket("ws://" + window.location.hostname + ":1228/");
+	} catch (e) {
+		ajax_connect();
+		return;
+	}
+	if (!ws) {
+		ajax_connect();
 		return;
 	}
 
-	$('#wsdata').html("<strong>Connecting...</strong>");
-	ws = new WebSocket("ws://" + window.location.hostname + ":1228/");
-
 	ws.onopen = function() {
-		ws_delay = 0;
-		$('#wsdata').html("<strong>Connected:</strong> Waiting for data.");
+		delay = 0;
+		$('#wsdata').html("<strong>Connected:</strong>"
+			+ " Waiting for data.");
 	}
 
 	ws.onmessage = function(m) {
-		var data = JSON.parse(m.data); // BUG:
+		var data = JSON.parse(m.data); // BUG: XXX:
 		$('#wsdata').html(table_generate(data));
 	}
 
 	ws.onclose = function() {
-		$('#wsdata').html("<strong>Disconnected:</strong> Reconnecting in " + ws_delay + "s.");
+		$('#wsdata').html("<strong>Disconnected:</strong>"
+			+ " Reconnecting in " + delay + "s.");
 		ws = null;
-		setTimeout(ws_connect, ws_delay * 1000);
+		setTimeout(ws_connect, delay * 1000);
 	}
 
 	ws.onerror = function(e) {
 		$('#wsdata').html("<strong>WebSockets Error!</strong>");
-		ws_delay = ws_delay >= 60 ? 60 : ws_delay + 10;
+		delay = (delay >= delay_max)
+			? delay_max : delay + delay_inc;
 	}
 }
 
