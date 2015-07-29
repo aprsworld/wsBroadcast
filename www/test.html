@@ -26,23 +26,56 @@ ALL RIGHTS RESERVED!
 </body>
 <script>
 <!-- BUG: I'm not sure this is kosher after the body tag -->
-var wsdisplay = $("#wsdata");
-wsdisplay.html("<strong>Connecting...</strong>");
+function table_generate(data) {
+	var $dtable = $('<table border=1></table>');
+	var $drow = $('<tr></tr>');
+	for (var p in data) {
+		$drow.append('<th>' + p + ':</th>');
+		// Nest Objects
+		if (typeof data[p] === 'object') {
+			// TODO: Arrays?
+			$drow.append(table_generate(data[p]));
+		} else {
+			// BUG: Escape Data
+			$drow.append('<td>' + data[p] + '</td>');
+		}
+		$dtable.append($drow);
+	}
+	return $dtable;
+}
 
-var ws = new WebSocket("ws://" + window.location.hostname + ":1228/");
-ws.onopen = function() {
-	wsdisplay.html("<strong>Connected</strong>");
+var ws_delay = 0;
+var ws = null;
+function ws_connect () {
+	if (ws) {
+		return;
+	}
+
+	$('#wsdata').html("<strong>Connecting...</strong>");
+	ws = new WebSocket("ws://" + window.location.hostname + ":1228/");
+
+	ws.onopen = function() {
+		ws_delay = 0;
+		$('#wsdata').html("<strong>Connected:</strong> Waiting for data.");
+	}
+
+	ws.onmessage = function(m) {
+		var data = JSON.parse(m.data); // BUG:
+		$('#wsdata').html(table_generate(data));
+	}
+
+	ws.onclose = function() {
+		$('#wsdata').html("<strong>Disconnected:</strong> Reconnecting in " + ws_delay + "s.");
+		ws = null;
+		setTimeout(ws_connect, ws_delay * 1000);
+	}
+
+	ws.onerror = function(e) {
+		$('#wsdata').html("<strong>WebSockets Error!</strong>");
+		ws_delay = ws_delay >= 60 ? 60 : ws_delay + 10;
+	}
 }
-ws.onmessage = function(e) {
-	var data = JSON.parse(e.data);
-	wsdisplay.html("<em>" + data._bserver_.message + "</em>, It has been " + data._bserver_.uptime + " seconds since " + data._bserver_.start + ".");
-}
-ws.onclose = function() {
-	wsdisplay.html("<strong>Disconnected</strong>");
-}
-ws.onerror = function() {
-	wsdisplay.html("<strong>WebSockets Error!</strong>");
-	ws.close(); // BUG: Unknown if needed
-}
+
+ws_connect();
 </script>
 </html>
