@@ -139,6 +139,13 @@ DataServer.prototype.hook = function() {
 				port: c.remotePort,
 				family: c.remoteFamily
 			};
+		// Hack: Fix ws encapsulation for WebSocketServer
+		} else if (c._socket && c._socket.remoteAddress) { // XXX: Above
+			c.info.net = {
+				address: c._socket.remoteAddress,
+				port: c._socket.remotePort,
+				family: c._socket.remoteFamily
+			};
 		}
 		this.dserv.log(c.client_string + ' Open', c.info);
 
@@ -203,8 +210,8 @@ function HTTPDataServer(manager, config) {
 		if (rurl.pathname == '/.data') {
 			if (req.method == 'GET') {
 				res.writeHead(200, {
-					// XXX: BUG:
-					'Content-Type': 'text/plain',
+					// XXX: IE may have problems
+					'Content-Type': 'application/json',
 				});
 				res.write(JSON.stringify(
 					this.dserv.manager.data
@@ -234,7 +241,6 @@ var serv_http = new HTTPDataServer(dm, {});
 
 /*
  * WebSockets Server
- * XXX: BUG: Logging doesn't work right due to encapsulation.
  */
 var WebSocketDataServerConfigDefaults = {
 	server_name:		'Server_WS',
@@ -249,6 +255,8 @@ function WebSocketDataServer(manager, config) {
 	}
 	
 	this.serv = new WebSocketServer({ port: config.port });
+	// Fix for ws encapsulation
+	this.serv.address = function () { return this._server.address(); };
 	this.hook();
 	this.serv.on('connection', function(c) {
 		c.send(JSON.stringify(this.dserv.manager.data));
