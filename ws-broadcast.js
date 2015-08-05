@@ -43,8 +43,12 @@ function DataManager() {
 	setInterval(function() { self.timer.call(self); }, 10*1000);
 }
 DataManager.prototype.timer = function() {
-	this.data._bserver_.uptime+=10;
-	return this.update({'_bserver_': this.data._bserver_});
+	if (!this.data._bserver_) {
+		this.data._bserver_ = { uptime: 0 };
+	} else {
+		this.data._bserver_.uptime+=10;
+	}
+	return this.update(this.data);
 };
 
 DataManager.prototype.update = function(data) {
@@ -212,6 +216,8 @@ function HTTPDataServer(manager, config) {
 				res.writeHead(200, {
 					// XXX: IE may have problems
 					'Content-Type': 'application/json',
+					'Cache-Control': 'no-cache, no-store, must-revalidate',
+					'Expires': '0'
 				});
 				res.write(JSON.stringify(
 					this.dserv.manager.data
