@@ -17,8 +17,8 @@ var delay_inc = 10;		// If there are errors slowly scale back reconnects at this
 <script>
 function table_generate(data) {
 	var $dtable = $('<table border=1></table>');
-	var $drow = $('<tr></tr>');
 	for (var p in data) {
+		var $drow = $('<tr></tr>');
 		var $th = $('<th></th>');
 		$th.text(p);
 		$drow.append($th);

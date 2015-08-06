@@ -1,7 +1,12 @@
 var util = require('util');
 
+// TODO: Clean this up
 function merge_objects(o1, o2) {
 	var out = {};
+
+	if (typeof o1 !== 'object') {
+		return merge_objects(out, o2);
+	}
 
 	for (var p in o1) {
 		if (typeof o1[p] !== 'object') {
@@ -9,6 +14,10 @@ function merge_objects(o1, o2) {
 		} else {
 			out[p] = merge_objects({}, o1[p]);
 		}
+	}
+
+	if (typeof o2 !== 'object') {
+		return o2;
 	}
 
 	for (var q in o2) {
@@ -30,10 +39,15 @@ function merge_objects(o1, o2) {
  * Data Manager
  */
 function DataManager() {
+	var ts = new Date();
 	this.data = {
 		_bserver_: {
-			uptime: 0//,
-//			start: new Date().toString(),
+			uptime: 0,
+			start: {
+				date: ts.toUTCString(),
+				epoch_ms: ts.getTime(),
+				epoch: Math.floor(ts.getTime() / 1000)
+			}
 		}
 	};
 	this.servers = [];
@@ -44,17 +58,41 @@ function DataManager() {
 }
 DataManager.prototype.timer = function() {
 	if (!this.data._bserver_) {
+		console.log('FUBAR: _bserver_ unset!');
 		this.data._bserver_ = { uptime: 0 };
 	} else {
-		this.data._bserver_.uptime+=10;
+		this.data._bserver_.uptime += 10;
 	}
-	return this.update(this.data);
+	return this.update(null);
 };
 
-DataManager.prototype.update = function(data) {
-//	this.data = merge_objects(this.data, data);
-//	data = this.data;
-	this.data = data;
+DataManager.prototype.update = function(data, dserv, source) {
+	var ts = new Date();
+	if (data && typeof data === 'object') {
+		var data_new = {};
+		for (var p in data) {
+			var data_origsub;
+			if (typeof data[p] === 'object') {
+				data_origsub = data[p];
+			} else {
+				data_origsub = { data: data[p] };
+			}
+			var data_newsub = merge_objects(data_origsub, {
+				'_bserver_': {
+					'dserv': dserv.info,
+					'source': source,
+					'date': ts.toUTCString(),
+					'uptime': this.data._bserver_.uptime,
+					'epoch_ms': ts.getTime(),
+					'epoch': Math.floor(ts.getTime() / 1000)
+				}
+			});
+			data_new[p] = data_newsub;
+		}
+		this.data = merge_objects(this.data, data_new);
+	}
+	data = this.data;
+	//this.data = data;
 
 	/* send data to each server to broadcast */
 	this.servers.forEach(function(serv) {
@@ -113,8 +151,8 @@ DataServer.prototype.log = function () {
 	for (var i = 1; i < args.length; i++) {
 		message += ' - ' + JSON.stringify(args[i]);
 	}
-	console.log('# DS(' + this.info.server + ') "' + this.info.name + '": '
-		+ args[0] + message);
+	console.log('# DS(' + this.info.server + ') "' +
+		this.info.name + '": ' + args[0] + message);
 };
 
 DataServer.prototype.hook = function() {
@@ -155,8 +193,8 @@ DataServer.prototype.hook = function() {
 
 		c.on('close', function(had_error) {
 			if (had_error) {
-				this.dserv.log(c.client_string
-					+ ' Close', '[Unclean!]');
+				this.dserv.log(c.client_string +
+					' Close', '[Unclean!]');
 			} else {
 				this.dserv.log(c.client_string + ' Close');
 			}
@@ -341,7 +379,7 @@ function TCPDataServer(manager, config) {
 				return;
 			}
 			this.dserv.log(this.client_string + ' Message', data);
-			this.dserv.manager.update(data);
+			this.dserv.manager.update(data, this.dserv, this.info);
 		});
 	});
 	this.hook();
