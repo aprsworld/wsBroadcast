@@ -16,9 +16,17 @@ At this time the data is always input and output as a JSON object.  In the futur
 
 ### HTTP Server
 
-The HTTP Server currently just serves static file content and the dynamic data (under '/.data') as a fallback for AJAX HTTP Polling.  It is possible it may be extended to allow updates via HTTP as well.
+The HTTP Server currently just serves static file content and the dynamic data (under '/.data') as a fallback for AJAX HTTP Polling and for other uses.  It is possible it may be extended to allow updates via HTTP as well.
+
+'/.data' serves the JSON data with a mime-type of 'application/json', though in the future may do some content negotation.
+
+'/.data.json' serves the JSON data with a mime-type of 'application/json'.
+
+'/.data.dat' serves the JSON data, but with a mime-type of 'text/plain' for compatibility with IE.
 
 The HTTP Server requires the 'serve-static', 'serve-index', and 'finalhandler' npm modules.
+
+Currently the HTTP server defaults to running on port 8888.
 
 ### WebSockets Server
 
@@ -27,9 +35,13 @@ The WebSockets Server currently broadcasts the dynamic data to all connected cli
 The WebSockets Server requires the 'ws' npm module.  (`npm install --save ws`)
 For diagnostic and debugging the 'wscat' module is recommended.  (`npm install -g wscat`)
 
+Currently the WebSocket server defaults to running on port 1228.
+
 ### TCP Server
 
-The TCP Server allows updating the dynamic data via standard JSON messages.  The protocol is a very simple input only null terminated ('\0', 0x00) message passing system with each message being a JSON object with absolutely no handshake.  It may be extended in the future.
+The TCP Server allows updating the dynamic data via standard JSON messages.  The protocol is a very simple input only terminated (At this time it is terminated with a '\n', 0x0A character though in the future may use the traditional null, '\0', 0x00 terminator) message passing system with each message being a JSON object with absolutely no handshake.  It may be extended in the future.
+
+Currently two TCP Servers are run, one on port 1229 which is for input, and one on port 1230 for a single output of the current data.
 
 ## WWW Static Content
 
@@ -51,10 +63,14 @@ test.html is a simple JavaScript web client that will display the data spit out 
 
 To execute:
 
-`node ws-broadcast.js` and point a web-browser at http://hostname:8888/.
+`node ws-broadcast.js` and point a web-browser at http://hostname:8888/test.html.
 
 ## Using wscat
-`wscat -c http://hostname:1228`
+`wscat -c http://hostname:1228` to receive continuous updates of the data in JSON format.
+
+## Using nc
+`nc hostname 1230` to receive the latest data in JSON format.
+`cat data.json | nc hostname 1229` to update the data with JSON.
 
 Copyright (C) APRS World, LLC. 2015
 ALL RIGHTS RESERVED!
