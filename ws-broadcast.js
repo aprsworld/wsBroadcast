@@ -33,11 +33,21 @@ function merge_objects(o1, o2) {
 	return out;
 }
 
+function decPad (num, size) {
+	var ret = '';
+	while (Math.pow(10, --size) > num) {
+		ret = ret + '0';
+	}
+	ret = ret + num;
+	return ret;
+}
+
 
 
 /*
  * Data Manager
  */
+var fs = require('fs');
 function DataManager() {
 	var ts = new Date();
 	this.data = {
@@ -98,6 +108,32 @@ DataManager.prototype.update = function(data, dserv, source) {
 	this.servers.forEach(function(serv) {
 		serv.broadcast(data);
 	});
+
+	/* log data to a file */
+	var log_date = '' + ts.getUTCFullYear() + decPad(ts.getUTCMonth(), 2) + decPad(ts.getUTCDate(), 2);
+	var log_ts = ts.getUTCFullYear() + '-' + decPad(ts.getUTCMonth(), 2) + '-' + decPad(ts.getUTCDate(), 2) + ' ' + decPad(ts.getUTCHours(), 2) + ':' + decPad(ts.getUTCMinutes(), 2) + ':' + decPad(ts.getUTCSeconds(), 2);
+
+	// Open log file
+	var log_fd = fs.openSync('./datalog/' + log_date + '.json', 'a', 0644);
+	if (log_fd < 0) {
+		console.log('# DataLog: ERROR: Could not open log file - data not logged!');
+			return true;	// XXX: Data updated, but not logged.
+	}
+
+	// Write to log file
+	var log_data = JSON.stringify([log_ts, data]) + '\n';
+	var log_datasize = Buffer.byteLength(log_data, 'UTF-8');
+	var log_written = fs.writeSync(log_fd, log_data, null, 'UTF-8');
+	if (log_written <= 0) {
+		console.log('# DataLog: ERROR: Could not write to log file - data not logged and possibly corrupted file!');
+	} else if (log_written != log_data.length) {
+		console.log('# DataLog: ERROR: Could not write to log file - data not logged and corrupted file!');
+	}
+
+	// Close log file
+	fs.closeSync(log_fd);
+
+	/* All Done */
 	return true;
 };
 
