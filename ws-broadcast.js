@@ -249,14 +249,22 @@ function HTTPDataServer(manager, config) {
 
 		// Request for data
 		var rurl = url.parse(req.url);
-		if (rurl.pathname == '/.data') {
+		if (rurl.pathname == '/.data' || rurl.pathname == '/.data.json' || rurl.pathname == '/.data.dat') {
 			if (req.method == 'GET') {
-				res.writeHead(200, {
-					// XXX: IE may have problems
-					'Content-Type': 'application/json',
-					'Cache-Control': 'no-cache, no-store, must-revalidate',
-					'Expires': '0'
-				});
+				// Work-around for IE problems with 'application/json' mimetype
+				if (rurl.pathname == '/.data.dat') {
+					res.writeHead(200, {
+						'Content-Type': 'text/plain',
+						'Cache-Control': 'no-cache, no-store, must-revalidate',
+						'Expires': '0'
+					});
+				} else {
+					res.writeHead(200, {
+						'Content-Type': 'application/json',
+						'Cache-Control': 'no-cache, no-store, must-revalidate',
+						'Expires': '0'
+					});
+				}
 				res.write(JSON.stringify(
 					this.dserv.manager.data
 				));
@@ -323,8 +331,9 @@ var serv_ws = new WebSocketDataServer(dm, {});
 var TCPDataServerConfigDefaults = {
 	server_name:		'Server_TCP',
 	port:			1229,
-	term:			0x0a	// 0x0A for newline testing w/ telnet
+	term:			0x0a,	// 0x0A for newline testing w/ telnet
 					// 0x00 for real release
+	mode:			'recv'
 };
 var net = require('net');
 function TCPDataServer(manager, config) {
@@ -357,12 +366,15 @@ function TCPDataServer(manager, config) {
 			}
 		};
 
-		c.on('data', function (data) {
-			this.message_buffer = Buffer.concat(
-				[this.message_buffer, data],
-				this.message_buffer.length + data.length);
-			this.process_buffer();
-		});
+		// Allow updates on this port
+		if (config.mode == 'recv') {
+			c.on('data', function (data) {
+				this.message_buffer = Buffer.concat(
+					[this.message_buffer, data],
+					this.message_buffer.length + data.length);
+				this.process_buffer();
+			});
+		}
 
 		c.on('timeout', function() {
 			c.close();
@@ -383,11 +395,20 @@ function TCPDataServer(manager, config) {
 		});
 	});
 	this.hook();
+
+	// Send latest data on this port
+	if (config.mode == 'send') {
+		this.serv.on('connection', function (c) {
+			c.end(JSON.stringify(this.dserv.manager.data) + String.fromCharCode(config.term));
+		});
+	}
+
 	this.serv.listen(config.port);
 	return this;
 }
 util.inherits(TCPDataServer, DataServer);
 var serv_tcp = new TCPDataServer(dm, {});
+var serv_tcp2 = new TCPDataServer(dm, { 'port': 1230, 'mode': 'send' });
 
 
 /* EOF */
