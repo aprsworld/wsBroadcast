@@ -355,7 +355,11 @@ function WebSocketDataServer(manager, config) {
 util.inherits(WebSocketDataServer, DataServer);
 WebSocketDataServer.prototype.broadcast = function(data) {
 	this.serv.clients.forEach(function each(client) {
-		client.send(JSON.stringify(data));
+		try {
+			client.send(JSON.stringify(data));
+		} catch (e) { // TODO: XXX:
+			console.log('ERROR: Sending to dead client.');
+		}
 	});
 };
 var serv_ws = new WebSocketDataServer(dm, {});
