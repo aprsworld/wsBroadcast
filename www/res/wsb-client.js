@@ -66,7 +66,7 @@ function BroadcastClient(config) {
 			self.callback_update(data);
 		}
 
-		ws.onclose = function() {
+		ws.onclose = function(ws_error) {
 			if (!ws_error) {
 				self.callback_error(['WebSocket Disconnected'], delay);
 			}
