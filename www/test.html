@@ -6,14 +6,7 @@
 <script src="res/web-socket-js/web_socket.js"></script> <!-- git.com/gimite/web-socket-js WebSockets Compatibility Fall-Back library -->
 <!-- Global Settings for web-socket-js library -->
 <script>WEB_SOCKET_SWF_LOCATION = "res/web-socket-js/WebSocketMain.swf";</script>
-<!-- Global Settings for this HTML file -->
-<script>
-var ws_port = 1228;		// WebSockets port to connect to
-// All following values are in seconds
-var poll_frequency = 30;	// AJAX polling frequency if websockets unavailable
-var delay_max = 60 * 5;		// If there is an error retry at least this often
-var delay_inc = 10;		// If there are errors slowly scale back reconnects at this rate
-</script>
+<script src="res/wsb-client.js"></script> <!-- WebSockets Broadcast Client -->
 <script>
 function table_generate(data) {
 	var $dtable = $('<table border=1></table>');
@@ -35,75 +28,27 @@ function table_generate(data) {
 	return $dtable;
 }
 
-var delay = 0;
-function ajax_connect () {
-	$.ajax("http://" + window.location.hostname + ":" + window.location.port + "/.data", {
-		cache: 'false',
-		dataType: 'json',
-		error: function (XHR, status, error) {
-			delay = delay + delay_inc;
-			delay = (delay >= delay_max) ? delay_max : delay;
-			$('#wsdata').html("<strong>AJAX Error:</strong>"
-				+ status + ": " + error
-				+ "<br><em>Retrying in " + delay + "s.</em>");
-			setTimeout(ajax_connect, delay * 1000);
-		},
-		success: function (data, status, XHR) {
-			$('#wsdata').html(table_generate(data));
-			setTimeout(ajax_connect, poll_frequency * 1000);
-		}
-	});
+function data_error (errors, reconnect_delay) {
+	$('#wsdata').html('<strong>' + errors[0] + ':</strong>'
+			+ '<em>Retrying in ' + reconnect_delay + 's.</em>');
 }
 
-function ws_connect () {
-	$('#wsdata').html("<strong>Connecting...</strong>");
-	var ws = null;
-	var ws_error = null;
+function data_update (data) {
+	$('#wsdata').html(table_generate(data));
+}
 
-	try {
-		ws = new WebSocket("ws://" + window.location.hostname + ":" + ws_port + "/");
-	} catch (e) {
-		ajax_connect();
-		return;
-	}
-	if (!ws) {
-		ajax_connect();
-		return;
-	}
-
-	ws.onopen = function() {
-		delay = 0;
-		$('#wsdata').html("<strong>Connected:</strong>"
-			+ " Waiting for data.");
-	}
-
-	ws.onmessage = function(m) {
-		var data = JSON.parse(m.data); // BUG: XXX:
-		$('#wsdata').html(table_generate(data));
-	}
-
-	ws.onclose = function() {
-		if (ws_error) {
-			$('#wsdata').html("<strong>WebSockets Error:</strong>"
-				+ " Reconnecting in " + delay + "s.");
-		} else {
-			$('#wsdata').html("<strong>Disconnected:</strong>"
-				+ " Reconnecting in " + delay + "s.");
-		}
-		setTimeout(ws_connect, delay * 1000);
-	}
-
-	ws.onerror = function(e) {
-		$('#wsdata').html("<strong>WebSockets Error!</strong>");
-		ws_error = e;
-		delay = delay + delay_inc;
-		delay = (delay >= delay_max) ? delay_max : delay;
-	}
+var data_object = null;
+function data_start () {
+	data_object = new BroadcastClient({
+		callback_update: data_update,
+		callback_error: data_error
+	});
+	$('#wsdata').html('<strong>Connecting...</strong>');
 }
 </script>
 </head>
 
-<body onload="ws_connect();">
+<body onload="data_start();">
 <div id="header">
 <h1>WS Broadcast Test</h1>
 </div>
