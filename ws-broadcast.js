@@ -288,7 +288,7 @@ function HTTPDataServer(manager, config) {
 		if (rurl.pathname == '/.data' || rurl.pathname == '/.data.json' || rurl.pathname == '/.data.dat') {
 			if (req.method == 'GET') {
 				var refurl = url.parse(req.headers['referer']);
-				var refhost = refurl.protocol + "//" + refurl.host + "/";
+				var refhost = refurl.protocol + "//" + refurl.host;
 				// Work-around for IE problems with 'application/json' mimetype
 				if (rurl.pathname == '/.data.dat') {
 					res.writeHead(200, {
