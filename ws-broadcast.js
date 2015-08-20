@@ -287,8 +287,11 @@ function HTTPDataServer(manager, config) {
 		var rurl = url.parse(req.url);
 		if (rurl.pathname == '/.data' || rurl.pathname == '/.data.json' || rurl.pathname == '/.data.dat') {
 			if (req.method == 'GET') {
-				var refurl = url.parse(req.headers['referer']);
-				var refhost = refurl.protocol + "//" + refurl.host;
+				var refhost = "";
+				if (req.headers['referer']) {
+					var refurl = url.parse(req.headers['referer']);
+					refhost = refurl.protocol + "//" + refurl.host;
+				}
 				// Work-around for IE problems with 'application/json' mimetype
 				if (rurl.pathname == '/.data.dat') {
 					res.writeHead(200, {

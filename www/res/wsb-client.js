@@ -53,6 +53,7 @@ function BroadcastClient(config) {
 		var self = this;
 		ws.onopen = function() {
 			self.delay = 0;
+			self.ws_error = false;
 		}
 
 		ws.onmessage = function(m) {
@@ -66,10 +67,11 @@ function BroadcastClient(config) {
 			self.callback_update(data);
 		}
 
-		ws.onclose = function(ws_error) {
-			if (!ws_error) {
+		ws.onclose = function(error) {
+			if (!self.ws_error) {
 				self.callback_error(['WebSocket Disconnected'], self.delay);
 			}
+			self.ws_error = false;
 			setTimeout($.proxy(self, self.ws_connect), self.delay * 1000);
 		}
 
@@ -77,6 +79,7 @@ function BroadcastClient(config) {
 			self.delay = self.delay + self.delay_inc;
 			self.delay = (self.delay >= self.delay_max) ? self.delay_max : self.delay;
 			self.callback_error(['WebSocket Error', e], self.delay);
+			self.ws_error = true;
 		}
 
 		return true;
