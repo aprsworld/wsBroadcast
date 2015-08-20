@@ -68,7 +68,7 @@ function BroadcastClient(config) {
 
 		ws.onclose = function(ws_error) {
 			if (!ws_error) {
-				self.callback_error(['WebSocket Disconnected'], delay);
+				self.callback_error(['WebSocket Disconnected'], self.delay);
 			}
 			setTimeout($.proxy(self, self.ws_connect), self.delay * 1000);
 		}
