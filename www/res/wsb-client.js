@@ -74,9 +74,9 @@ function BroadcastClient(config) {
 		}
 
 		ws.onerror = function(e) {
-			self.elay = self.delay + self.delay_inc;
+			self.delay = self.delay + self.delay_inc;
 			self.delay = (self.delay >= self.delay_max) ? self.delay_max : self.delay;
-			callback_error(['WebSocket Error', e], self.delay);
+			self.callback_error(['WebSocket Error', e], self.delay);
 		}
 
 		return true;
