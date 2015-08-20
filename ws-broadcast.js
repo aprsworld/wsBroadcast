@@ -287,18 +287,22 @@ function HTTPDataServer(manager, config) {
 		var rurl = url.parse(req.url);
 		if (rurl.pathname == '/.data' || rurl.pathname == '/.data.json' || rurl.pathname == '/.data.dat') {
 			if (req.method == 'GET') {
+				var refurl = url.parse(req.headers['referer']);
+				var refhost = refurl.protocol + "//" + refurl.host + "/";
 				// Work-around for IE problems with 'application/json' mimetype
 				if (rurl.pathname == '/.data.dat') {
 					res.writeHead(200, {
 						'Content-Type': 'text/plain',
 						'Cache-Control': 'no-cache, no-store, must-revalidate',
-						'Expires': '0'
+						'Expires': '0',
+						'Access-Control-Allow-Origin': refhost
 					});
 				} else {
 					res.writeHead(200, {
 						'Content-Type': 'application/json',
 						'Cache-Control': 'no-cache, no-store, must-revalidate',
-						'Expires': '0'
+						'Expires': '0',
+						'Access-Control-Allow-Origin': refhost
 					});
 				}
 				res.write(JSON.stringify(
