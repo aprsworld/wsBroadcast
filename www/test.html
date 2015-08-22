@@ -2,11 +2,11 @@
 <head>
 <title>WS Broadcast Test</title>
 <script src="res/jquery-2.1.4.min.js"></script>
-<script src="res/swfobject-2.2.js"></script> <!-- SWFObject [Flash fallback for web_socket_js] -->
+<script src="res/swfobject-2.2.min.js"></script> <!-- SWFObject [Flash fallback for web_socket_js] -->
 <script src="res/web-socket-js/web_socket.js"></script> <!-- git.com/gimite/web-socket-js WebSockets Compatibility Fall-Back library -->
 <!-- Global Settings for web-socket-js library -->
 <script>WEB_SOCKET_SWF_LOCATION = "res/web-socket-js/WebSocketMain.swf";</script>
-<script src="res/wsb-client.js"></script> <!-- WebSockets Broadcast Client -->
+<script src="js/wsb-client.js"></script> <!-- WebSockets Broadcast Client -->
 <script>
 function table_generate(data) {
 	var $dtable = $('<table border=1></table>');
@@ -29,8 +29,7 @@ function table_generate(data) {
 }
 
 function data_error (errors, reconnect_delay) {
-	$('#wsdata').html('<strong>' + errors[0] + ':</strong>'
-			+ '<em>Retrying in ' + reconnect_delay + 's.</em>');
+	$('#wsdata').html('<strong>' + errors[0] + ':</strong>' + '<em>Retrying in ' + reconnect_delay + 's.</em>');
 }
 
 function data_update (data) {

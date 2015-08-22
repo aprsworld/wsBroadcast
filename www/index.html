@@ -2,11 +2,11 @@
 <head>
 <title>Weather Station Monitor</title>
 <script src="res/jquery-2.1.4.min.js"></script>
-<script src="res/swfobject-2.2.js"></script> <!-- SWFObject [Flash fallback for web_socket_js] -->
+<script src="res/swfobject-2.2.min.js"></script> <!-- SWFObject [Flash fallback for web_socket_js] -->
 <script src="res/web-socket-js/web_socket.js"></script> <!-- git.com/gimite/web-socket-js WebSockets Compatibility Fall-Back library -->
 <!-- Global Settings for web-socket-js library -->
 <script>WEB_SOCKET_SWF_LOCATION = "res/web-socket-js/WebSocketMain.swf";</script>
-<script src="res/wsb-client.js"></script> <!-- WebSockets Broadcast Client -->
+<script src="js/wsb-client.js"></script> <!-- WebSockets Broadcast Client -->
 <script>
 function table_generate(data) {
 	var $dtable = $('<table border=1></table>');
@@ -34,10 +34,10 @@ function data_error (errors, delay) {
 
 function data_update (data) {
 	$('#ws_status').text('Connected');
-	$('#ws_update').text(data['FAIRBANKS1']._bserver_['date']);
-	$('#ws_image').attr('src', data['FAIRBANKS1'].image_url);
-	$('#ws_image').attr('alt', 'Image from ' + data['FAIRBANKS1']._bserver_['date']);
-	var tempK = data['FAIRBANKS1'].sensors['External Temp'];
+	$('#ws_update').text(data.FAIRBANKS1._bserver_.date);
+	$('#ws_image').attr('src', data.FAIRBANKS1.image_url);
+	$('#ws_image').attr('alt', 'Image from ' + data.FAIRBANKS1._bserver_.date);
+	var tempK = data.FAIRBANKS1.sensors['External Temp'];
 	var tempC = tempK - 273.15;
 	var tempF = (tempC * 1.8) + 32;
 	$('#ws_temp').text(Math.round(tempF) + '˚ F');
