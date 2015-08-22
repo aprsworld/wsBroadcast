@@ -273,6 +273,8 @@ BroadcastClient.prototype.WSConnect = function() {
 		// XXX: e
 		if (!self.ws_error) {
 			self.onError(['WebSocket Disconnected', e]);
+		} else {
+			self.ConnectThrottle();
 		}
 		self.ws = null;
 		setTimeout($.proxy(self.WSConnect, self), self.delay * 1000);
