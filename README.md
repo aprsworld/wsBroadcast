@@ -45,11 +45,18 @@ Currently two TCP Servers are run, one on port 1229 which is for input, and one 
 
 ## WWW Static Content
 
-The 'www/' directory currently contains some static html files for demonstration and diagnostic purposes.  'test.html' is the currently the only real file and makes use of http://github.com/gimite/web-socket-js which I've copied the resource files into 'www/res/web-socket-js/' for fallback websocket compatibility.  It also relies on JQuery and web-socket-js requires swfobject; both of which are located in the 'res/' directory.
+The 'www/' directory currently contains some static html files for demonstration and diagnostic purposes.  'test.html' is the currently the only real file and makes use of the wsb-client.js library.
+
+### js/wsb-client.js
+
+A simple client library for browsers.  It supports native WebSockets, Flash Emulation of WebSockets provided by a slightly modified version of the 'web-socket-js' library, and falling back to AJAX polling.  It currently requires JQuery and should be ECMA3 compliant.
+
+* http://github.com/gimite/web-socket-js/
+* http://jquery.com/
 
 ### test.html
 
-test.html is a simple JavaScript web client that will display the data spit out from the system into a table that is dynamically generated using JQuery.  It will attempt to use native WebSockets, then fall back to a Flash solution if that fails via the 'web-socket-js' library, and finally will fallback to HTTP Polling via AJAX if that's not possible either.
+test.html is a simple Web Client that will display the data spit out from the system into a table that is dynamically generated using JQuery.  It uses the 'js/wsb-client.js' library. 
 
 ## Quick and Dirty Install
 
