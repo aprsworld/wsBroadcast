@@ -33,6 +33,13 @@
  *		Simply passing null in will suffice to disable all messages.
  *
  *	debug is a flag to specify print extra crap for debugging purposes.
+ *
+ *	method allows you to force an underlying method for testing reasons.
+ *		'WebSocket' forces use of standard native WebSockets.
+ *		'MozWebSocket' forces use of the Mozilla WebSockets.
+ *		'FlashWebSocket' forces use of the Flash emulation.
+ *		'AJAX' forces the use of AJAX polling.
+ *		'Fail' forces the use of none (failure).
  */
 function BroadcastClient(config) {
 
@@ -83,7 +90,8 @@ function BroadcastClient(config) {
 
 	// Make a Connection
 	if (!this.Connect()) {
-		return false; // XXX
+		this.delay = -1;
+		this.onError(['Connection Impossible']);
 	}
 
 	// We should be good.
@@ -161,23 +169,21 @@ BroadcastClient.prototype.ConnectThrottle = function (reset) {
  */
 BroadcastClient.prototype.AJAXConnect = function () {
 	this.logger.debug('wsb-client: Making JQuery AJAX Request...');
-	var self = this;
 
 	// XXX: TODO: IE Workaround (append '.dat' to url)
-	$.ajax(self.url_ajax, {
+	$.ajax(this.url_ajax, {
+		context: this,
 		cache: 'false',
 		dataType: 'json',
-		error: function (XHR, status, error) {
-			self.ConnectThrottle();
-			// XXX: XHR?
-			self.onError(['AJAX Error!', status, error]);
-			setTimeout($.proxy(self.AJAXConnect, self), self.delay * 1000);
-		},
-		success: function (data, status, XHR) {
-			// XXX: status, XHR?
-			self.onUpdate(data);
-			setTimeout($.proxy(self.AJAXConnect, self), self.poll_freq * 1000);
-		}
+	}).done(function (data, status, XHR) {
+		// XXX: status, XHR?
+		this.onData(data);
+		setTimeout($.proxy(this.AJAXConnect, this), this.poll_freq * 1000);
+	}).fail(function (XHR, status, error) {
+		this.ConnectThrottle();
+		// XXX: XHR?
+		this.onError(['AJAX Error!', status, error]);
+		setTimeout($.proxy(this.AJAXConnect, this), this.delay * 1000);
 	});
 
 	// Was successful (in theory)...
@@ -228,7 +234,8 @@ BroadcastClient.prototype.WSConnect = function() {
 	// Flash WebSockets Emulation
 	if (!this.ws && (!this.method || this.method == 'FlashWebSocket')) {
 		try {
-			this.ws = new FlashWebSocket(this.url_ws);
+			this.logger.info('wsb-client: FlashWebSocket is broken!');
+			//this.ws = new FlashWebSocket(this.url_ws);
 		} finally {
 			if (!this.ws && this.method) {
 				this.logger.error('wsb-client: FlashWebSocket unavailable!');
@@ -299,7 +306,7 @@ BroadcastClient.prototype.WSConnect = function() {
 BroadcastClient.prototype.Connect = function() {
 
 	// WebSockets methods
-	if (!this.method || this.method.search('WebSocket$')) {
+	if (!this.method || this.method.search('WebSocket$') != -1) {
 		if (this.WSConnect()) {
 			return true;
 		}

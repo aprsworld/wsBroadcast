@@ -29,7 +29,13 @@ function table_generate(data) {
 }
 
 function data_error (errors, reconnect_delay) {
-	$('#wsdata').html('<strong>' + errors[0] + ':</strong>' + '<em>Retrying in ' + reconnect_delay + 's.</em>');
+	if (reconnect_delay > 0) {
+		$('#wsdata').html('<strong>' + errors[0] + ':</strong> <em>Retrying in ' + reconnect_delay + 's.</em>');
+	} else if (reconnect_delay < 0) {
+		$('#wsdata').html('<strong>Unrecoverable Error: ' + errors[0] + '</strong>');
+	} else {
+		$('#wsdata').html('<strong>' + errors[0] + '</strong>');
+	}
 }
 
 function data_update (data) {
@@ -38,11 +44,11 @@ function data_update (data) {
 
 var data_object = null;
 function data_start () {
+	$('#wsdata').html('<strong>Connecting...</strong>');
 	data_object = new BroadcastClient({
 		callback_update: data_update,
 		callback_error: data_error
 	});
-	$('#wsdata').html('<strong>Connecting...</strong>');
 }
 </script>
 </head>

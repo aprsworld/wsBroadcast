@@ -29,7 +29,13 @@ function table_generate(data) {
 }
 
 function data_error (errors, delay) {
-	$('#ws_status').text(errors[0] + ': Reconnecting in ' + delay + 's.');
+	if (delay > 0) {
+		$('#ws_status').text(errors[0] + ': Reconnecting in ' + delay + 's.');
+	} else if (delay < 0) {
+		$('#ws_status').text('Unrecoverable Error: ' + errors[0]);
+	} else {
+		$('#ws_status').text(errors[0]);
+	}
 }
 
 function data_update (data) {
@@ -45,6 +51,7 @@ function data_update (data) {
 
 var data_object = null;
 function data_start () {
+	$('#ws_status').text('Connecting...');
 	data_object = new BroadcastClient({
 		callback_update: data_update,
 		callback_error: data_error,
@@ -54,7 +61,6 @@ function data_start () {
 	});
 	document.title = 'FAIRBANKS1 Station Monitor';
 	$('#header').html('<h1>FAIRBANKS1 Station Monitor</h1>');
-	$('#ws_status').text('Connecting...');
 }
 </script>
 <link rel="stylesheet" type="text/css" href="styles/style.css">
