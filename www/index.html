@@ -2,89 +2,423 @@
 <head>
 <title>Weather Station Monitor</title>
 <script src="res/jquery-2.1.4.min.js"></script>
-<script src="res/swfobject-2.2.min.js"></script> <!-- SWFObject [Flash fallback for web_socket_js] -->
-<script src="res/web-socket-js/web_socket.js"></script> <!-- git.com/gimite/web-socket-js WebSockets Compatibility Fall-Back library -->
+<link rel="stylesheet" type="text/css" href="res/external/smoothness/jquery-ui.min.css">
+<script type="text/javascript" src="res/external/jquery-ui.min.js"></script> <!-- jquery ui library -->
+<script type="text/javascript" src="res/external/jquery-ui-touch-punch-min.js"></script> <!-- jquery ui library -->
+<script src="http://cam.aprsworld.com:8888/res/swfobject-2.2.min.js"></script> <!-- SWFObject [Flash fallback for web_socket_js] -->
+<script src="http://cam.aprsworld.com:8888/res/web-socket-js/web_socket.js"></script> <!-- git.com/gimite/web-socket-js WebSockets Compatibility Fall-Back library -->
 <!-- Global Settings for web-socket-js library -->
 <script>WEB_SOCKET_SWF_LOCATION = "res/web-socket-js/WebSocketMain.swf";</script>
-<script src="js/wsb-client.js"></script> <!-- WebSockets Broadcast Client -->
+<script src="http://cam.aprsworld.com:8888/js/wsb-client.js"></script> <!-- WebSockets Broadcast Client -->
 <script>
+/***** Global variables ********/
+var lastkey;
+var id_arr = [];
+var path_arr = [];
+var name_arr = [];
+var originalTable = [];
+var savedStates = []; //set of saved table states in the format of a multi Dimensional array consisting of coordinates of each cell
+var started = false; //this boolean makes sure we only execute some of our functions only once such as the jquery ui setup
+var editMode = false; //boolean that determines whether we are in edit mode or not
+/*******************************/
+
 function table_generate(data) {
-	var $dtable = $('<table border=1></table>');
-	for (var p in data) {
-		var $drow = $('<tr></tr>');
-		var $th = $('<th></th>');
-		$th.text(p);
-		$drow.append($th);
-		// Nest Objects
-		if (typeof data[p] === 'object') {
-			$drow.append(table_generate(data[p]));
-		} else {
-			var $td = $('<td></td>');
-			$td.text(data[p]);
-			$drow.append($td);
+    var $dtable = $('<table border=1></table>');
+    for (var p in data) {
+        var $drow = $('<tr></tr>');
+        var $th = $('<th></th>');
+        $th.text(p);
+        $drow.append($th);
+        // Nest Objects
+        if (typeof data[p] === 'object') {
+            $drow.append(table_generate(data[p]));
+        } else {
+            var $td = $('<td></td>');
+            $td.text(data[p]);
+            $drow.append($td);
+        }
+        $dtable.append($drow);
+    }
+    return $dtable;
+}
+
+function data_error(errors, delay) {
+    $('#ws_status').text(errors[0] + ': Reconnecting in ' + delay + 's.');
+}
+
+/*
+The three iterate functions below form IDs, names, and paths to our objects and they put them in arrays of equal size to be accessed later.
+All three functions work in a recursive manner by finding each nested property and determining whether that property is an object or not
+once a non-object property is found, it pushes the entire thing to an array
+*/
+function iterateID(obj, stack) {
+    for (var property in obj) {
+        if (obj.hasOwnProperty(property)) {
+            if (typeof obj[property] == "object") { //is this property an object? then find next property
+                lastkey = property; //keeps track of last property which is stored in a global variable
+                iterateID(obj[property], stack + '.' + property); //combine stack and property and call function recurssively
+            } else {
+                //console.log(property + "   " + obj[property]);
+                var id = "ws_" + stack + "_" + property;
+                id = id.replace(/\s+/g, '_'); //replaces spaces with underscores to comply with html standards
+                id = id.replace(/\./g, ""); //removes periods since one function that uses these ids splits the string using periods as a delimiter
+                id_arr.push(id);
+            }
+        }
+    }
+    return id_arr;
+}
+
+function iterateName(obj, stack) {
+    for (var property in obj) {
+        if (obj.hasOwnProperty(property)) {
+            if (typeof obj[property] == "object") { //is this property an object? then find next property
+                lastkey = property; //keeps track of last property which is stored in a global variable
+                iterateName(obj[property], stack + '.' + property); //combine stack and property and call function recurssively
+            } else {
+                var name = lastkey + " " + property;
+                parts = name.split("."); //split the string using period as a delimiter
+                name_arr.push(parts[parts.length - 1]); //only return last two properties on the stack		
+            }
+        }
+    }
+    return name_arr;
+}
+
+function iteratePath(obj, stack) {
+    for (var property in obj) {
+        if (obj.hasOwnProperty(property)) {
+            if (typeof obj[property] == "object") { //is this property an object? then find next property
+                lastkey = property; //keeps track of last property which is stored in a global variable
+                iteratePath(obj[property], stack + '.' + property); //combine stack and property and call function recurssively
+            } else {
+                var path = stack + '.' + property;
+                path_arr.push(path);
+            }
+        }
+    }
+    return path_arr;
+}
+
+/*this is an important function because it converts the dot notation string into an actual object reference and then returns that reference*/
+function ref(obj, str) {
+    str = str.split("."); //splits the dot notation
+    for (var i = 1; i < str.length; i++) {
+        obj = obj[str[i]];
+    }
+    return obj;
+}
+
+/*this function takes in the array of ids, the array of dot notation reference strings and our data object. it uses the length of the id array to find all values that need to be changed and then changes them dynamically*/
+function dynamicUpdate($id_arr, $path_arr, data) {
+    for ($i = 0; $i < $id_arr.length; $i++) {
+		var value = ref(data, $path_arr[$i]); //finds value of object
+        $('div#' + $id_arr[$i] + '').children('p').text(value);
+    }
+}
+
+/*function that is in charge of setting up the table that holds all of the values*/
+function create_table($id_arr, $name_arr) {
+    var $myTable = "";
+    for ($i = 0; $i < $id_arr.length; $i++) { //generates the divs that hold all of our values
+        $myTable += '<div class="tr draggable" id="' + ($i + 1) + '"><div class="td dg-arrange-table-rows-drag-icon"></div><div class="td myTableID"> ID: <span>' + ($i + 1) + '</span> </div><div class="td myTableTitle"><input title="Original text: '+ $name_arr[$i] +'" class="titleEdit" type="text"></input><select class="formulaEdit"> <option value ="">Formula</option></select><input title="Add a unit label -- Example: &deg;C" class="labelEdit" placeholder="Label" type="text"></input><p class="titleText">' + $name_arr[$i] + '</p></div><div class="td myTableValue" id="' + $id_arr[$i] + '"><p>Unknown</p> <span class="label"></span></div><div class="td dg-arrange-table-rows-close-icon"><span>Hide:</span><input autocomplete="off" class="checkBox" type="checkbox"></div></div>';
+    }
+
+    return $myTable;
+}
+
+/* maps the ids and left/top coordinate of each div in "table"*/
+function mapTable($id_arr) {
+    var table = [];
+    for ($i = 0; $i < $id_arr.length; $i++) { //loops through every .tr div
+        var id = $('#' + $id_arr[$i]); //gets id
+        var top = $('#' + $id_arr[$i]).closest('.tr').css('top'); //gets top cooridinate of div
+        var left = $('#' + $id_arr[$i]).closest('.tr').css('left'); //gets left coordinate
+        var hidden = $('#' + $id_arr[$i]).closest('.tr').children('.dg-arrange-table-rows-close-icon').find('input[type="checkbox"]').prop('checked'); //gets checkbox status
+        var title = $('#' + $id_arr[$i]).closest('.tr').children('.myTableTitle').children('.titleText').text(); //gets title value
+		var label =  $('#' + $id_arr[$i]).closest('.tr').children('.myTableValue').children('.label').text(); //gets label
+		var position_arr = [id, top, left, hidden, title, label];
+		table.push(position_arr);
+    }
+    savedStates.push(table);
+    //append an option to the select input on the control bar for our newly saved state
+    var option = document.createElement("option");
+    if ($('#saveAs').val() !== '') {
+        option.text = $('#saveAs').val();
+    } else {
+        option.text = "Table#" + savedStates.length;
+    }
+    option.value = savedStates.length - 1;
+    $('#stateSelect').append(option);
+}
+
+/* resets div positions to a selected saved state*/
+function resetTable($originalTable) {
+    console.log($originalTable);
+    console.log(savedStates);
+    for ($i = 0; $i < $originalTable.length; $i++) { //pull id, coordinates, hidden state and title out of array
+        var id = $originalTable[$i][0];
+        var top = $originalTable[$i][1];
+        var left = $originalTable[$i][2];
+        var hidden = $originalTable[$i][3];
+		var title = $originalTable[$i][4];
+		var label = $originalTable[$i][5];
+        if (hidden === true) {
+            $($originalTable[$i][0]).closest('.tr').children('.dg-arrange-table-rows-close-icon').find('input[type="checkbox"]').prop('checked', true);
+            if (editMode === false) { //hides the cell if we are not editing the table.
+                id.parent().css('visibility', 'hidden');
+            }
+        } else {
+            $($originalTable[$i][0]).closest('.tr').children('.dg-arrange-table-rows-close-icon').find('input[type="checkbox"]').prop('checked', false);
+            id.parent().css('visibility', 'initial');
+        }
+        $(id).closest('.tr').css('left', left);
+        $(id).closest('.tr').css('top', top);
+		$(id).closest('.tr').children('.myTableTitle').find('p').text(title);
+		$(id).closest('.tr').children('.myTableValue').find('.label').text(label);
+    }
+}
+function fontSize(direction){
+	var fontsize = $('.myTableValue').css('font-size');
+	if(direction == 'decrease'){
+		fontsize = fontsize.replace("px",'');
+		fontsize = (parseInt(fontsize)-1).toString();
+		fontsize = fontsize+"px";
+		$('.myTableValue').css('font-size', fontsize);
+	}
+	if(direction == 'increase'){
+		fontsize = fontsize.replace("px",'');
+		fontsize = (parseInt(fontsize)+1).toString();
+		fontsize = fontsize+"px";
+		$('.myTableValue').css('font-size', fontsize);	
+	}
+}
+/*function that periodically updates the data */
+function data_update(data) {
+    if (started === false) { //we only want the below block of code to execute once because it is in charge of data creation and initiating a path to the various nested object properties
+        path_arr = iteratePath(data, '');
+        $('#myTableBody').empty().append(create_table(iterateID(data, ''), iterateName(data, ''))); //creates our table
+        $(".draggable").draggable({ //makes our data cells draggable
+            handle: '.dg-arrange-table-rows-drag-icon',
+            grid: [1, 1],
+            snap: true,
+            snapTolerance: 10,
+            start: function(event, ui) {
+                $(this).addClass('draggable_focus_in');
+            },
+            stop: function(event, ui) {
+                $(this).removeClass('draggable_focus_in');
+            }
+        });
+        $("#ws_image").resizable({ //makes our camera image resizable
+            aspectRatio: true
+        });
+        $(".outer").draggable({ // makes our camera image parent div draggable
+            grid: [1,1],
+			handle: '.cam-drag-handle'
+			
+        });
+        $("#ws_status").draggable({}); //makes the little green "connected" span draggable
+        $(".controls").draggable({
+			handle: '.drag-handle',
+			start: function(event, ui) {
+                $(this).addClass('draggable_focus_in');
+            },
+			stop: function(event, ui) {
+                $(this).removeClass('draggable_focus_in');
+            }
+		}).resizable({ //makes our controls div resizable and draggable
+            minHeight: 70,
+            minWidth: 150,
+        });
+        $(document).ready(function() {
+            mapTable(id_arr);
+        });
+    }
+    started = true; //sets our boolean to true so the above only executes once
+    $('#ws_status').text('Connected');
+    $('#ws_status').css('color', 'green');
+
+    dynamicUpdate(id_arr, path_arr, data); //updates all data cells to their current values
+
+    $('#ws_image_preload').attr('src', data.FAIRBANKS1.image_url); //preloads the image so that we don't get a "scan-line" effect when the image loads on a slow internet connection
+    $('#ws_image_preload').load(function() {
+        $('#ws_image').attr('src', data.FAIRBANKS1.image_url);
+    });
+    $('#ws_image').attr('alt', 'Image from ' + data['FAIRBANKS1']._bserver_['date']);
+
+    $('#ws_update').text(data['FAIRBANKS1']._bserver_['date']);
+    var tempK = data['FAIRBANKS1'].sensors['External Temp'];
+    var tempC = tempK - 273.15;
+    var tempF = (tempC * 1.8) + 32;
+    $('#ws_sensors_External_Temp').text(Math.round(tempF) + '\xB0F');
+}
+
+/*function initiates the data transfer*/
+function data_start() {
+    data_object = new BroadcastClient({
+        callback_update: data_update,
+        callback_error: data_error,
+        // XXX: These are temporary
+        url_ajax: 'http://cam.aprsworld.com:8888/.data',
+        url_ws: 'ws://cam.aprsworld.com:1228/.data'
+    });
+    document.title = 'FAIRBANKS1 Station Monitor';
+    $('#header').html('<div class="logo_container"> </div><h1>FAIRBANKS1 Station Monitor</h1>');
+    $('#ws_status').text('Connecting...');
+}
+
+/*function that is called when the edit table button is pressed. The function sets the drag and hide toggles to be unhidden*/
+function editTable() {
+    $('.dg-arrange-table-rows-drag-icon').each(function() {
+		//initialize variables
+		var row, td, id, close, title, titleEdit, titleText, label, labelEdit, labelText, formulaEdit;
+		
+        row = $(this).parent();
+        td = $(this);
+        id = $(row).children('.myTableID');
+        close = $(row).children('.dg-arrange-table-rows-close-icon');
+		title = $(row).children('.myTableTitle').children('p');
+		titleEdit = $(row).children('.myTableTitle').children('.titleEdit');
+		titleText = title.text();
+		label = $(row).children('.myTableValue').children('.label');
+		labelEdit = $(row).children('.myTableTitle').children('.labelEdit');
+		labelText = label.text();
+        formulaEdit = $(row).children('.myTableTitle').children('.formulaEdit');
+					
+		$('.container .myTableTitle').css('width', '75%');
+        $('.container .myTableTitle').css('clear', 'none');
+        $('.container .myTableTitle').css('background-color', 'transparent');
+        $('.container .myTableTitle').css('height', '50px');
+		$('.container .myTableValue').hide(); //hide value for the sake of editing
+		$(title).hide(); //hide title text for editing
+		$(titleEdit).val(titleText); //import the current title tex tinto the edit input field
+		$(titleEdit).show();
+		$(labelEdit).val(labelText); //import the current label text into the edit label field
+		$(labelEdit).show();
+        $(row).css('visibility', 'initial'); //makes the cell visible
+        $(td).show(); //shows drag icon
+        //$(id).show(); //shows the cell id
+        $(close).show(); //shows the close button
+		if(!isNaN($(row).children('.myTableValue').children('p').text())){
+			formulaEdit.show();
 		}
-		$dtable.append($drow);
-	}
-	return $dtable;
+    });
+    editMode = true;
+	$('.drag-handle').show();
+	$('.cam-drag-handle').show();
+    $('#editTable').text('Finish Modifying');
+    $('#editTable').attr('onclick', 'disableEdit()');
 }
-
-function data_error (errors, delay) {
-	if (delay > 0) {
-		$('#ws_status').text(errors[0] + ': Reconnecting in ' + delay + 's.');
-	} else if (delay < 0) {
-		$('#ws_status').text('Unrecoverable Error: ' + errors[0]);
-	} else {
-		$('#ws_status').text(errors[0]);
-	}
+/*function that is called when the ok button is pressed. The function sets the drag and hide toggles to be hidden and hides rows where the hidden button is checked*/
+function disableEdit() {
+    $('.dg-arrange-table-rows-close-icon').each(function() {
+		//initialize variables
+		var row, td, id, move, title, titleEdit, titleChangedText, label, labelEdit, labelChangedText, formulaEdit;
+		
+        row = $(this).parent();
+        td = $(this);
+        id = $(row).children('.myTableID');
+        move = $(row).children('.dg-arrange-table-rows-drag-icon');
+		title = $(row).children('.myTableTitle').children('p');
+		titleEdit = $(row).children('.myTableTitle').children('.titleEdit');
+		titleChangedText = titleEdit.val();
+		label = $(row).children('.myTableValue').children('.label');
+		labelEdit = $(row).children('.myTableTitle').children('.labelEdit');
+		labelChangedText = labelEdit.val();
+		formulaEdit = $(row).children('.myTableTitle').children('.formulaEdit');
+		
+		if (td.children().is(':checked')) {
+            row.css('visibility', 'hidden');
+        }
+		$(title).text(titleChangedText);
+		$(titleEdit).hide();	
+		$(title).show();
+		$(label).text(labelChangedText);
+		$(labelEdit).hide();	
+		$(label).show();
+        td.hide();
+        id.hide();
+        move.hide();
+        $('.container .myTableTitle').css('width', '100%');
+        $('.container .myTableTitle').css('clear', 'both');
+        $('.container .myTableTitle').css('background-color', 'rgba(0,0,0,.35)');
+        $('.container .myTableTitle').css('height', '20px');
+        $('.container .myTableValue').show();
+		formulaEdit.hide();
+    });
+    editMode = false;
+	$('.drag-handle').hide();
+	$('.cam-drag-handle').hide();
+    $('#editTable').text('Modify Table');
+    $('#editTable').attr('onclick', 'editTable()');
 }
-
-function data_update (data) {
-	$('#ws_status').text('Connected');
-	$('#ws_update').text(data.FAIRBANKS1._bserver_.date);
-	$('#ws_image').attr('src', data.FAIRBANKS1.image_url);
-	$('#ws_image').attr('alt', 'Image from ' + data.FAIRBANKS1._bserver_.date);
-	var tempK = data.FAIRBANKS1.sensors['External Temp'];
-	var tempC = tempK - 273.15;
-	var tempF = (tempC * 1.8) + 32;
-	$('#ws_temp').text(Math.round(tempF) + '˚ F');
-}
-
-var data_object = null;
-function data_start () {
-	$('#ws_status').text('Connecting...');
-	data_object = new BroadcastClient({
-		callback_update: data_update,
-		callback_error: data_error,
-		// XXX: These are temporary
-		url_ajax: 'http://cam.aprsworld.com:8888/.data',
-		url_ws: 'ws://cam.aprsworld.com:1228/.data'
-	});
-	document.title = 'FAIRBANKS1 Station Monitor';
-	$('#header').html('<h1>FAIRBANKS1 Station Monitor</h1>');
-}
+	
 </script>
 <link rel="stylesheet" type="text/css" href="styles/style.css">
 </head>
 
 <body onload="data_start();">
-<div id="header">
-<h1>Weather Station Monitor</h1>
+<div id="preload">
+	<img id="ws_image_preload" src="images/disconnected.png" alt="preload_image">
 </div>
-
 <div id="content">
-<img id="ws_image" src="images/disconnected.png" alt="This site requirest JavaScript!">
-<br>
-<table>
-<tr><th>Status:</th><td id="ws_status">This site requires JavaScript!</td></tr>
-<tr><th>Temperature:</th><td id="ws_temp">Unknown</td></tr>
-<tr><th>Last Update:</th><td id="ws_update">Never</td></tr>
-</table>
+	<div class="container">
+		<div class="top-container">
+			<div id="header">
+				<div id="logo_container">
+					
+				</div>
+			</div>
+			<div class="outer">
+				<div class="camera-container">
+					<span id="ws_status"> disconnected </span>
+					<img id="ws_image" src="images/disconnected.png" alt="This site requirest JavaScript!">
+					<div class="cam-drag-handle"></div>
+
+				</div>
+			</div>
+			<h2> Acquired Camera Data </h2>
+
+				<div class="controls">
+					<h2> Controls </h2>
+					<div class="controlRow">
+						<span class="verticalAlign"></span>
+						<button id="editTable" onclick="editTable();">Modify Table</button>
+						<button id="resetTable" onclick="resetTable(savedStates[0]);">Reset Table</button>
+					</div>
+					<div class="controlRow">
+						<span class="verticalAlign"></span>
+						<p> Font Size: </p>
+						<button id="fontSizePlus" onclick="fontSize('increase');">Font +</button>
+						<button id="fontSizeMinus" onclick="fontSize('decrease');">Font -</button>
+					</div>
+					<div class="controlRow">
+						<span class="verticalAlign"></span>
+						<input id="saveAs" type="textfield" value="" placeholder="Save as..."></input>
+						<button id="saveState" onclick="mapTable(id_arr)">Save Table</button>
+					</div>
+					<div class="controlRow">
+						<span class="verticalAlign"></span>
+						<select id="stateSelect" name="states">
+						</select>
+						<button id="loadState" onclick="resetTable(savedStates[$('#stateSelect').val()])">Load Table</button>
+					</div>
+					<div class="drag-handle"></div>
+				</div>
+		</div>
+		<div class="table_container">
+			<div id="myTable">
+				<div id="myTableBody">
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<div id="footer">
+	<hr>
+	<p>Powered by an <a href="http://www.aprsworld.com/"> APRS World, LLC</a> solution.</p><br>
 </div>
 
-<div id="footer">
-<br><hr>
-&copy; Copyright 2015.<br>
-ALL RIGHTS RESERVED!
-</div>
 </body>
 </html>

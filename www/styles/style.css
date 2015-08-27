@@ -1,0 +1,447 @@
+/* CSS file */
+body{
+	margin: 0;
+	padding: 0;
+	font-family: Arial,Helvetica Neue,Helvetica,sans-serif;
+}
+#header{
+	height: 35px;	
+	padding: 10px;
+	background-color: white;
+	border-bottom: 2px solid black;
+}
+#header h1{
+	margin-top: 5px;
+	margin-left: 5px;
+	color: #0550a5;	
+	font-size: 28px;	
+	float: left;
+
+}
+#preload{
+	display:none;
+}
+#ws_image_preload{
+	display: none;
+}
+.top-container{
+	clear: both;
+	height: auto;
+	background-color: #333333;
+	padding-bottom: 10px;
+}
+.top-container h2{
+	color: #DEDEDE;
+	text-align: center;
+	font-size: 18px;
+	margin: 4px;
+	
+}
+.left{
+	float: left;
+	width: 50%;
+	height: 450px;
+}
+.info-panel{
+	width: 100%;
+	height: 410px;
+	clear: both;
+}
+.controls{
+	width: 250px;
+	height: 250px;
+	background-color:rgba(222, 222, 222,.5);
+	padding: 10px;
+	border: black 1px solid;
+	border-radius: 0.5em;
+	position: absolute;
+	top: 15%;
+	left: 1%;
+	z-index: 1;
+}
+.controls h2{
+	font-size: 16px;
+	margin: 1px;
+	padding: 0px;
+	text-align: center;
+	color: #333 !important;
+}
+.controlRow{
+	width: 250px;
+	float: left;
+	margin-top: 5px;
+	text-align: center;
+	height: 50px;
+}
+.verticalAlign{
+	height: 50px;
+	vertical-align: middle;
+	display: inline-block;
+}
+.controls input{
+	vertical-align: middle;
+	display: inline-block;
+}
+.controls select{
+	vertical-align: middle;
+	display: inline-block;	
+}
+.controls button{
+	vertical-align: middle;
+	display: inline-block;
+	height: 40px;
+	width: 100px;
+	color: #333;
+}
+.controls p{
+	vertical-align: middle;
+	display: inline-block;
+	height: 20px;
+	width: 100px;
+}
+
+.right{
+	float: right;
+	width: 49%;
+	height: 450px;
+}
+#content{
+	display: block;
+	margin-bottom: 1px;
+	height: auto;
+	background-color: #333333;
+	padding-bottom: 10px;
+}
+div.logo_container{
+	height: 60px;
+	width: 60px;
+	background-image: url('../images/aprsworld_logo.175.jpg');
+    background-repeat: no-repeat;
+	background-size: contain;
+	float: left;
+}
+#connection_status{
+	margin-top: 20px;
+	width: 90%;
+	margin-left: auto;
+	margin-right: auto;
+	height: 250px;
+	background-color: white;
+	padding: 10px;
+	border: 1px solid white;
+	border-radius: 2em;
+	box-shadow: 0px 0px 4px white;
+}
+#ws_status{
+	position: absolute;
+	display: block;
+	margin-left: 7%;
+	margin-top: 1%;
+	color: red;	
+	z-index: 2;
+	background-color: rgba(255,255,255,.5);
+	padding: 5px;
+	cursor: move;
+}
+#stateSelect{
+	height: 30px;
+	width: 100px;
+	background-color: #333333;
+	color: white;
+	text-align: center;
+}
+#saveAs{
+	height: 30px;
+	width: 93px;
+	background-color: #333333;
+	color: white;
+	text-align: center;
+}
+#fontSizePlus{
+	width: 50px;
+}
+#fontSizeMinus{
+	width: 50px;
+}
+.container{
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.th{
+	float: left;	
+}
+.td {
+	float: left;
+}
+.outer{
+	margin-top: 10px;
+	margin-left: auto;
+	margin-right: auto;
+	display: block;
+	width: 50%;
+	height: 470px;
+}
+.camera-container{
+	width: 800px;
+	position: relative;
+	top:0;
+	left: 0;
+	min-height: 450px;
+	height: auto;
+	z-index: 1;
+	margin: auto;
+}
+.container img{
+	position: absolute;
+	top:0px;
+	height: 450px;
+	width: 800px;
+	box-shadow: 2px 2px 5px #222;
+	border: 1px solid black;
+	border-radius: .35em;
+}
+.table_container{
+	position: relative;
+	display: block;
+	font-family: Arial,Helvetica Neue,Helvetica,sans-serif;
+	width: 99%;
+	background-color: #999;
+	padding-top:5px;
+	border-radius: .5em;
+	margin-left: auto;
+	margin-right: auto;
+}
+#myTableBody{
+	text-align: center;	
+}
+.container .dg-arrange-table-rows-drag-icon{
+	display:none;
+	background-image: url('../images/drag.png'); 
+	background-repeat: no-repeat;
+	height: 50px;
+	width: 10%;
+	float: left;
+}
+
+.container .dg-arrange-table-rows-drag-icon:hover{
+	cursor: move;
+
+}
+.container .tr td:first-child{
+	display: none;	
+}
+.thead{
+	width: 100%;
+	clear: both;
+	float: left;
+}
+.container .myTableID{
+	width: 10%;
+	display: none;
+	float: left;
+	height: 50px;
+}
+
+.container .myTableID span{
+	color: white;
+}
+
+.container .myTableTitle{
+	width: 100%;
+	float: left;
+	clear: both;
+	height:20px;
+	font-size: 14px;
+	font-weight: bold;
+	color: #efefef !important;
+	background-color: rgba(0,0,0,.35);
+	border-radius: .25em;
+}
+.container .myTableTitle p{
+	margin: 0;
+	padding: 0;
+	text-transform:capitalize;
+}
+.container .myTableTitle .titleEdit{
+	display: none;
+	width: 96%;
+	clear: both;
+	background-color: rgba(0,0,0,.35);
+	color: #999;
+	font-weight: bold;
+	text-align: center;
+	border: none;
+}
+.container .myTableTitle .labelEdit{
+	display: none;	
+	width: 44%;
+	float: right;
+	background-color: #333333;
+	color: #efefef;
+	text-align: center;
+	margin-right: 5px;
+	margin-top: 2px;
+	border: none;
+}
+.container .myTableTitle .formulaEdit{
+	display: none;	
+	width: 51%;
+	float: left;
+	margin-left: 3px;
+	margin-top: 2px;	
+	background-color: #333333;
+	color: #999;
+	text-align: center;
+	border: none;
+
+}
+
+.container .myTableValue{
+	width: 65%;
+	float: left;
+	height: 15px;
+	padding-top: 2px;
+	width: 100%;
+	color: #ddd !important;
+	font-weight: 700;
+	text-shadow: 0px 0px 2px black;
+	font-size: 14px;
+}
+.container .myTableValue p{
+	margin:0;
+	padding: 0;
+	text-transform: capitalize;
+	display: inline;
+}
+.container .dg-arrange-table-rows-close-icon{
+	display: none;
+	width: 10%;
+	float: left;
+	height: 50px;
+}
+.container .dg-arrange-table-rows-close-icon span{
+	color: white;	
+}
+.ui-sortable-helper{
+	background-color: white !important;	
+}
+.container .tr{
+	padding: 1px;
+	font-size: 12px;
+	width: 12.2%;
+	min-width: 220px;
+	height: 50px;
+	display: inline-block;
+	border: #111111 solid 1px;
+	background-color: rgba(0,0,0,.1);
+	border-radius: 5px;
+	z-index: 2;
+	
+}
+.cam-drag-handle{
+	display: none;
+	width: 26px;
+	height: 26px;
+	position: relative;
+	top: 0;
+	background-image: url(../images/drag.png); 
+	background-repeat: no-repeat;
+	cursor: move;
+	z-index: 90;
+}
+.drag-handle{
+	display: none;
+	width: 26px;
+	height: 26px;
+	position: relative;
+	top: -30px;
+	background-image: url(../images/drag.png); 
+	background-repeat: no-repeat;
+	cursor: move;
+	z-index: 90;
+	
+}
+.draggable_focus_in{
+	box-shadow: 0px 0px 20px #0550a5;
+	background-color: rgba(239,239,239, .8) !important;
+}
+.container .th{
+	padding: 5px;
+	width: 20%;
+	text-align: center;
+	background-color: white;
+	background-image: none !important;
+}
+.container .td{
+	color: #333333;
+	text-align: center;
+}
+.container .th:hover{
+	cursor: default !important;
+
+}
+#footer{
+	display: block;
+	margin-top: 1px;
+	clear: both;
+	background-color: #DEDEDE;
+}
+#footer p{
+	text-align: center;
+	font-size: 12px;
+	margin: 0;
+	padding: 5px;
+	color: #333;
+}
+#footer hr{
+	clear:both;
+	margin-top: 0;
+	border-top: 0;
+}
+@media (max-width: 400px) {
+	img{
+		width: 320px !important;
+		height: 180px !important;
+	}
+	.camera-container{
+		width: 100%;
+		margin: 0;
+	}
+	.outer{
+		width: 320px;
+		margin: 0;
+		
+	}
+	.controls{
+		width: 300px;
+		height: 70x;
+		background-color:rgba(222, 222, 222,.5);
+		padding: 5px;
+		top: 45%;
+		left: 1%;
+	}
+	.controlRow{
+		width: 150px;	
+	}
+	.controls button{
+		width: 50px;
+	}
+	#stateSelect{
+		width: 50px;
+	}
+	#saveAs{
+		width: 50px;	
+	}
+	.controls p{
+		width: 50px;
+	}
+	#fontSizePlus{
+		padding: 0;
+		width: 35px;
+	}
+	#fontSizeMinus{
+		padding: 0;
+		width: 35px;	
+	}
+}
