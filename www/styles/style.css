@@ -275,28 +275,13 @@ div.logo_container{
 }
 .container .myTableTitle .labelEdit{
 	display: none;	
-	width: 44%;
-	float: right;
+	width: 96%;
 	background-color: #333333;
 	color: #efefef;
 	text-align: center;
-	margin-right: 5px;
 	margin-top: 2px;
 	border: none;
 }
-.container .myTableTitle .formulaEdit{
-	display: none;	
-	width: 51%;
-	float: left;
-	margin-left: 3px;
-	margin-top: 2px;	
-	background-color: #333333;
-	color: #999;
-	text-align: center;
-	border: none;
-
-}
-
 .container .myTableValue{
 	width: 65%;
 	float: left;
@@ -311,7 +296,6 @@ div.logo_container{
 .container .myTableValue p{
 	margin:0;
 	padding: 0;
-	text-transform: capitalize;
 	display: inline;
 }
 .container .dg-arrange-table-rows-close-icon{

@@ -21,7 +21,6 @@ var savedStates = []; //set of saved table states in the format of a multi Dimen
 var started = false; //this boolean makes sure we only execute some of our functions only once such as the jquery ui setup
 var editMode = false; //boolean that determines whether we are in edit mode or not
 /*******************************/
- //comment
 function table_generate(data) {
     var $dtable = $('<table border=1></table>');
     for (var p in data) {
@@ -121,7 +120,7 @@ function dynamicUpdate($id_arr, $path_arr, data) {
 function create_table($id_arr, $name_arr) {
     var $myTable = "";
     for ($i = 0; $i < $id_arr.length; $i++) { //generates the divs that hold all of our values
-        $myTable += '<div class="tr draggable" id="' + ($i + 1) + '"><div class="td dg-arrange-table-rows-drag-icon"></div><div class="td myTableID"> ID: <span>' + ($i + 1) + '</span> </div><div class="td myTableTitle"><input title="Original text: '+ $name_arr[$i] +'" class="titleEdit" type="text"></input><select class="formulaEdit"> <option value ="">Formula</option></select><input title="Add a unit label -- Example: &deg;C" class="labelEdit" placeholder="Label" type="text"></input><p class="titleText">' + $name_arr[$i] + '</p></div><div class="td myTableValue" id="' + $id_arr[$i] + '"><p>Unknown</p> <span class="label"></span></div><div class="td dg-arrange-table-rows-close-icon"><span>Hide:</span><input autocomplete="off" class="checkBox" type="checkbox"></div></div>';
+        $myTable += '<div class="tr draggable" id="' + ($i + 1) + '"><div class="td dg-arrange-table-rows-drag-icon"></div><div class="td myTableID"> ID: <span>' + ($i + 1) + '</span> </div><div class="td myTableTitle"><input title="Original text: '+ $name_arr[$i] +'" class="titleEdit" type="text"></input><input title="Add a unit label -- Example: &deg;C" class="labelEdit" placeholder="Add a unit label" type="text"></input><p class="titleText">' + $name_arr[$i] + '</p></div><div class="td myTableValue" id="' + $id_arr[$i] + '"><p>Unknown</p> <span class="label"></span></div><div class="td dg-arrange-table-rows-close-icon"><span>Hide:</span><input autocomplete="off" class="checkBox" type="checkbox"></div></div>';
     }
 
     return $myTable;
@@ -312,9 +311,9 @@ function editTable() {
 }
 /*function that is called when the ok button is pressed. The function sets the drag and hide toggles to be hidden and hides rows where the hidden button is checked*/
 function disableEdit() {
-    $('.dg-arrange-table-rows-close-icon').each(function() {
+    $('.dg-arrange-table-rows-close-icon').each(function(index) {
 		//initialize variables
-		var row, td, id, move, title, titleEdit, titleChangedText, label, labelEdit, labelChangedText, formulaEdit;
+		var row, td, id, move, title, titleEdit, titleChangedText, label, labelEdit, labelChangedText, formulaEdit, formulaVal;
 		
         row = $(this).parent();
         td = $(this);
@@ -327,7 +326,10 @@ function disableEdit() {
 		labelEdit = $(row).children('.myTableTitle').children('.labelEdit');
 		labelChangedText = labelEdit.val();
 		formulaEdit = $(row).children('.myTableTitle').children('.formulaEdit');
-		
+		formulaVal = formulaEdit.val();	
+		if(formulaVal != ""){
+			formula(formulaVal, path_arr[index]);
+		}
 		if (td.children().is(':checked')) {
             row.css('visibility', 'hidden');
         }
@@ -353,7 +355,7 @@ function disableEdit() {
     $('#editTable').text('Modify Table');
     $('#editTable').attr('onclick', 'editTable()');
 }
-	
+
 </script>
 <link rel="stylesheet" type="text/css" href="styles/style.css">
 </head>
