@@ -18,7 +18,8 @@ var path_arr = [];
 var name_arr = [];
 var originalTable = [];
 var savedStates = []; //set of saved table states in the format of a multi Dimensional array consisting of coordinates of each cell
-var textBlocks = [];
+var textBlocks = []; //array to keep track of ids of generated text blocks
+var imgBlocks = []; //array to keep track of ids of generated images
 var started = false; //this boolean makes sure we only execute some of our functions only once such as the jquery ui setup
 var editMode = false; //boolean that determines whether we are in edit mode or not
 /*******************************/
@@ -348,9 +349,16 @@ function disableEdit() {
     $('#editTable').attr('onclick', 'editTable()');
 }
 function createText(){
+//unhide inputs
 	$('#createTextTitle').show();
 	$('#createTextBody').show();
+	$('#createTextTitle').val('');
+	$('#createTextBody').val('');
+	$('#createImageURL').hide();
 	$('#createText').text('Submit Text');
+	$('#createImg').text('Create Image');
+//change function of button
+    $('#createImg').attr('onclick', 'createImage()');
     $('#createText').attr('onclick', 'submitText()');
 	$('.controls').css('height', '400px');
 }
@@ -390,6 +398,33 @@ function submitText(){
 	$('.controls').css('height', '300px');
 	$('#createTextTitle').hide();
 	$('#createTextBody').hide();	
+}
+function createImage(){
+//unhide inputs
+	$('#createTextTitle').hide();
+	$('#createTextBody').hide();
+	$('#createImageURL').show();
+	$('#createImageURL').val('');
+	$('#createImg').text('Submit URL');
+	$('#createText').text('Create Text');
+//change function of button
+    $('#createText').attr('onclick', 'createText()');
+    $('#createImg').attr('onclick', 'submitURL()');
+	$('.controls').css('height', '400px');
+}
+function submitURL(){
+	var imgURL, index;
+	index = imgBlocks.length;
+	imgURL = $('#createImageURL').val();
+	$('#content').append('<div class="imgBlockContainer"><div class="cam-drag-handle"></div><img id=img'+index+' alt=img'+index+' src='+imgURL+'></img></div>');
+	$(".imgBlockContainer").draggable({
+				handle: ".cam-drag-handle"
+			});
+	$("#img"+index+"").resizable({ //makes our controls div resizable and draggable
+				minHeight: 70,
+				minWidth: 150,
+		        aspectRatio: true
+			});	
 }
 </script>
 <link rel="stylesheet" type="text/css" href="styles/style.css">
@@ -443,7 +478,9 @@ function submitText(){
 					</div>
 					<div class="controlRow">
 						<button id="createText" onclick="createText()"> Create Text </button>
-						<input id="createTextTitle" type="text" placeholder="Title">
+						<button id="createImg" onclick="createImage()"> Create Image </button>
+						<input id="createTextTitle" type="text" placeholder="Title"></input>
+						<input id="createImageURL" type="text" placeholder="Enter URL"></input>
 						<textarea id="createTextBody" placeholder= "Text Body"rows"4"></textarea>
 					</div>
 					<div class="drag-handle"></div>

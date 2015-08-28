@@ -291,15 +291,10 @@ div.logo_container{
 	width: 100%;
 	clear: both;
 }
-#createTextWidth{
-	display: none;
-	width: 45%;
-	float: left;
-}
-#createTextHeight{
+#createImageURL{
 	display: none;	
-	width: 45%;	
-	float: left;
+	width: 100%;
+	clear: both;	
 }
 .textBlockContainer{
 	position: absolute;
@@ -307,7 +302,22 @@ div.logo_container{
 	left: 20%;
 	width: 300px;
 	height: 400px;
+	padding: 10px;
 	background-color: grey;
+}
+.imgBlockContainer{
+	position: absolute;
+	top: 15%;
+	left: 20%;
+	width: auto;
+	z-index: 90;
+	display: inline;
+}
+.textBlockContainer h2{
+	color: #333;
+}
+.textBlockContainer p{
+	color: #333;
 }
 .container .myTableValue{
 	width: 65%;
