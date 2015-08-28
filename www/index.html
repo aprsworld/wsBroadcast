@@ -356,7 +356,7 @@ function createText(){
 }
 function submitText(){
 	var textBlock, textTitle, textContent, title, index;
-	
+//index is the size of our global array - this is used to create distinct ids for each textbox so that they may be referenced later on
 	index = textBlocks.length;
 //get title text from our input field
 	textTitle = $('#createTextTitle').val();
@@ -371,7 +371,7 @@ function submitText(){
 /*get text content from text area and append it to our div*/
 	$(textBlock).append('<p>'+textContent+'</p>');
 	$('#content').append(textBlock);
-	textBlocks = "block"+index;
+	textBlocks.push("block"+index);
 //make our div draggable and resizable
 	$("#block"+index).draggable({
 				start: function(event, ui) {
