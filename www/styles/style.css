@@ -49,13 +49,13 @@ body{
 }
 .controls{
 	width: 250px;
-	height: 250px;
+	height: 300px;
 	background-color:rgba(222, 222, 222,.5);
 	padding: 10px;
 	border: black 1px solid;
 	border-radius: 0.5em;
 	position: absolute;
-	top: 15%;
+	top: 10%;
 	left: 1%;
 	z-index: 1;
 }
@@ -281,6 +281,33 @@ div.logo_container{
 	text-align: center;
 	margin-top: 2px;
 	border: none;
+}
+#createTextTitle{
+	display: none;
+	clear: both;
+}
+#createTextBody{
+	display: none;	
+	width: 100%;
+	clear: both;
+}
+#createTextWidth{
+	display: none;
+	width: 45%;
+	float: left;
+}
+#createTextHeight{
+	display: none;	
+	width: 45%;	
+	float: left;
+}
+.textBlockContainer{
+	position: absolute;
+	top: 15%;
+	left: 20%;
+	width: 300px;
+	height: 400px;
+	background-color: grey;
 }
 .container .myTableValue{
 	width: 65%;

@@ -18,6 +18,7 @@ var path_arr = [];
 var name_arr = [];
 var originalTable = [];
 var savedStates = []; //set of saved table states in the format of a multi Dimensional array consisting of coordinates of each cell
+var textBlocks = [];
 var started = false; //this boolean makes sure we only execute some of our functions only once such as the jquery ui setup
 var editMode = false; //boolean that determines whether we are in edit mode or not
 /*******************************/
@@ -297,11 +298,7 @@ function editTable() {
 		$(labelEdit).show();
         $(row).css('visibility', 'initial'); //makes the cell visible
         $(td).show(); //shows drag icon
-        //$(id).show(); //shows the cell id
         $(close).show(); //shows the close button
-		if(!isNaN($(row).children('.myTableValue').children('p').text())){
-			formulaEdit.show();
-		}
     });
     editMode = true;
 	$('.drag-handle').show();
@@ -325,11 +322,7 @@ function disableEdit() {
 		label = $(row).children('.myTableValue').children('.label');
 		labelEdit = $(row).children('.myTableTitle').children('.labelEdit');
 		labelChangedText = labelEdit.val();
-		formulaEdit = $(row).children('.myTableTitle').children('.formulaEdit');
-		formulaVal = formulaEdit.val();	
-		if(formulaVal != ""){
-			formula(formulaVal, path_arr[index]);
-		}
+
 		if (td.children().is(':checked')) {
             row.css('visibility', 'hidden');
         }
@@ -347,7 +340,6 @@ function disableEdit() {
         $('.container .myTableTitle').css('background-color', 'rgba(0,0,0,.35)');
         $('.container .myTableTitle').css('height', '20px');
         $('.container .myTableValue').show();
-		formulaEdit.hide();
     });
     editMode = false;
 	$('.drag-handle').hide();
@@ -355,7 +347,50 @@ function disableEdit() {
     $('#editTable').text('Modify Table');
     $('#editTable').attr('onclick', 'editTable()');
 }
-
+function createText(){
+	$('#createTextTitle').show();
+	$('#createTextBody').show();
+	$('#createText').text('Submit Text');
+    $('#createText').attr('onclick', 'submitText()');
+	$('.controls').css('height', '400px');
+}
+function submitText(){
+	var textBlock, textTitle, textContent, title, index;
+	
+	index = textBlocks.length;
+//get title text from our input field
+	textTitle = $('#createTextTitle').val();
+//get content text from our body text area
+	textContent = $('#createTextBody').val();
+//create a div to hold our information
+	textBlock = document.createElement("div");
+	textBlock.className = "textBlockContainer";
+	textBlock.id = "block"+index;
+//append h2 holding title text
+	$(textBlock).append('<h2>'+textTitle+'</h2>');
+/*get text content from text area and append it to our div*/
+	$(textBlock).append('<p>'+textContent+'</p>');
+	$('#content').append(textBlock);
+	textBlocks = "block"+index;
+//make our div draggable and resizable
+	$("#block"+index).draggable({
+				start: function(event, ui) {
+					$(this).addClass('draggable_focus_in');
+				},
+				stop: function(event, ui) {
+					$(this).removeClass('draggable_focus_in');
+				}
+			}).resizable({ //makes our controls div resizable and draggable
+				minHeight: 70,
+				minWidth: 150,
+			});	
+//reset buttons, input fields, and control div back to defaults
+	$('#createText').text('Create Text');
+    $('#createText').attr('onclick', 'createText()');
+	$('.controls').css('height', '300px');
+	$('#createTextTitle').hide();
+	$('#createTextBody').hide();	
+}
 </script>
 <link rel="stylesheet" type="text/css" href="styles/style.css">
 </head>
@@ -405,6 +440,11 @@ function disableEdit() {
 						<select id="stateSelect" name="states">
 						</select>
 						<button id="loadState" onclick="resetTable(savedStates[$('#stateSelect').val()])">Load Table</button>
+					</div>
+					<div class="controlRow">
+						<button id="createText" onclick="createText()"> Create Text </button>
+						<input id="createTextTitle" type="text" placeholder="Title">
+						<textarea id="createTextBody" placeholder= "Text Body"rows"4"></textarea>
 					</div>
 					<div class="drag-handle"></div>
 				</div>
