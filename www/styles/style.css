@@ -189,7 +189,7 @@ div.logo_container{
 	left: 0;
 	min-height: 450px;
 	height: auto;
-	z-index: 1;
+	z-index: 0;
 	margin: auto;
 }
 .container img{
@@ -407,6 +407,7 @@ div.logo_container{
 	margin-top: 1px;
 	clear: both;
 	background-color: #DEDEDE;
+	height: 30px;
 }
 #footer p{
 	text-align: center;
@@ -424,7 +425,7 @@ div.logo_container{
 	position: fixed;
 	bottom: 0;
 	right: 0;
-	width: 400px;
+	width: 500px;
 	height: 30px;
 	background-color: rgba(222,222,222,.5);
 	z-index: 1000;
@@ -444,6 +445,11 @@ div.logo_container{
 #statusBar button:hover{
 	background-color: #DDD;	
 }
+#timer{
+	display: block;
+	float: left;
+	padding-top: 5px;
+}
 .editWindow{
 	position: absolute;
 	right: 0;
@@ -454,6 +460,7 @@ div.logo_container{
 	background-color: #888888;
 	border-radius: .5em;
 	padding: 10px;
+	z-index: 2;
 }
 @media (max-width: 400px) {
 	img{

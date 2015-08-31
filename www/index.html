@@ -12,6 +12,7 @@
 <script src="http://cam.aprsworld.com:8888/js/wsb-client.js"></script> <!-- WebSockets Broadcast Client -->
 <script>
 /***** Global variables ********/
+	var time;
 var lastkey;
 var id_arr = [];
 var path_arr = [];
@@ -194,8 +195,16 @@ function fontSize(direction){
 		$('.myTableValue').css('font-size', fontsize);	
 	}
 }
+function timer(){
+	time = time+1;
+	$('#timer').text(time + " seconds since last data received.");
+	if(time > 30){
+		$('#timer').text("30+ seconds since last data received. Something went wrong.");
+	}
+}
 /*function that periodically updates the data */
 function data_update(data) {
+	time=0;
     if (started === false) { //we only want the below block of code to execute once because it is in charge of data creation and initiating a path to the various nested object properties
         path_arr = iteratePath(data, '');
         $('#myTableBody').empty().append(create_table(iterateID(data, ''), iterateName(data, ''))); //creates our table
@@ -234,6 +243,7 @@ function data_update(data) {
         });
         $(document).ready(function() {
             mapTable(id_arr);
+			setInterval(timer,1000);
         });
     }
     started = true; //sets our boolean to true so the above only executes once
@@ -254,7 +264,6 @@ function data_update(data) {
     var tempF = (tempC * 1.8) + 32;
     $('#ws_sensors_External_Temp').text(Math.round(tempF) + '\xB0F');
 }
-
 /*function initiates the data transfer*/
 function data_start() {
     data_object = new BroadcastClient({
@@ -268,6 +277,7 @@ function data_start() {
     $('#header').html('<div class="logo_container"> </div><h1>FAIRBANKS1 Station Monitor</h1>');
     $('#ws_status').text('Connecting...');
 }
+	
 /*function that is called when the edit table button is pressed. The function sets the drag and hide toggles to be unhidden*/
 function editTable() {
     $('.dg-arrange-table-rows-drag-icon').each(function() {
@@ -523,10 +533,10 @@ function changeCell(id) {
 	</div>
 </div>
 <div id="footer">
-	<hr>
-	<p>Powered by an <a href="http://www.aprsworld.com/"> APRS World, LLC</a> solution.</p><br>
+	<p>Powered by an <a href="http://www.aprsworld.com/"> APRS World, LLC</a> solution.</p>
 </div>
 <div id="statusBar">
+	<span id="timer"> placeholder for timer </span>
 	<button id="masterEdit" onclick="edit()"> </button>
 </div>
 <div class="editWindow">
