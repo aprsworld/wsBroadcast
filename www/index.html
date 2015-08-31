@@ -296,6 +296,7 @@ function editTable() {
 		label = $(row).children('.myTableValue').children('.label');
 		labelEdit = $(row).children('.myTableTitle').children('.labelEdit');
 		labelText = label.text();
+		console.log(titleText);
         formulaEdit = $(row).children('.myTableTitle').children('.formulaEdit');
 					
 		$('.container .myTableTitle').css('width', '75%');
@@ -472,7 +473,7 @@ function nonEdit(handler) {
 	$('#myTableBody').undelegate('.tr','click', editWindow);
 }
 function changeCell(id) {
-	$(id).closest('.tr').children('.myTableTitle').text($('.titleChange').val());
+	$(id).closest('.tr').children('.myTableTitle').children('p').text($('.titleChange').val());
 	$(id).children('.label').text($('.labelChange').val());
 }
 </script>
