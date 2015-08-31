@@ -426,10 +426,13 @@ function submitURL(){
 			});	
 }
 var editWindow =  function() {
-	var title, titleChange;
+	var title, titleChange, id, submitButton;
 	$('.editWindow').show();
+	var submitButton = $('#submitCell');
 	title = $(this).children('.myTableTitle').children('p');
+	id = $(this).children('.myTableValue').attr('id');
 	titleChange = $('.titleChange');
+	submitButton.attr('onclick','changeCell('+id+')');
 	$('.editWindow h2').text('Edit ' + title.text() + ' cell');
 	$(titleChange).val(title.text());
 	console.log(title);
@@ -446,6 +449,10 @@ function nonEdit(handler) {
 	$('.tr').css('cursor','initial');
 	$('.editWindow').hide();
 	$('#myTableBody').undelegate('.tr','click', editWindow);
+}
+function changeCell(id) {
+	$(id).closest('.tr').children('.myTableTitle').text($('.titleChange').val());
+	$(id).children('.label').text($('.labelChange').val());
 }
 </script>
 <link rel="stylesheet" type="text/css" href="styles/style.css">
@@ -526,6 +533,7 @@ function nonEdit(handler) {
 	<h2> Edit Cell </h2>
 	<span> Edit Title </span><input class="titleChange" type="text"></input><br>
 	<span> Label </span><input class="labelChange" type="text" placeholder="Add a Label"></input>
+	<button id="submitCell"> Submit Changes </button>
 </div>
 </body>
 </html>

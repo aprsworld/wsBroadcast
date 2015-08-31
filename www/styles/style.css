@@ -453,6 +453,7 @@ div.logo_container{
 	display: none;
 	background-color: #888888;
 	border-radius: .5em;
+	padding: 10px;
 }
 @media (max-width: 400px) {
 	img{
