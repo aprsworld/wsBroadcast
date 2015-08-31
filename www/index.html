@@ -12,7 +12,7 @@
 <script src="http://cam.aprsworld.com:8888/js/wsb-client.js"></script> <!-- WebSockets Broadcast Client -->
 <script>
 /***** Global variables ********/
-	var time;
+var time;
 var lastkey;
 var id_arr = [];
 var path_arr = [];
@@ -251,8 +251,10 @@ function data_update(data) {
     $('#ws_status').css('color', 'green');
 
     dynamicUpdate(id_arr, path_arr, data); //updates all data cells to their current values
-
-    $('#ws_image_preload').attr('src', data.FAIRBANKS1.image_url); //preloads the image so that we don't get a "scan-line" effect when the image loads on a slow internet connection
+//
+//TODO: make more general - fairbanks1 is too specific. maybe set a global variable at the beginning so that it can be like: data.[VARIABLE].images_url
+//  
+	$('#ws_image_preload').attr('src', data.FAIRBANKS1.image_url); //preloads the image so that we don't get a "scan-line" effect when the image loads on a slow internet connection
     $('#ws_image_preload').load(function() {
         $('#ws_image').attr('src', data.FAIRBANKS1.image_url);
     });
@@ -425,7 +427,7 @@ function submitURL(){
 	var imgURL, index;
 	index = imgBlocks.length;
 	imgURL = $('#createImageURL').val();
-	$('#content').append('<div class="imgBlockContainer"><div class="cam-drag-handle"></div><img id=img'+index+' alt=img'+index+' src='+imgURL+'></img></div>');
+	$('#content').append('<div class="imgBlockContainer"><div class="cam-drag-handle"></div><img onerror="brokenImg(img'+index+')" id=img'+index+' alt=img'+index+' src='+imgURL+'></img></div>');
 	$(".imgBlockContainer").draggable({
 				handle: ".cam-drag-handle"
 			});
@@ -434,6 +436,10 @@ function submitURL(){
 				minWidth: 150,
 		        aspectRatio: true
 			});	
+}
+function brokenImg(id){
+	alert('invalid URL');
+	$(id).closest('.imgBlockContainer').remove();
 }
 var editWindow =  function() {
 	var title, titleChange, id, submitButton;
@@ -454,7 +460,7 @@ function edit(handler) {
 	$('#myTableBody').delegate('.tr','click', editWindow);
 }
 function nonEdit(handler) {
-	$('#masterEdit').css('background-color','#BBB');
+	$('#masterEdit').css('background-color',' rgba(222,222,222,.0)');
 	$('#masterEdit').attr('onclick', 'edit()');
 	$('.tr').css('cursor','initial');
 	$('.editWindow').hide();

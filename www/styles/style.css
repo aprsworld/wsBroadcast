@@ -437,13 +437,10 @@ div.logo_container{
 	background-repeat: no-repeat;
     background-position: center; 
 	border: none;
-	background-color: #BBB;
+	background-color: rgba(222,222,222,.0);
 	cursor: pointer;
 	float: right;
 	transition: background-color 0.5s ease;	
-}
-#statusBar button:hover{
-	background-color: #DDD;	
 }
 #timer{
 	display: block;
