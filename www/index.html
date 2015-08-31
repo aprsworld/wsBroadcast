@@ -382,33 +382,35 @@ function submitText(){
 //get content text from our body text area
 	textContent = $('#createTextBody').val();
 //create a div to hold our information
-	textBlock = document.createElement("div");
-	textBlock.className = "textBlockContainer";
-	textBlock.id = "block"+index;
-//append h2 holding title text
-	$(textBlock).append('<h2>'+textTitle+'</h2>');
-/*get text content from text area and append it to our div*/
-	$(textBlock).append('<p>'+textContent+'</p>');
-	$('#content').append(textBlock);
-	textBlocks.push("block"+index);
-//make our div draggable and resizable
-	$("#block"+index).draggable({
-				start: function(event, ui) {
-					$(this).addClass('draggable_focus_in');
-				},
-				stop: function(event, ui) {
-					$(this).removeClass('draggable_focus_in');
-				}
-			}).resizable({ //makes our controls div resizable and draggable
-				minHeight: 70,
-				minWidth: 150,
-			});	
-//reset buttons, input fields, and control div back to defaults
-	$('#createText').text('Create Text');
-    $('#createText').attr('onclick', 'createText()');
-	$('.controls').css('height', '300px');
-	$('#createTextTitle').hide();
-	$('#createTextBody').hide();	
+	if(textContent != "" || textTitle != ""){
+		textBlock = document.createElement("div");
+		textBlock.className = "textBlockContainer";
+		textBlock.id = "block"+index;
+	//append h2 holding title text
+		$(textBlock).append('<h2>'+textTitle+'</h2>');
+	/*get text content from text area and append it to our div*/
+		$(textBlock).append('<p>'+textContent+'</p>');
+		$('#content').append(textBlock);
+		textBlocks.push("block"+index);
+	//make our div draggable and resizable
+		$("#block"+index).draggable({
+					start: function(event, ui) {
+						$(this).addClass('draggable_focus_in');
+					},
+					stop: function(event, ui) {
+						$(this).removeClass('draggable_focus_in');
+					}
+				}).resizable({ //makes our controls div resizable and draggable
+					minHeight: 70,
+					minWidth: 150,
+				});	
+	//reset buttons, input fields, and control div back to defaults
+		$('#createText').text('Create Text');
+		$('#createText').attr('onclick', 'createText()');
+		$('.controls').css('height', '300px');
+		$('#createTextTitle').hide();
+		$('#createTextBody').hide();	
+	}
 }
 function createImage(){
 //unhide inputs
@@ -427,16 +429,19 @@ function submitURL(){
 	var imgURL, index;
 	index = imgBlocks.length;
 	imgURL = $('#createImageURL').val();
-	$('#content').append('<div class="imgBlockContainer"><div class="cam-drag-handle"></div><img onerror="brokenImg(img'+index+')" id=img'+index+' alt=img'+index+' src='+imgURL+'></img></div>');
-	$(".imgBlockContainer").draggable({
-				handle: ".cam-drag-handle"
-			});
-	$("#img"+index+"").resizable({ //makes our controls div resizable and draggable
-				minHeight: 70,
-				minWidth: 150,
-		        aspectRatio: true
-			});	
+	if(imgURL != ""){
+		$('#content').append('<div class="imgBlockContainer"><div class="cam-drag-handle"></div><img onerror="brokenImg(img'+index+')" id=img'+index+' alt=img'+index+' src='+imgURL+'></img></div>');
+		$(".imgBlockContainer").draggable({
+					handle: ".cam-drag-handle"
+				});
+		$("#img"+index+"").resizable({ //makes our controls div resizable and draggable
+					minHeight: 70,
+					minWidth: 150,
+					aspectRatio: true
+				});	
+	}
 }
+/* function that removes an image if it returns a 404 error.*/
 function brokenImg(id){
 	alert('invalid URL');
 	$(id).closest('.imgBlockContainer').remove();
@@ -444,7 +449,7 @@ function brokenImg(id){
 var editWindow =  function() {
 	var title, titleChange, id, submitButton;
 	$('.editWindow').show();
-	var submitButton = $('#submitCell');
+	var submitButton = $('#submitCell');	
 	title = $(this).children('.myTableTitle').children('p');
 	id = $(this).children('.myTableValue').attr('id');
 	titleChange = $('.titleChange');
