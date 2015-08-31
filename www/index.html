@@ -268,7 +268,6 @@ function data_start() {
     $('#header').html('<div class="logo_container"> </div><h1>FAIRBANKS1 Station Monitor</h1>');
     $('#ws_status').text('Connecting...');
 }
-
 /*function that is called when the edit table button is pressed. The function sets the drag and hide toggles to be unhidden*/
 function editTable() {
     $('.dg-arrange-table-rows-drag-icon').each(function() {
@@ -426,6 +425,28 @@ function submitURL(){
 		        aspectRatio: true
 			});	
 }
+var editWindow =  function() {
+	var title, titleChange;
+	$('.editWindow').show();
+	title = $(this).children('.myTableTitle').children('p');
+	titleChange = $('.titleChange');
+	$('.editWindow h2').text('Edit ' + title.text() + ' cell');
+	$(titleChange).val(title.text());
+	console.log(title);
+};
+function edit(handler) {
+	$('#masterEdit').css('background-color','green');
+	$('#masterEdit').attr('onclick', 'nonEdit()');
+	$('.tr').css('cursor','pointer');
+	$('#myTableBody').delegate('.tr','click', editWindow);
+}
+function nonEdit(handler) {
+	$('#masterEdit').css('background-color','#BBB');
+	$('#masterEdit').attr('onclick', 'edit()');
+	$('.tr').css('cursor','initial');
+	$('.editWindow').hide();
+	$('#myTableBody').undelegate('.tr','click', editWindow);
+}
 </script>
 <link rel="stylesheet" type="text/css" href="styles/style.css">
 </head>
@@ -498,6 +519,13 @@ function submitURL(){
 	<hr>
 	<p>Powered by an <a href="http://www.aprsworld.com/"> APRS World, LLC</a> solution.</p><br>
 </div>
-
+<div id="statusBar">
+	<button id="masterEdit" onclick="edit()"> </button>
+</div>
+<div class="editWindow">
+	<h2> Edit Cell </h2>
+	<span> Edit Title </span><input class="titleChange" type="text"></input><br>
+	<span> Label </span><input class="labelChange" type="text" placeholder="Add a Label"></input>
+</div>
 </body>
 </html>

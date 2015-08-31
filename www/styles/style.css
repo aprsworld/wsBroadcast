@@ -420,6 +420,40 @@ div.logo_container{
 	margin-top: 0;
 	border-top: 0;
 }
+#statusBar{
+	position: fixed;
+	bottom: 0;
+	right: 0;
+	width: 400px;
+	height: 30px;
+	background-color: rgba(222,222,222,.5);
+	z-index: 1000;
+}
+#statusBar button{
+	width: 30px;
+	height: 30px;
+	background-image: url(../images/Feedbin-Icon-home-edit.png);
+	background-repeat: no-repeat;
+    background-position: center; 
+	border: none;
+	background-color: #BBB;
+	cursor: pointer;
+	float: right;
+	transition: background-color 0.5s ease;	
+}
+#statusBar button:hover{
+	background-color: #DDD;	
+}
+.editWindow{
+	position: absolute;
+	right: 0;
+	top: 100px;
+	width: 400px;
+	height: 40vh;
+	display: none;
+	background-color: #888888;
+	border-radius: .5em;
+}
 @media (max-width: 400px) {
 	img{
 		width: 320px !important;
