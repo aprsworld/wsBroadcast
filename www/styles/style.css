@@ -29,6 +29,7 @@ body{
 	height: auto;
 	background-color: #333333;
 	padding-bottom: 10px;
+	padding-top: 10px;
 	z-index: 0;
 }
 .top-container h2{
@@ -71,8 +72,8 @@ body{
 	width: 250px;
 	float: left;
 	margin-top: 5px;
-	text-align: center;
-	height: 50px;
+	text-align: left;
+	height: 30px;
 }
 .verticalAlign{
 	height: 50px;
@@ -173,10 +174,13 @@ div.logo_container{
 	text-align: center;
 }
 #fontSizePlus{
-	width: 50px;
+	width: 30px;
+}
+#fontSize{
+	width: 30px;	
 }
 #fontSizeMinus{
-	width: 50px;
+	width: 30px;
 }
 .container{
 	margin-left: auto;
@@ -190,7 +194,6 @@ div.logo_container{
 	float: left;
 }
 .outer{
-	margin-top: 10px;
 	margin-left: auto;
 	margin-right: auto;
 	display: block;
@@ -221,7 +224,7 @@ div.logo_container{
 	display: block;
 	font-family: Arial,Helvetica Neue,Helvetica,sans-serif;
 	width: 99%;
-	background-color: #999;
+	background-color: transparent;
 	padding-top:5px;
 	border-radius: .5em;
 	margin-left: auto;
@@ -299,18 +302,32 @@ div.logo_container{
 	border: none;
 }
 #createTextTitle{
+	margin-top: 5px;
 	display: none;
 	clear: both;
+	width: 80%;
+	transition: width 1s;
 }
 #createTextBody{
 	display: none;	
-	width: 100%;
+	transition: width 1s;
+	width: 80%;
 	clear: both;
 }
 #createImageURL{
-	display: none;	
-	width: 100%;
+	display: none;
+	transition: width 1s;
+	width: 82%;
 	clear: both;	
+}
+#createImageURL:focus{
+	width: 100%;	
+}
+#createTextBody:focus{
+	width:90%;	
+}
+#createTextTitle:focus{
+	width:90%;	
 }
 .textBlockContainer{
 	position: absolute;
@@ -478,8 +495,8 @@ div.logo_container{
 
 }
 .editWindow{
-	position: absolute;
-	right: 0;
+	position: absolute;	
+	right: 0px;
 	top: 100px;
 	width: 400px;
 	height: 40vh;
@@ -488,6 +505,17 @@ div.logo_container{
 	border-radius: .5em;
 	padding: 10px;
 	z-index: 2;
+	color: #333;
+}
+.editWindow h2{
+	text-transform:capitalize;
+	
+}
+.titleChange{
+	width:50%;
+}
+.labelChange{
+	width: 50%;
 }
 @media (max-width: 400px) {
 	img{

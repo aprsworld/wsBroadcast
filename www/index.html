@@ -183,25 +183,26 @@ function resetTable($originalTable) {
 		$(id).closest('.tr').children('.myTableValue').find('.label').text(label);
     }
 }
-function fontSize(direction){
-	var fontsize = $('.myTableValue').css('font-size');
+function fontSizeChange(direction, id){
+	var fontsize = $('#'+id).css('font-size');
 	if(direction == 'decrease'){
 		fontsize = fontsize.replace("px",'');
 		fontsize = (parseInt(fontsize)-1).toString();
 		fontsize = fontsize+"px";
-		$('.myTableValue').css('font-size', fontsize);
+		$('#'+id).css('font-size', fontsize);
 	}
-	if(direction == 'increase'){
+	else if(direction == 'increase'){
 		fontsize = fontsize.replace("px",'');
 		fontsize = (parseInt(fontsize)+1).toString();
 		fontsize = fontsize+"px";
-		$('.myTableValue').css('font-size', fontsize);	
+		$('#'+id).css('font-size', fontsize);	
 	}
+	$('#fontSize').val((fontsize).slice(0,-2));
 }
 function timer(){
 	camTime = camTime+1;
 	time = time+1;
-	$('#timer').text("Data from approximately " + time + " seconds ago ");
+	$('#timer').text("Table data from approximately " + time + " seconds ago ");
 	$('#camTimer').text("Camera image from approximately " + camTime + " seconds ago");
 	if(time > 30){
 		$('#timer').text("30+ seconds since last data received. Try refreshing your browser window.");
@@ -471,16 +472,38 @@ function brokenImg(id){
 	$(id).closest('.imgBlockContainer').remove();
 }
 var editWindow =  function() {
-	var title, titleChange, id, submitButton;
+	var title, label, titleChange, labelChange, id, value, submitButton, fontPlus, fontMinus;
 	$('.editWindow').show();
-	var submitButton = $('#submitCell');	
+	
+	submitButton = $('#submitCell');
 	title = $(this).children('.myTableTitle').children('p');
+	label = $(this).children('.myTableValue').children('.label');
+	value = $(this).children('.myTableValue');
 	id = $(this).children('.myTableValue').attr('id');
 	titleChange = $('.titleChange');
+	labelChange = $('.labelChange');
+	fontSize = $('#fontSize');
+	fontPlus = $('#fontSizePlus');
+	fontMinus = $('#fontSizeMinus');
+
+	fontPlus.attr('onclick', "fontSizeChange('increase','"+ id +"')");
+	fontMinus.attr('onclick', "fontSizeChange('decrease','"+ id +"')");					 
+	fontSize.val(value.css('font-size').slice(0, - 2));	//takes 'px' off end
+	$( document ).on( "keyup", "input#fontSize" , function() {	
+		fontsize = $('#'+id).css('font-size');
+		$('#'+id).css('font-size', fontSize.val());				
+	});
+	//TODO: find a way to make a tool tip that includes the original text
+	$( document ).on( "keyup", "input.titleChange" , function() {	
+		title.text(titleChange.val());
+	});
+	$( document ).on( "keyup", "input.labelChange" , function() {	
+		label.text(labelChange.val());
+	});
 	submitButton.attr('onclick','changeCell('+id+')');
 	$('.editWindow h2').text('Edit ' + title.text() + ' cell');
 	$(titleChange).val(title.text());
-	console.log(title);
+	console.log(title);	
 };
 function edit(handler) {
 	$('#masterEdit').css('background-color','green');
@@ -510,11 +533,6 @@ function changeCell(id) {
 <div id="content">
 	<div class="container">
 		<div class="top-container">
-			<div id="header">
-				<div id="logo_container">
-					
-				</div>
-			</div>
 			<div class="outer">
 				<div class="camera-container">
 					<span id="ws_status"> disconnected </span>
@@ -533,12 +551,12 @@ function changeCell(id) {
 						<button id="editTable" onclick="editTable();">Modify Table</button>
 						<button id="resetTable" onclick="resetTable(savedStates[0]);">Reset Table</button>
 					</div>
-					<div class="controlRow">
+					<!--<div class="controlRow">
 						<span class="verticalAlign"></span>
 						<p> Font Size: </p>
 						<button id="fontSizePlus" onclick="fontSize('increase');">Font +</button>
 						<button id="fontSizeMinus" onclick="fontSize('decrease');">Font -</button>
-					</div>
+					</div>-->
 					<div class="controlRow">
 						<span class="verticalAlign"></span>
 						<input id="saveAs" type="textfield" value="" placeholder="Save as..."></input>
@@ -551,11 +569,12 @@ function changeCell(id) {
 						<button id="loadState" onclick="resetTable(savedStates[$('#stateSelect').val()])">Load Table</button>
 					</div>
 					<div class="controlRow">
+						<input id="createTextTitle" type="text" placeholder="Title"></input>
+						<input id="createImageURL" type="text" placeholder="Enter Image URL"></input>
+						<textarea id="createTextBody" placeholder= "Text Body"rows"6"></textarea>
 						<button id="createText" onclick="createText()"> Create Text </button>
 						<button id="createImg" onclick="createImage()"> Create Image </button>
-						<input id="createTextTitle" type="text" placeholder="Title"></input>
-						<input id="createImageURL" type="text" placeholder="Enter URL"></input>
-						<textarea id="createTextBody" placeholder= "Text Body"rows"4"></textarea>
+						
 					</div>
 					<div class="drag-handle"></div>
 				</div>
@@ -579,9 +598,18 @@ function changeCell(id) {
 </div>
 <div class="editWindow">
 	<h2> Edit Cell </h2>
-	<span> Edit Title </span><input class="titleChange" type="text"></input><br>
-	<span> Label </span><input class="labelChange" type="text" placeholder="Add a Label"></input>
-	<button id="submitCell"> Submit Changes </button>
+	<div class="controlRow">
+		<span> Edit Title: </span><input title="" class="titleChange" type="text"></input>
+	</div>	
+	<div class="controlRow">
+		<span> Edit Label: </span><input title="Add a unit label" class="labelChange" type="text" placeholder="Add a Label"></input>
+	</div>
+	<div class="controlRow">
+		<span> Adjust Font Size: </span>
+		<button id="fontSizeMinus" onclick="">-</button>		
+		<input id="fontSize" type="text"> </input>
+		<button id="fontSizePlus" onclick="">+</button>
+	</div>
 </div>
 </body>
 </html>
