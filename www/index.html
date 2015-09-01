@@ -201,8 +201,8 @@ function fontSize(direction){
 function timer(){
 	camTime = camTime+1;
 	time = time+1;
-	console.log(camTime);
-	$('#timer').text(time + " total seconds " + camTime + " cam seconds");
+	$('#timer').text("Data from approximately " + time + " seconds ago ");
+	$('#camTimer').text("Camera image from approximately " + camTime + " seconds ago");
 	if(time > 30){
 		$('#timer').text("30+ seconds since last data received. Something went wrong.");
 	}
@@ -260,9 +260,9 @@ function data_update(data) {
 //
 //TODO: make more general - fairbanks1 is too specific. maybe set a global variable at the beginning so that it can be like: data.[VARIABLE].images_url
 //  
+
 	newImage = data.FAIRBANKS1.image_url;
-	console.log(JSON.stringify(lastImage)+ " vs. " +JSON.stringify(newImage));
-	console.log(Object.is(newImage, lastImage));
+//compares the last image url to the new image url and checks if it is different. If it is, it resets the timer for the camera.
 	if(!Object.is(newImage, lastImage)){
 		camTime = 0;
 		lastImage = data.FAIRBANKS1.image_url;
@@ -562,8 +562,10 @@ function changeCell(id) {
 	<p>Powered by an <a href="http://www.aprsworld.com/"> APRS World, LLC</a> solution.</p>
 </div>
 <div id="statusBar">
-	<span id="timer"> placeholder for timer </span>
+	<span id="timer"> loading data... </span>
 	<button id="masterEdit" onclick="edit()"> </button>
+		<span id="camTimer"> loading data... </span>
+
 </div>
 <div class="editWindow">
 	<h2> Edit Cell </h2>

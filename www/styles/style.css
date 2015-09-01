@@ -408,8 +408,9 @@ div.logo_container{
 	display: block;
 	margin-top: 1px;
 	clear: both;
-	background-color: #DEDEDE;
+	background-color: white;
 	height: 30px;
+	margin-bottom:16px;
 }
 #footer p{
 	text-align: center;
@@ -427,15 +428,15 @@ div.logo_container{
 	position: fixed;
 	bottom: 0;
 	right: 0;
-	width: 500px;
-	height: 30px;
-	background-color: rgba(222,222,222,.5);
+	width: 100%;
+	height: 18px;
+	background-color: rgba(200,200,200,.8);
 	z-index: 1000;
 }
 #statusBar button{
-	width: 30px;
-	height: 30px;
-	background-image: url(../images/Feedbin-Icon-home-edit.png);
+	width: 18px;
+	height: 18px;
+	background-image: url(../images/Feedbin-Icon-home-edit1.png);
 	background-repeat: no-repeat;
     background-position: center; 
 	border: none;
@@ -443,13 +444,24 @@ div.logo_container{
 	cursor: pointer;
 	float: right;
 	transition: background-color 0.5s ease;	
+	padding-top: 3px;
 }
 #timer{
 	display: block;
 	float: left;
-	padding-top: 5px;
-	font-weight: bold;
 	color: #333;
+	font-size: 12px;
+	padding-top: 3px;
+	padding-left: 10px;
+}
+#camTimer{
+	display: block;
+	float: right;
+	color: #333;
+	font-size: 12px;
+	padding-top: 3px;
+	padding-right: 10px;
+
 }
 .editWindow{
 	position: absolute;
