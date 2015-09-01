@@ -136,13 +136,27 @@ div.logo_container{
 #ws_status{
 	position: absolute;
 	display: block;
-	margin-left: 7%;
-	margin-top: 1%;
+	top:0;
+	left: 10;
 	color: red;	
 	z-index: 2;
 	background-color: rgba(255,255,255,.5);
 	padding: 5px;
 	cursor: move;
+	display: none;
+}
+#imageHide{
+	position: absolute;
+	top:0;
+	right:10;
+	background-color: rgba(0,0,0,.5);
+	height: auto;
+	width: auto;
+	z-index: 2;
+	padding: 5px;
+	border-radius: .2em;
+	color: white;
+	display: none;
 }
 #stateSelect{
 	height: 30px;

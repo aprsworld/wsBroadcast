@@ -12,10 +12,10 @@
 <script src="http://cam.aprsworld.com:8888/js/wsb-client.js"></script> <!-- WebSockets Broadcast Client -->
 <script>
 /***** Global variables ********/
-var time;
-var camTime = 0;
-var newImage;
-var lastImage;
+var time; //incremental variable that keeps track of time since last data update
+var camTime = 0; //incremental variable that keeps track of time since last camera image update
+var newImage; // variable that holds url of new camera image
+var lastImage; // variable tha tholds url of last camera image
 var lastkey;
 var id_arr = [];
 var path_arr = [];
@@ -204,7 +204,10 @@ function timer(){
 	$('#timer').text("Data from approximately " + time + " seconds ago ");
 	$('#camTimer').text("Camera image from approximately " + camTime + " seconds ago");
 	if(time > 30){
-		$('#timer').text("30+ seconds since last data received. Something went wrong.");
+		$('#timer').text("30+ seconds since last data received. Try refreshing your browser window.");
+	}
+	if(camTime > 90){
+		$('#camTimer').text("90+ seconds since last camera image received. Try refreshing your browser window.");	
 	}
 }
 /*function that periodically updates the data */
@@ -328,7 +331,9 @@ function editTable() {
         $(close).show(); //shows the close button
     });
     editMode = true;
+	$('#ws_image').show();	
 	$('.drag-handle').show();
+	$('#imageHide').show();
 	$('.cam-drag-handle').show();
     $('#editTable').text('Finish Modifying');
     $('#editTable').attr('onclick', 'disableEdit()');
@@ -368,8 +373,12 @@ function disableEdit() {
         $('.container .myTableTitle').css('height', '20px');
         $('.container .myTableValue').show();
     });
+	if($('#imageHideCheck').is(':checked')){
+		$('#ws_image').hide();	
+	}
     editMode = false;
 	$('.drag-handle').hide();
+	$('#imageHide').hide();
 	$('.cam-drag-handle').hide();
     $('#editTable').text('Modify Table');
     $('#editTable').attr('onclick', 'editTable()');
@@ -509,6 +518,7 @@ function changeCell(id) {
 			<div class="outer">
 				<div class="camera-container">
 					<span id="ws_status"> disconnected </span>
+					<div id="imageHide"><span>hide</span><input id="imageHideCheck" autocomplete="off" class="checkBox" type="checkbox"></div>
 					<img id="ws_image" src="images/disconnected.png" alt="This site requirest JavaScript!">
 					<div class="cam-drag-handle"></div>
 
