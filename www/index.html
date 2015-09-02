@@ -157,6 +157,14 @@ function mapTable($id_arr) {
     $('#stateSelect').append(option);
 }
 
+function populateCams(data){
+	var keys = [];
+	for(var k in data){
+		keys.push(k);
+		console.log(data[k]['image_url']);
+	}
+}
+	
 /* resets div positions to a selected saved state*/
 function resetTable($originalTable) {
     console.log($originalTable);
@@ -259,6 +267,7 @@ function data_update(data) {
 			setInterval(timer,1000);
         });
 		lastImage = data.DEEPLAKE.image_url;
+		populateCams(data);
     }
     started = true; //sets our boolean to true so the above only executes once
     $('#ws_status').text('Connected');
@@ -650,17 +659,17 @@ function showModule(id) {
 
 				<div class="controls">
 					<h2> Controls </h2>
-					<div class="controlRow">
+					<!--<div class="controlRow">
 						<span class="verticalAlign"></span>
 						<button id="editTable" onclick="editTable();">Modify Table</button>
 						<button id="resetTable" onclick="resetTable(savedStates[0]);">Reset Table</button>
 					</div>
-					<!--<div class="controlRow">
+					<div class="controlRow">
 						<span class="verticalAlign"></span>
 						<p> Font Size: </p>
 						<button id="fontSizePlus" onclick="fontSize('increase');">Font +</button>
 						<button id="fontSizeMinus" onclick="fontSize('decrease');">Font -</button>
-					</div>-->
+					</div>
 					<div class="controlRow">
 						<span class="verticalAlign"></span>
 						<input id="saveAs" type="textfield" value="" placeholder="Save as..."></input>
@@ -671,7 +680,7 @@ function showModule(id) {
 						<select id="stateSelect" name="states">
 						</select>
 						<button id="loadState" onclick="resetTable(savedStates[$('#stateSelect').val()])">Load Table</button>
-					</div>
+					</div>-->
 					<div class="controlRow">
 						<input id="createTextTitle" type="text" placeholder="Title"></input>
 						<input id="createImageURL" type="text" placeholder="Enter Image URL"></input>
@@ -680,6 +689,12 @@ function showModule(id) {
 						<button id="createImg" onclick="createImage()"> Create Image </button>
 						
 					</div>
+					<div class="controlRow">
+						<select id="feedSelect">
+							
+						</select>
+						<button id="createFeed">Create Cam</button>
+					</div>	
 					<div class="drag-handle"></div>
 				</div>
 		</div>
@@ -697,7 +712,7 @@ function showModule(id) {
 <div id="statusBar">
 	<span id="timer"> loading data... </span>
 	<button id="masterEdit" onclick="edit()"> </button>
-		<span id="camTimer"> loading data... </span>
+	<span id="camTimer"> loading data... </span>
 
 </div>
 <div class="editWindow">
