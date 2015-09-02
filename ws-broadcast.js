@@ -114,10 +114,14 @@ DataManager.prototype.update = function(data, dserv, source) {
 	var log_ts = ts.getUTCFullYear() + '-' + decPad(ts.getUTCMonth(), 2) + '-' + decPad(ts.getUTCDate(), 2) + ' ' + decPad(ts.getUTCHours(), 2) + ':' + decPad(ts.getUTCMinutes(), 2) + ':' + decPad(ts.getUTCSeconds(), 2);
 
 	// Open log file
-	var log_fd = fs.openSync('./datalog/' + log_date + '.json', 'a', 0644);
-	if (log_fd < 0) {
-		console.log('# DataLog: ERROR: Could not open log file - data not logged!');
+	var log_fd = -1;
+	try {
+		log_fd = fs.openSync('./datalog/' + log_date + '.json', 'a', 0644);
+	} finally {
+		if (log_fd < 0) {
+			console.log('# DataLog: ERROR: Could not open log file - data not logged!');
 			return true;	// XXX: Data updated, but not logged.
+		}
 	}
 
 	// Write to log file
