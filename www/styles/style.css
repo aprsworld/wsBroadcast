@@ -517,6 +517,7 @@ div.logo_container{
 .labelChange{
 	width: 50%;
 }
+.ui-state-disabled.ui-draggable-disabled { opacity : 1 !important; filter: alpha(opacity = 50); }
 @media (max-width: 400px) {
 	img{
 		width: 320px !important;

@@ -218,8 +218,8 @@ function data_update(data) {
         path_arr = iteratePath(data, '');
         $('#myTableBody').empty().append(create_table(iterateID(data, ''), iterateName(data, ''))); //creates our table
         $(".draggable").draggable({ //makes our data cells draggable
-            handle: '.dg-arrange-table-rows-drag-icon',
-            grid: [1, 1],
+            disabled: true,
+			grid: [1, 1],
             snap: true,
             snapTolerance: 10,
             start: function(event, ui) {
@@ -472,43 +472,53 @@ function brokenImg(id){
 	$(id).closest('.imgBlockContainer').remove();
 }
 var editWindow =  function() {
-	var title, label, titleChange, labelChange, id, value, submitButton, fontPlus, fontMinus;
-	//TODO possible fix for multiple label change issue is moving the above variables outside the function so that they are global
+	var selectedModule, title, label, titleChange, labelChange, id, value, submitButton, fontPlus, fontMinus;
+	
 	$('.editWindow').show();
+	selectedModule = $(this).attr('id');
 	
-	submitButton = $('#submitCell');
-	title = $(this).children('.myTableTitle').children('p');
-	label = $(this).children('.myTableValue').children('.label');
-	value = $(this).children('.myTableValue');
-	id = $(this).children('.myTableValue').attr('id');
-	titleChange = $('.titleChange');
-	labelChange = $('.labelChange');
-	fontSize = $('#fontSize');
-	fontPlus = $('#fontSizePlus');
-	fontMinus = $('#fontSizeMinus');
+	if($(this).hasClass('tr')){
+		title = $(this).children('.myTableTitle').children('p');
+		label = $(this).children('.myTableValue').children('.label');
+		value = $(this).children('.myTableValue');
+		id = $(this).children('.myTableValue').attr('id');
+		titleChange = $('.titleChange');
+		labelChange = $('.labelChange');
+		fontSize = $('#fontSize');
+		fontPlus = $('#fontSizePlus');
+		fontMinus = $('#fontSizeMinus');
 
-	fontPlus.attr('onclick', "fontSizeChange('increase','"+ id +"')");
-	fontMinus.attr('onclick', "fontSizeChange('decrease','"+ id +"')");					 
-	fontSize.val(value.css('font-size').slice(0, - 2));	//takes 'px' off end
-	//fontsize input change event handler
-	$( document ).off( "keyup", "input#fontSize") //unbind old events, and bind a new one
-	$( document ).on( "keyup", "input#fontSize" , function() {	
-		fontsize = $('#'+id).css('font-size');
-		$('#'+id).css('font-size', fontSize.val());				
-	});
-	//TODO: find a way to make a tool tip that includes the original text
-	//title change event handler
-	$( document ).off( "keyup", "input.titleChange"); //unbind old events, and bind a new one
-	$( document ).on( "keyup", "input.titleChange" , function() {	
-		title.text(titleChange.val());
-	});
-	// label change event handler
-	$( document ).off( "keyup", "input.labelChange"); //unbind old events, and bind a new one
-	$( document ).on( "keyup", "input.labelChange" , function() {	
-		label.text(labelChange.val());
-	});
+		fontPlus.attr('onclick', "fontSizeChange('increase','"+ id +"')");
+		fontMinus.attr('onclick', "fontSizeChange('decrease','"+ id +"')");					 
+		fontSize.val(value.css('font-size').slice(0, - 2));	//takes 'px' off end
+
+		//fontsize input change event handler
+		$( document ).off( "keyup", "input#fontSize") //unbind old events, and bind a new one
+		$( document ).on( "keyup", "input#fontSize" , function() {	
+			fontsize = $('#'+id).css('font-size');
+			$('#'+id).css('font-size', fontSize.val());				
+		});
+		//TODO: find a way to make a tool tip that includes the original text
+		//title change event handler
+		$( document ).off( "keyup", "input.titleChange"); //unbind old events, and bind a new one
+		$( document ).on( "keyup", "input.titleChange" , function() {	
+			title.text(titleChange.val());
+		});
+		// label change event handler
+		$( document ).off( "keyup", "input.labelChange"); //unbind old events, and bind a new one
+		$( document ).on( "keyup", "input.labelChange" , function() {	
+			label.text(labelChange.val());
+		});
+	}
 	
-	submitButton.attr('onclick','changeCell('+id+')');
+	if($("#"+selectedModule).hasClass('hide')){
+		$('#hideModule').attr('onclick', "showModule('"+ selectedModule +"')");
+		$('#hideModule').text('unhide');
+	}
+	else{
+		$('#hideModule').attr('onclick', "hideModule('"+ selectedModule +"')");
+		$('#hideModule').text('hide');
+	}
 	$('.editWindow h2').text('Edit ' + title.text() + ' cell');
 	$(titleChange).val(title.text());
 	console.log(title);	
@@ -517,18 +527,34 @@ function edit(handler) {
 	$('#masterEdit').css('background-color','green');
 	$('#masterEdit').attr('onclick', 'nonEdit()');
 	$('.tr').css('cursor','pointer');
+	$('.textBlockContainer').css('cursor','pointer');
+	$('.hide').css('visibility','visible');
 	$('#myTableBody').delegate('.tr','click', editWindow);
+	$('#myTableBody').delegate('.textBlockContainer','click', editWindow);	
+	$(".draggable").draggable({ disabled: false});
 }
 function nonEdit(handler) {
 	$('#masterEdit').css('background-color',' rgba(222,222,222,.0)');
 	$('#masterEdit').attr('onclick', 'edit()');
 	$('.tr').css('cursor','initial');
+	$('.textBlockContainer').css('cursor','initial');
+	$('.hide').css('visibility', 'hidden');;
 	$('.editWindow').hide();
+	$('#myTableBody').undelegate('.textBlockContainer','click', editWindow);
 	$('#myTableBody').undelegate('.tr','click', editWindow);
+	$(".draggable").draggable({ disabled: true});
 }
-function changeCell(id) {
-	$(id).closest('.tr').children('.myTableTitle').children('p').text($('.titleChange').val());
-	$(id).children('.label').text($('.labelChange').val());
+function hideModule(id) {
+	$("#"+id).addClass('hide');
+	$("#"+id).css('opacity','.2');
+	$('#hideModule').attr('onclick', "showModule('"+ id +"')");	
+	$('#hideModule').text('unhide');
+}
+function showModule(id) {
+	$("#"+id).css('opacity','1.0');
+	$("#"+id).removeClass('hide');
+	$('#hideModule').attr('onclick', "hideModule('"+ id +"')");
+	$('#hideModule').text('hide');
 }
 </script>
 <link rel="stylesheet" type="text/css" href="styles/style.css">
@@ -617,6 +643,10 @@ function changeCell(id) {
 		<button id="fontSizeMinus" onclick="">-</button>		
 		<input id="fontSize" type="text"> </input>
 		<button id="fontSizePlus" onclick="">+</button>
+	</div>
+	<div class="controlRow">
+		<span> Hide </span>	
+		<button id="hideModule"> Hide </button>
 	</div>
 </div>
 </body>
