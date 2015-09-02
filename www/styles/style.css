@@ -499,7 +499,7 @@ div.logo_container{
 	right: 0px;
 	top: 100px;
 	width: 400px;
-	height: 40vh;
+	height: auto;
 	display: none;
 	background-color: #888888;
 	border-radius: .5em;

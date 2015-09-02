@@ -473,6 +473,7 @@ function brokenImg(id){
 }
 var editWindow =  function() {
 	var title, label, titleChange, labelChange, id, value, submitButton, fontPlus, fontMinus;
+	//TODO possible fix for multiple label change issue is moving the above variables outside the function so that they are global
 	$('.editWindow').show();
 	
 	submitButton = $('#submitCell');
@@ -489,17 +490,24 @@ var editWindow =  function() {
 	fontPlus.attr('onclick', "fontSizeChange('increase','"+ id +"')");
 	fontMinus.attr('onclick', "fontSizeChange('decrease','"+ id +"')");					 
 	fontSize.val(value.css('font-size').slice(0, - 2));	//takes 'px' off end
+	//fontsize input change event handler
+	$( document ).off( "keyup", "input#fontSize") //unbind old events, and bind a new one
 	$( document ).on( "keyup", "input#fontSize" , function() {	
 		fontsize = $('#'+id).css('font-size');
 		$('#'+id).css('font-size', fontSize.val());				
 	});
 	//TODO: find a way to make a tool tip that includes the original text
+	//title change event handler
+	$( document ).off( "keyup", "input.titleChange"); //unbind old events, and bind a new one
 	$( document ).on( "keyup", "input.titleChange" , function() {	
 		title.text(titleChange.val());
 	});
+	// label change event handler
+	$( document ).off( "keyup", "input.labelChange"); //unbind old events, and bind a new one
 	$( document ).on( "keyup", "input.labelChange" , function() {	
 		label.text(labelChange.val());
 	});
+	
 	submitButton.attr('onclick','changeCell('+id+')');
 	$('.editWindow h2').text('Edit ' + title.text() + ' cell');
 	$(titleChange).val(title.text());
