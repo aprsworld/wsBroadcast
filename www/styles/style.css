@@ -511,12 +511,28 @@ div.logo_container{
 	text-transform:capitalize;
 	
 }
+
 .titleChange{
 	width:50%;
 }
 .labelChange{
 	width: 50%;
 }
+.bodyChange{
+	width: 50%;
+	
+}
+.urlChange{
+	width: 50%;
+}
+#titleRow, #labelRow, #urlRow, #bodyRow, #fontSizeRow{
+	display:none;	
+}
+#bodyRow{
+	height: auto;
+	min-height: 60px;
+}
+.ui-state-disabled.ui-resizable-disabled { opacity : 1 !important; filter: alpha(opacity = 50); }
 .ui-state-disabled.ui-draggable-disabled { opacity : 1 !important; filter: alpha(opacity = 50); }
 @media (max-width: 400px) {
 	img{

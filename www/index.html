@@ -230,16 +230,19 @@ function data_update(data) {
             }
         });
         $("#ws_image").resizable({ //makes our camera image resizable
+			disabled: true,
             aspectRatio: true
         });
         $(".outer").draggable({ // makes our camera image parent div draggable
+			disabled: true,
             grid: [1,1],
-			handle: '.cam-drag-handle'
+			/*handle: '.cam-drag-handle'*/
 			
         });
         $("#ws_status").draggable({}); //makes the little green "connected" span draggable
         $(".controls").draggable({
-			handle: '.drag-handle',
+            disabled: true,			
+			/*handle: '.drag-handle',*/
 			start: function(event, ui) {
                 $(this).addClass('draggable_focus_in');
             },
@@ -247,6 +250,7 @@ function data_update(data) {
                 $(this).removeClass('draggable_focus_in');
             }
 		}).resizable({ //makes our controls div resizable and draggable
+			disabled: true,
             minHeight: 70,
             minWidth: 150,
         });
@@ -254,7 +258,7 @@ function data_update(data) {
             mapTable(id_arr);
 			setInterval(timer,1000);
         });
-		lastImage = data.FAIRBANKS1.image_url;
+		lastImage = data.DEEPLAKE.image_url;
     }
     started = true; //sets our boolean to true so the above only executes once
     $('#ws_status').text('Connected');
@@ -262,24 +266,24 @@ function data_update(data) {
 
     dynamicUpdate(id_arr, path_arr, data); //updates all data cells to their current values
 //
-//TODO: make more general - fairbanks1 is too specific. maybe set a global variable at the beginning so that it can be like: data.[VARIABLE].images_url
+//TODO: make more general - DEEPLAKE is too specific. maybe set a global variable at the beginning so that it can be like: data.[VARIABLE].images_url
 //  
 
-	newImage = data.FAIRBANKS1.image_url;
+	newImage = data.DEEPLAKE.image_url;
 //compares the last image url to the new image url and checks if it is different. If it is, it resets the timer for the camera.
 	if(!Object.is(newImage, lastImage)){
 		camTime = 0;
-		lastImage = data.FAIRBANKS1.image_url;
+		lastImage = data.DEEPLAKE.image_url;
 	}		
-	$('#ws_image_preload').attr('src', data.FAIRBANKS1.image_url); //preloads the image so that we don't get a "scan-line" effect when the image loads on a slow internet connection
+	$('#ws_image_preload').attr('src', data.DEEPLAKE.image_url); //preloads the image so that we don't get a "scan-line" effect when the image loads on a slow internet connection
 	$('#ws_image_preload').load(function() {
-        $('#ws_image').attr('src', data.FAIRBANKS1.image_url);
+        $('#ws_image').attr('src', data.DEEPLAKE.image_url);
 		
     });
-    $('#ws_image').attr('alt', 'Image from ' + data['FAIRBANKS1']._bserver_['date']);
+    $('#ws_image').attr('alt', 'Image from ' + data['DEEPLAKE']._bserver_['date']);
 
-    $('#ws_update').text(data['FAIRBANKS1']._bserver_['date']);
-    var tempK = data['FAIRBANKS1'].sensors['External Temp'];
+    $('#ws_update').text(data['DEEPLAKE']._bserver_['date']);
+    var tempK = data['DEEPLAKE'].sensors['External Temp'];
     var tempC = tempK - 273.15;
     var tempF = (tempC * 1.8) + 32;
     $('#ws_sensors_External_Temp').text(Math.round(tempF) + '\xB0F');
@@ -293,8 +297,8 @@ function data_start() {
         url_ajax: 'http://cam.aprsworld.com:8888/.data',
         url_ws: 'ws://cam.aprsworld.com:1228/.data'
     });
-    document.title = 'FAIRBANKS1 Station Monitor';
-    $('#header').html('<div class="logo_container"> </div><h1>FAIRBANKS1 Station Monitor</h1>');
+    document.title = 'DEEPLAKE Station Monitor';
+    $('#header').html('<div class="logo_container"> </div><h1>DEEPLAKE Station Monitor</h1>');
     $('#ws_status').text('Connecting...');
 }
 	
@@ -472,21 +476,63 @@ function brokenImg(id){
 	$(id).closest('.imgBlockContainer').remove();
 }
 var editWindow =  function() {
-	var selectedModule, title, label, titleChange, labelChange, id, value, submitButton, fontPlus, fontMinus;
+	var selectedModule, title, label, titleChange, labelChange, urlChange, id, value, submitButton, fontPlus, fontMinus, body;
+	titleChange = $('.titleChange');
+	labelChange = $('.labelChange');
+	bodyChange = $('.bodyChange');
+	urlChange = $('.urlChange');
+	fontSize = $('#fontSize');
+	fontPlus = $('#fontSizePlus');
+	fontMinus = $('#fontSizeMinus');
+	$('#titleRow, #labelRow, #urlRow, #bodyRow, #fontSizeRow').hide();
 	
 	$('.editWindow').show();
 	selectedModule = $(this).attr('id');
+	console.log($(this));
 	
+	if($(this).hasClass('outer')){
+		selectedModule = $(this).children().children().children('img').attr('id');
+		$('#urlRow').show();
+		var image =  $(this).children().children().children('img');
+		var url = $(this).children().children().children('img').attr('src');
+		$('.urlChange').val(url);
+		$( document ).off( "paste", "input.urlChange"); //unbind old events, and bind a new one		
+		$( document ).on( "paste", "input.urlChange" , function() {	
+			alert(urlChange.val());
+			$(image).attr('src',urlChange.val());
+		});
+		
+	}
+	
+	
+	if($(this).hasClass('textBlockContainer')){
+		$('#titleRow, #bodyRow, #fontSizeRow').show();
+		
+		title = $(this).children('h2');
+		body = $(this).children('p');
+		$(titleChange).val(title.text());
+		$(bodyChange).val(body.text());
+		$('.editWindow h2').text('Edit ' + title.text() + "text block");
+		
+		//title change event handler		
+		$( document ).off( "keyup", "input.titleChange"); //unbind old events, and bind a new one		
+		$( document ).on( "keyup", "input.titleChange" , function() {	
+			title.text(titleChange.val());
+		});
+
+		$( document ).off( "keyup", "textarea.bodyChange"); //unbind old events, and bind a new one		
+		$( document ).on( "keyup", "textarea.bodyChange" , function() {	
+			body.text(bodyChange.val());
+		});
+	}
 	if($(this).hasClass('tr')){
+		$('#titleRow, #labelRow, #fontSizeRow').show();
+		
 		title = $(this).children('.myTableTitle').children('p');
 		label = $(this).children('.myTableValue').children('.label');
 		value = $(this).children('.myTableValue');
 		id = $(this).children('.myTableValue').attr('id');
-		titleChange = $('.titleChange');
-		labelChange = $('.labelChange');
-		fontSize = $('#fontSize');
-		fontPlus = $('#fontSizePlus');
-		fontMinus = $('#fontSizeMinus');
+		
 
 		fontPlus.attr('onclick', "fontSizeChange('increase','"+ id +"')");
 		fontMinus.attr('onclick', "fontSizeChange('decrease','"+ id +"')");					 
@@ -509,6 +555,8 @@ var editWindow =  function() {
 		$( document ).on( "keyup", "input.labelChange" , function() {	
 			label.text(labelChange.val());
 		});
+		$('.editWindow h2').text('Edit ' + title.text() + ' cell');
+		$(titleChange).val(title.text());
 	}
 	
 	if($("#"+selectedModule).hasClass('hide')){
@@ -519,30 +567,52 @@ var editWindow =  function() {
 		$('#hideModule').attr('onclick', "hideModule('"+ selectedModule +"')");
 		$('#hideModule').text('hide');
 	}
-	$('.editWindow h2').text('Edit ' + title.text() + ' cell');
-	$(titleChange).val(title.text());
-	console.log(title);	
 };
 function edit(handler) {
 	$('#masterEdit').css('background-color','green');
 	$('#masterEdit').attr('onclick', 'nonEdit()');
 	$('.tr').css('cursor','pointer');
 	$('.textBlockContainer').css('cursor','pointer');
+	$('.outer').css('cursor','pointer');	
 	$('.hide').css('visibility','visible');
+	
+	//delegate events
+	$('.top-container').delegate('.outer','click', editWindow);	
 	$('#myTableBody').delegate('.tr','click', editWindow);
-	$('#myTableBody').delegate('.textBlockContainer','click', editWindow);	
+	$('#content').delegate('.textBlockContainer','click', editWindow);	
+	$('#content').delegate('.imgBlockContainer','click',editWindow);
+	
+	//enable draggables
 	$(".draggable").draggable({ disabled: false});
+	$('.outer').draggable({disabled: false});
+	$('#ws_image').resizable({disabled: false});
+	$('#ws_status').draggable({disabled: false});
+	$(".controls").draggable({disabled: false}).resizable({disabled: false});
+
 }
 function nonEdit(handler) {
 	$('#masterEdit').css('background-color',' rgba(222,222,222,.0)');
 	$('#masterEdit').attr('onclick', 'edit()');
 	$('.tr').css('cursor','initial');
 	$('.textBlockContainer').css('cursor','initial');
-	$('.hide').css('visibility', 'hidden');;
+	$('.outer').css('cursor','initial');
+	$('.hide').css('visibility', 'hidden');
 	$('.editWindow').hide();
-	$('#myTableBody').undelegate('.textBlockContainer','click', editWindow);
+	
+	//delegate events
+	$('.top-container').undelegate('.outer','click', editWindow);
+	$('#container').undelegate('.textBlockContainer','click', editWindow);
 	$('#myTableBody').undelegate('.tr','click', editWindow);
+	$('#content').delegate('.imgBlockContainer','click',editWindow);
+
+	
+	//disable draggables
 	$(".draggable").draggable({ disabled: true});
+	$('.outer').draggable({disabled: true});
+	$('#ws_image').resizable({disabled: true});
+	$('#ws_status').draggable({disabled: true});
+	$(".controls").draggable({disabled: true}).resizable({disabled: true});
+	
 }
 function hideModule(id) {
 	$("#"+id).addClass('hide');
@@ -571,7 +641,7 @@ function showModule(id) {
 				<div class="camera-container">
 					<span id="ws_status"> disconnected </span>
 					<div id="imageHide"><span>hide</span><input id="imageHideCheck" autocomplete="off" class="checkBox" type="checkbox"></div>
-					<img id="ws_image" src="images/disconnected.png" alt="This site requirest JavaScript!">
+					<img id="ws_image" class="cam_image" src="images/disconnected.png" alt="This site requirest JavaScript!">
 					<div class="cam-drag-handle"></div>
 
 				</div>
@@ -605,7 +675,7 @@ function showModule(id) {
 					<div class="controlRow">
 						<input id="createTextTitle" type="text" placeholder="Title"></input>
 						<input id="createImageURL" type="text" placeholder="Enter Image URL"></input>
-						<textarea id="createTextBody" placeholder= "Text Body"rows"6"></textarea>
+						<textarea id="createTextBody" placeholder= "Text Body" rows"6"></textarea>
 						<button id="createText" onclick="createText()"> Create Text </button>
 						<button id="createImg" onclick="createImage()"> Create Image </button>
 						
@@ -632,13 +702,19 @@ function showModule(id) {
 </div>
 <div class="editWindow">
 	<h2> Edit Cell </h2>
-	<div class="controlRow">
+	<div id="titleRow"class="controlRow">
 		<span> Edit Title: </span><input title="" class="titleChange" type="text"></input>
 	</div>	
-	<div class="controlRow">
+	<div id="labelRow" class="controlRow">
 		<span> Edit Label: </span><input title="Add a unit label" class="labelChange" type="text" placeholder="Add a Label"></input>
 	</div>
-	<div class="controlRow">
+	<div id="urlRow" class="controlRow">
+		<span> Edit URL: </span><input title="" class="urlChange" type="text" placeholder="Add a Label"></input>
+	</div>
+	<div id="bodyRow" class="controlRow">
+		<span> Edit Body: </span><textarea rows"6" title="" class="bodyChange" type="text" placeholder="Change Text"></textarea>
+	</div>
+	<div id="fontSizeRow"class="controlRow">
 		<span> Adjust Font Size: </span>
 		<button id="fontSizeMinus" onclick="">-</button>		
 		<input id="fontSize" type="text"> </input>
