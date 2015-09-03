@@ -51,7 +51,7 @@ body{
 }
 .controls{
 	width: 250px;
-	height: 300px;
+	height: 200px;
 	background-color:rgba(222, 222, 222,.5);
 	padding: 10px;
 	border: black 1px solid;
@@ -60,6 +60,7 @@ body{
 	top: 10%;
 	left: 1%;
 	z-index: 1;
+	display: none;
 }
 .controls h2{
 	font-size: 16px;
@@ -74,6 +75,7 @@ body{
 	margin-top: 5px;
 	text-align: left;
 	height: 30px;
+	margin-bottom: 10px;
 }
 .verticalAlign{
 	height: 50px;
@@ -229,7 +231,7 @@ div.logo_container{
 	border-radius: .5em;
 	margin-left: auto;
 	margin-right: auto;
-	z-index: 0;
+	z-index: 1;
 }
 #myTableBody{
 	text-align: center;	
@@ -352,7 +354,7 @@ div.logo_container{
 	left: 20%;
 	height: 224px;
 	width: 400px;
-	z-index: 90;
+	z-index: 0;
 	background-repeat: no-repeat;
 	background-position: center; 
 	background-size: contain;

@@ -177,20 +177,37 @@ function getCamData(data){
 function populateCams(cam_arr){
 	for(var i =1; i<cam_arr.length; i++){
 		$('#content').append('<div class="imgCamContainer" id=cam'+i+'_'+cam_arr[i][0]+' style="background-image:url('+cam_arr[i][1]+'); display: none;"></div>');
-		$('#feedSelect').append('<option value="#cam'+i+'_'+cam_arr[i][0]+'">'+cam_arr[i][0]+'</option>');
+		$('#preload').append('<img id="preload_cam'+i+'_'+cam_arr[i][0]+'" >');
+		$('#feedSelect').append('<option value="cam'+i+'_'+cam_arr[i][0]+'">'+cam_arr[i][0]+'</option>');
 	}
 }
 function createCam(){
 	var selection = $('#feedSelect').val();
 	console.log(selection);
-	$(selection).css('display','inline');
+	$("#"+selection).css('display','inline');
 	$('.imgCamContainer').draggable({disabled: true}).resizable({disabled: true, aspectRatio: true});
+	preloadCam(selection);
+//TEMPORARY	
+	nonEdit();
+	edit();
 }
 	
 function refreshCams(cam_arr){
 	for(var i =1; i<cam_arr.length; i++){
-		$('#cam'+i+'_'+cam_arr[i][0]).css('background-image','url('+cam_arr[i][1]+')');
+		//if($('#cam'+i+'_'+cam_arr[i][0]+'').is(":visible")){
+			$('#preload_cam'+i+'_'+cam_arr[i][0]).attr('src',cam_arr[i][1]);
+			var src = $('#preload_cam'+i+'_'+cam_arr[i][0]).attr('src');
+			var cam = $('#cam'+i+'_'+cam_arr[i][0]+'');
+			$('#preload_cam'+i+'_'+cam_arr[i][0]+'').load(function() {
+				$(cam).css('background-image', 'url(' + src + ')');
+			});
+		//}
 	}
+}
+function preloadCam(selection){
+	var url = $('#'+selection).css('background-image').replace(/^url\(["']?/, '').replace(/["']?\)$/, ''); //gets url from background-image prop
+	$('#preload_'+selection).attr('src', url);
+	
 }
 /* resets div positions to a selected saved state*/
 function resetTable($originalTable) {
@@ -265,15 +282,6 @@ function data_update(data) {
                 $(this).removeClass('draggable_focus_in');
             }
         });
-		//console.log("looped");
-        $("#ws_image").resizable({ //makes our camera image resizable
-			disabled: true,
-            aspectRatio: true
-        });
-        $(".outer").draggable({ // makes our camera image parent div draggable
-			disabled: true,
-            grid: [1,1],
-        });
         $("#ws_status").draggable({}); //makes the little green "connected" span draggable
         $(".controls").draggable({
             disabled: true,			
@@ -301,11 +309,9 @@ function data_update(data) {
     $('#ws_status').css('color', 'green');
 	refreshCams(cams);
     dynamicUpdate(id_arr, path_arr, data); //updates all data cells to their current values
-//
-//TODO: make more general - DEEPLAKE is too specific. maybe set a global variable at the beginning so that it can be like: data.[VARIABLE].images_url
-//  
+	
 
-	newImage = data.DEEPLAKE.image_url;
+	/*newImage = data.DEEPLAKE.image_url;
 //compares the last image url to the new image url and checks if it is different. If it is, it resets the timer for the camera.
 	if(!Object.is(newImage, lastImage)){
 		camTime = 0;
@@ -317,7 +323,7 @@ function data_update(data) {
 		
     });
     $('#ws_image').attr('alt', 'Image from ' + data['DEEPLAKE']._bserver_['date']);
-
+*/
 }
 /*function initiates the data transfer*/
 function data_start() {
@@ -367,10 +373,7 @@ function editTable() {
         $(close).show(); //shows the close button
     });
     editMode = true;
-	$('#ws_image').show();	
 	$('.drag-handle').show();
-	$('#imageHide').show();
-	$('.cam-drag-handle').show();
     $('#editTable').text('Finish Modifying');
     $('#editTable').attr('onclick', 'disableEdit()');
 }
@@ -409,9 +412,6 @@ function disableEdit() {
         $('.container .myTableTitle').css('height', '20px');
         $('.container .myTableValue').show();
     });
-	if($('#imageHideCheck').is(':checked')){
-		$('#ws_image').hide();	
-	}
     editMode = false;
 	$('.drag-handle').hide();
 	$('#imageHide').hide();
@@ -431,7 +431,7 @@ function createText(){
 //change function of button
     $('#createImg').attr('onclick', 'createImage()');
     $('#createText').attr('onclick', 'submitText()');
-	$('.controls').css('height', '400px');
+	$('.controls').css('height', '250px');
 }
 function submitText(){
 	var textBlock, textTitle, textContent, title, index;
@@ -483,7 +483,7 @@ function createImage(){
 //change function of button
     $('#createText').attr('onclick', 'createText()');
     $('#createImg').attr('onclick', 'submitURL()');
-	$('.controls').css('height', '400px');
+	$('.controls').css('height', '250px');
 }
 function submitURL(){
 	var imgURL, index;
@@ -520,21 +520,6 @@ var editWindow =  function() {
 	$('.editWindow').show();
 	selectedModule = $(this).attr('id');
 	console.log($(this));
-	
-	if($(this).hasClass('outer')){
-		selectedModule = $(this).children().children().children('img').attr('id');
-		$('#urlRow').show();
-		var image =  $(this).children().children().children('img');
-		var url = $(this).children().children().children('img').attr('src');
-		$('.urlChange').val(url);
-		$( document ).off( "paste", "input.urlChange"); //unbind old events, and bind a new one		
-		$( document ).on( "paste", "input.urlChange" , function() {	
-			alert(urlChange.val());
-			$(image).attr('src',urlChange.val());
-		});
-		
-	}
-	
 	
 	if($(this).hasClass('textBlockContainer')){
 		$('#titleRow, #bodyRow, #fontSizeRow').show();
@@ -604,11 +589,10 @@ function edit(handler) {
 	$('#masterEdit').attr('onclick', 'nonEdit()');
 	$('.tr').css('cursor','pointer');
 	$('.textBlockContainer').css('cursor','pointer');
-	$('.outer').css('cursor','pointer');	
 	$('.hide').css('visibility','visible');
+	$('.controls').show();
 	
 	//delegate events
-	$('.top-container').delegate('.outer','click', editWindow);	
 	$('#myTableBody').delegate('.tr','click', editWindow);
 	$('#content').delegate('.textBlockContainer','click', editWindow);	
 	$('#content').delegate('.imgBlockContainer','click',editWindow);
@@ -616,8 +600,6 @@ function edit(handler) {
 	//enable draggables
 	$(".imgCamContainer").draggable({disabled: false}).resizable({disabled: false});
 	$(".draggable").draggable({ disabled: false});
-	$('.outer').draggable({disabled: false});
-	$('#ws_image').resizable({disabled: false});
 	$('#ws_status').draggable({disabled: false});
 	$(".controls").draggable({disabled: false}).resizable({disabled: false});
 
@@ -627,22 +609,20 @@ function nonEdit(handler) {
 	$('#masterEdit').attr('onclick', 'edit()');
 	$('.tr').css('cursor','initial');
 	$('.textBlockContainer').css('cursor','initial');
-	$('.outer').css('cursor','initial');
 	$('.hide').css('visibility', 'hidden');
 	$('.editWindow').hide();
+	$('.controls').hide();
+
 	
 	//delegate events
-	$('.top-container').undelegate('.outer','click', editWindow);
 	$('#container').undelegate('.textBlockContainer','click', editWindow);
 	$('#myTableBody').undelegate('.tr','click', editWindow);
 	$('#content').delegate('.imgBlockContainer','click',editWindow);
 
 	
 	//disable draggables
-	$(".imgCamContainer").draggable.draggable({disabled: true}).resizable({disabled: true});
+	$(".imgCamContainer").draggable({disabled: true}).resizable({disabled: true});
 	$(".draggable").draggable({ disabled: true});
-	$('.outer').draggable({disabled: true});
-	$('#ws_image').resizable({disabled: true});
 	$('#ws_status').draggable({disabled: true});
 	$(".controls").draggable({disabled: true}).resizable({disabled: true});
 	
@@ -665,22 +645,19 @@ function showModule(id) {
 
 <body onload="data_start();">
 <div id="preload">
-	<img id="ws_image_preload" src="images/disconnected.png" alt="preload_image">
 </div>
 <div id="content">
 	<div class="container">
 		<div class="top-container">
 			<div class="outer">
-				<div class="camera-container">
+				<!--<div class="camera-container">
 					<span id="ws_status"> disconnected </span>
 					<div id="imageHide"><span>hide</span><input id="imageHideCheck" autocomplete="off" class="checkBox" type="checkbox"></div>
 					<img id="ws_image" class="cam_image" src="images/disconnected.png" alt="This site requirest JavaScript!">
 					<div class="cam-drag-handle"></div>
 
-				</div>
+				</div>-->
 			</div>
-			<h2> Acquired Camera Data </h2>
-
 				<div class="controls">
 					<h2> Controls </h2>
 					<!--<div class="controlRow">
@@ -706,6 +683,12 @@ function showModule(id) {
 						<button id="loadState" onclick="resetTable(savedStates[$('#stateSelect').val()])">Load Table</button>
 					</div>-->
 					<div class="controlRow">
+						<select id="feedSelect">
+							
+						</select>
+						<button id="createFeed" onclick="createCam()">Create Cam</button>
+					</div>	
+					<div class="controlRow">
 						<input id="createTextTitle" type="text" placeholder="Title"></input>
 						<input id="createImageURL" type="text" placeholder="Enter Image URL"></input>
 						<textarea id="createTextBody" placeholder= "Text Body" rows"6"></textarea>
@@ -713,12 +696,7 @@ function showModule(id) {
 						<button id="createImg" onclick="createImage()"> Create Image </button>
 						
 					</div>
-					<div class="controlRow">
-						<select id="feedSelect">
-							
-						</select>
-						<button id="createFeed" onclick="createCam()">Create Cam</button>
-					</div>	
+					
 					<div class="drag-handle"></div>
 				</div>
 		</div>
