@@ -157,11 +157,28 @@ function mapTable($id_arr) {
     $('#stateSelect').append(option);
 }
 
-function populateCams(data){
-	var keys = [];
+function getCamData(data){
+	var pairs = []; //array to hold serial key pairs
+	var serials; //names of each camera
+	var keys; //image url source for each camera
+	var i = 0;
 	for(var k in data){
-		keys.push(k);
-		console.log(data[k]['image_url']);
+		if( i = 0){
+			//do nothing	
+		}
+		else{
+			keys = (data[k]['image_url']);
+			serials = (data[k]['source_serial']);
+			pairs.push([serials, keys]);
+		}
+		console.log(i);
+		i++;
+	}
+	return pairs;
+}
+function populateCams(cam_arr){
+	for(var i =1; i<=cam_arr.length; i++){
+		$('#content').append('<div class="imgCamContainer" id=cam'+i+'_'+cam_arr[i][0]+' style="background-image:url('+cam_arr[i][1]+'); display: none;"></div>');
 	}
 }
 	
@@ -222,6 +239,7 @@ function timer(){
 /*function that periodically updates the data */
 function data_update(data) {
 	time=0;
+	var cams = getCamData(data);
     if (started === false) { //we only want the below block of code to execute once because it is in charge of data creation and initiating a path to the various nested object properties
         path_arr = iteratePath(data, '');
         $('#myTableBody').empty().append(create_table(iterateID(data, ''), iterateName(data, ''))); //creates our table
@@ -237,6 +255,7 @@ function data_update(data) {
                 $(this).removeClass('draggable_focus_in');
             }
         });
+		//console.log("looped");
         $("#ws_image").resizable({ //makes our camera image resizable
 			disabled: true,
             aspectRatio: true
@@ -244,13 +263,10 @@ function data_update(data) {
         $(".outer").draggable({ // makes our camera image parent div draggable
 			disabled: true,
             grid: [1,1],
-			/*handle: '.cam-drag-handle'*/
-			
         });
         $("#ws_status").draggable({}); //makes the little green "connected" span draggable
         $(".controls").draggable({
             disabled: true,			
-			/*handle: '.drag-handle',*/
 			start: function(event, ui) {
                 $(this).addClass('draggable_focus_in');
             },
@@ -265,9 +281,10 @@ function data_update(data) {
         $(document).ready(function() {
             mapTable(id_arr);
 			setInterval(timer,1000);
+			populateCams(cams);
+
         });
 		lastImage = data.DEEPLAKE.image_url;
-		populateCams(data);
     }
     started = true; //sets our boolean to true so the above only executes once
     $('#ws_status').text('Connected');
@@ -291,11 +308,6 @@ function data_update(data) {
     });
     $('#ws_image').attr('alt', 'Image from ' + data['DEEPLAKE']._bserver_['date']);
 
-    $('#ws_update').text(data['DEEPLAKE']._bserver_['date']);
-    var tempK = data['DEEPLAKE'].sensors['External Temp'];
-    var tempC = tempK - 273.15;
-    var tempF = (tempC * 1.8) + 32;
-    $('#ws_sensors_External_Temp').text(Math.round(tempF) + '\xB0F');
 }
 /*function initiates the data transfer*/
 function data_start() {
