@@ -205,7 +205,7 @@ div.logo_container{
 	position: relative;
 	top:0;
 	left: 0;
-	min-height: 450px;
+	min-height: 122px;
 	height: auto;
 	z-index: 0;
 	margin: auto;
@@ -345,6 +345,17 @@ div.logo_container{
 	width: auto;
 	z-index: 90;
 	display: inline;
+}
+.imgCamContainer{
+	position: absolute;
+	top: 15%;
+	left: 20%;
+	height: 224px;
+	width: 400px;
+	z-index: 90;
+	background-repeat: no-repeat;
+	background-position: center; 
+	background-size: contain;
 }
 .textBlockContainer h2{
 	color: #333;

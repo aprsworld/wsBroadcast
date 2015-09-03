@@ -171,17 +171,27 @@ function getCamData(data){
 			serials = (data[k]['source_serial']);
 			pairs.push([serials, keys]);
 		}
-		console.log(i);
-		i++;
 	}
 	return pairs;
 }
 function populateCams(cam_arr){
-	for(var i =1; i<=cam_arr.length; i++){
+	for(var i =1; i<cam_arr.length; i++){
 		$('#content').append('<div class="imgCamContainer" id=cam'+i+'_'+cam_arr[i][0]+' style="background-image:url('+cam_arr[i][1]+'); display: none;"></div>');
+		$('#feedSelect').append('<option value="#cam'+i+'_'+cam_arr[i][0]+'">'+cam_arr[i][0]+'</option>');
 	}
 }
+function createCam(){
+	var selection = $('#feedSelect').val();
+	console.log(selection);
+	$(selection).css('display','inline');
+	$('.imgCamContainer').draggable({disabled: true}).resizable({disabled: true, aspectRatio: true});
+}
 	
+function refreshCams(cam_arr){
+	for(var i =1; i<cam_arr.length; i++){
+		$('#cam'+i+'_'+cam_arr[i][0]).css('background-image','url('+cam_arr[i][1]+')');
+	}
+}
 /* resets div positions to a selected saved state*/
 function resetTable($originalTable) {
     console.log($originalTable);
@@ -289,7 +299,7 @@ function data_update(data) {
     started = true; //sets our boolean to true so the above only executes once
     $('#ws_status').text('Connected');
     $('#ws_status').css('color', 'green');
-
+	refreshCams(cams);
     dynamicUpdate(id_arr, path_arr, data); //updates all data cells to their current values
 //
 //TODO: make more general - DEEPLAKE is too specific. maybe set a global variable at the beginning so that it can be like: data.[VARIABLE].images_url
@@ -604,6 +614,7 @@ function edit(handler) {
 	$('#content').delegate('.imgBlockContainer','click',editWindow);
 	
 	//enable draggables
+	$(".imgCamContainer").draggable({disabled: false}).resizable({disabled: false});
 	$(".draggable").draggable({ disabled: false});
 	$('.outer').draggable({disabled: false});
 	$('#ws_image').resizable({disabled: false});
@@ -628,6 +639,7 @@ function nonEdit(handler) {
 
 	
 	//disable draggables
+	$(".imgCamContainer").draggable.draggable({disabled: true}).resizable({disabled: true});
 	$(".draggable").draggable({ disabled: true});
 	$('.outer').draggable({disabled: true});
 	$('#ws_image').resizable({disabled: true});
@@ -705,7 +717,7 @@ function showModule(id) {
 						<select id="feedSelect">
 							
 						</select>
-						<button id="createFeed">Create Cam</button>
+						<button id="createFeed" onclick="createCam()">Create Cam</button>
 					</div>	
 					<div class="drag-handle"></div>
 				</div>
