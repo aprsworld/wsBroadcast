@@ -26,7 +26,7 @@ body{
 }
 .top-container{
 	clear: both;
-	height: auto;
+	height: 100vh;
 	background-color: #333333;
 	padding-bottom: 10px;
 	padding-top: 10px;
@@ -51,16 +51,15 @@ body{
 }
 .controls{
 	width: 250px;
-	height: 200px;
+	height: 100vh;
 	background-color:rgba(222, 222, 222,.5);
 	padding: 10px;
 	border: black 1px solid;
 	border-radius: 0.5em;
 	position: absolute;
-	top: 10%;
-	left: 1%;
+	top: 0;
+	left: 0;
 	z-index: 1;
-	display: none;
 }
 .controls h2{
 	font-size: 16px;
@@ -544,6 +543,10 @@ div.logo_container{
 #bodyRow{
 	height: auto;
 	min-height: 60px;
+}
+#stationTree{
+	margin-top: 20px;
+	float: left;
 }
 .ui-state-disabled.ui-resizable-disabled { opacity : 1 !important; filter: alpha(opacity = 50); }
 .ui-state-disabled.ui-draggable-disabled { opacity : 1 !important; filter: alpha(opacity = 50); }

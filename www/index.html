@@ -3,8 +3,10 @@
 <title>Weather Station Monitor</title>
 <script src="res/jquery-2.1.4.min.js"></script>
 <link rel="stylesheet" type="text/css" href="res/external/smoothness/jquery-ui.min.css">
+<link rel="stylesheet" type="text/css" href="res/external/dist/themes/default/style.min.css" />
 <script type="text/javascript" src="res/external/jquery-ui.min.js"></script> <!-- jquery ui library -->
 <script type="text/javascript" src="res/external/jquery-ui-touch-punch-min.js"></script> <!-- jquery ui library -->
+<script src="res/external/dist/jstree.min.js"></script>
 <script src="http://cam.aprsworld.com:8888/res/swfobject-2.2.min.js"></script> <!-- SWFObject [Flash fallback for web_socket_js] -->
 <script src="http://cam.aprsworld.com:8888/res/web-socket-js/web_socket.js"></script> <!-- git.com/gimite/web-socket-js WebSockets Compatibility Fall-Back library -->
 <!-- Global Settings for web-socket-js library -->
@@ -104,7 +106,40 @@ function iteratePath(obj, stack) {
     }
     return path_arr;
 }
-
+function iterateStations(obj, stack, arr, lastk) {
+	for (var property in obj) {
+        if (obj.hasOwnProperty(property)) {
+            if (typeof obj[property] == "object") { //is this property an object? then find next property
+				var jsonItem = {};
+				var id = ("ws_" + stack+property+"_x").replace(/\./g, "");				
+				var path = stack + '.' + property;
+				var parent = ("ws_"+stack+"_x").replace(/\./g, "");
+				if(parent == "ws__x"){ //case for root node
+					parent = "#";	
+				}
+				jsonItem ["id"] = id;
+				jsonItem ["parent"] = parent;
+				jsonItem ["text"] = property;
+				//jsonItem ["data"] = {"path": stack + '.' + property};
+				arr.push(jsonItem)
+                lastk = property; //keeps track of last property which is stored in a global variable
+                iterateStations(obj[property], stack + '.' + property, arr, lastk); //combine stack and property and call function recurssively
+            } else {
+				var jsonItem = {};
+				var id = ("ws_" + stack+property+"_x").replace(/\./g, "");
+				var path = stack + '.' + property;
+				var parent = ("ws_"+stack+"_x").replace(/\./g, "");
+				jsonItem ["id"] = id;
+				jsonItem ["parent"] = parent;
+				jsonItem ["text"] = property;
+				//jsonItem ["data"] = {"path": stack + '.' + property};
+                arr.push(jsonItem);
+            }
+        }
+    }
+	var jsonString = JSON.stringify(arr);
+    return jsonString;
+}
 /*this is an important function because it converts the dot notation string into an actual object reference and then returns that reference*/
 function ref(obj, str) {
     str = str.split("."); //splits the dot notation
@@ -156,7 +191,22 @@ function mapTable($id_arr) {
     option.value = savedStates.length - 1;
     $('#stateSelect').append(option);
 }
-
+function getStations(data){
+	var stations = [];
+	var stationData =[];
+	var lastk = "#";
+	for(var k in data){
+		if( i = 0){
+			//do nothing since this is not a station	
+		}
+		else{
+			var station_arr;
+			stations.push(k);
+			iterateStations(k, "",station_arr, lastk);
+		}
+	}
+}
+	
 function getCamData(data){
 	var pairs = []; //array to hold serial key pairs
 	var serials; //names of each camera
@@ -164,7 +214,7 @@ function getCamData(data){
 	var i = 0;
 	for(var k in data){
 		if( i = 0){
-			//do nothing	
+			//do nothing since this is not a station	
 		}
 		else{
 			keys = (data[k]['image_url']);
@@ -194,14 +244,14 @@ function createCam(){
 	
 function refreshCams(cam_arr){
 	for(var i =1; i<cam_arr.length; i++){
-		//if($('#cam'+i+'_'+cam_arr[i][0]+'').is(":visible")){
+		if($('#cam'+i+'_'+cam_arr[i][0]+'').is(":visible")){
 			$('#preload_cam'+i+'_'+cam_arr[i][0]).attr('src',cam_arr[i][1]);
 			var src = $('#preload_cam'+i+'_'+cam_arr[i][0]).attr('src');
 			var cam = $('#cam'+i+'_'+cam_arr[i][0]+'');
 			$('#preload_cam'+i+'_'+cam_arr[i][0]+'').load(function() {
 				$(cam).css('background-image', 'url(' + src + ')');
 			});
-		//}
+		}
 	}
 }
 function preloadCam(selection){
@@ -269,7 +319,7 @@ function data_update(data) {
 	var cams = getCamData(data);
     if (started === false) { //we only want the below block of code to execute once because it is in charge of data creation and initiating a path to the various nested object properties
         path_arr = iteratePath(data, '');
-        $('#myTableBody').empty().append(create_table(iterateID(data, ''), iterateName(data, ''))); //creates our table
+        //$('#myTableBody').empty().append(create_table(iterateID(data, ''), iterateName(data, ''))); //creates our table
         $(".draggable").draggable({ //makes our data cells draggable
             disabled: true,
 			grid: [1, 1],
@@ -300,10 +350,30 @@ function data_update(data) {
             mapTable(id_arr);
 			setInterval(timer,1000);
 			populateCams(cams);
-
+			var lastk = "#";
+			var jsonArray = [];
+			var json = iterateStations(data, "", jsonArray, lastk);
+			$(function () {$('#stationTree').jstree({ 'core' : {'multiple' : false, 'data' : jsonArray}})});
+			$(".top-container").droppable({
+        		accept: '.jstree-leaf',
+				drop: function( event, ui ) {
+					var $element, $me, $newElement;
+					$element = $(ui.draggable);
+					$newElement = $element.clone();
+					$newElement.css('z-index','100');
+					$newElement.css('position','absolute');
+					$newElement.css('top','200');
+					$newElement.css('left','500');			
+					$newElement.appendTo('.top-container');
+					$($newElement).removeClass('jstree-leaf');
+					$($newElement).draggable({});
+				}
+			});
+			
         });
 		lastImage = data.DEEPLAKE.image_url;
-    }
+    	//console.log(iterateStations(data, "", jsonArray, lastk));
+	}
     started = true; //sets our boolean to true so the above only executes once
     $('#ws_status').text('Connected');
     $('#ws_status').css('color', 'green');
@@ -431,7 +501,7 @@ function createText(){
 //change function of button
     $('#createImg').attr('onclick', 'createImage()');
     $('#createText').attr('onclick', 'submitText()');
-	$('.controls').css('height', '250px');
+	$('.controls').css('height', '400px');
 }
 function submitText(){
 	var textBlock, textTitle, textContent, title, index;
@@ -483,7 +553,7 @@ function createImage(){
 //change function of button
     $('#createText').attr('onclick', 'createText()');
     $('#createImg').attr('onclick', 'submitURL()');
-	$('.controls').css('height', '250px');
+	$('.controls').css('height', '400px');
 }
 function submitURL(){
 	var imgURL, index;
@@ -590,7 +660,6 @@ function edit(handler) {
 	$('.tr').css('cursor','pointer');
 	$('.textBlockContainer').css('cursor','pointer');
 	$('.hide').css('visibility','visible');
-	$('.controls').show();
 	
 	//delegate events
 	$('#myTableBody').delegate('.tr','click', editWindow);
@@ -598,10 +667,13 @@ function edit(handler) {
 	$('#content').delegate('.imgBlockContainer','click',editWindow);
 	
 	//enable draggables
+	$(".jstree-leaf").draggable({
+		helper: "clone"
+	});
 	$(".imgCamContainer").draggable({disabled: false}).resizable({disabled: false});
 	$(".draggable").draggable({ disabled: false});
 	$('#ws_status').draggable({disabled: false});
-	$(".controls").draggable({disabled: false}).resizable({disabled: false});
+	//$(".controls").draggable({disabled: false}).resizable({disabled: false});
 
 }
 function nonEdit(handler) {
@@ -611,8 +683,6 @@ function nonEdit(handler) {
 	$('.textBlockContainer').css('cursor','initial');
 	$('.hide').css('visibility', 'hidden');
 	$('.editWindow').hide();
-	$('.controls').hide();
-
 	
 	//delegate events
 	$('#container').undelegate('.textBlockContainer','click', editWindow);
@@ -683,12 +753,6 @@ function showModule(id) {
 						<button id="loadState" onclick="resetTable(savedStates[$('#stateSelect').val()])">Load Table</button>
 					</div>-->
 					<div class="controlRow">
-						<select id="feedSelect">
-							
-						</select>
-						<button id="createFeed" onclick="createCam()">Create Cam</button>
-					</div>	
-					<div class="controlRow">
 						<input id="createTextTitle" type="text" placeholder="Title"></input>
 						<input id="createImageURL" type="text" placeholder="Enter Image URL"></input>
 						<textarea id="createTextBody" placeholder= "Text Body" rows"6"></textarea>
@@ -696,7 +760,13 @@ function showModule(id) {
 						<button id="createImg" onclick="createImage()"> Create Image </button>
 						
 					</div>
-					
+					<div class="controlRow">
+						<select id="feedSelect">
+							
+						</select>
+						<button id="createFeed" onclick="createCam()">Create Cam</button>
+					</div>
+					<div id="stationTree"></div>
 					<div class="drag-handle"></div>
 				</div>
 		</div>
