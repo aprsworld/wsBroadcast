@@ -55,11 +55,11 @@ body{
 	background-color:rgba(222, 222, 222,.5);
 	padding: 10px;
 	border: black 1px solid;
-	border-radius: 0.5em;
 	position: absolute;
 	top: 0;
 	left: 0;
 	z-index: 1;
+
 }
 .controls h2{
 	font-size: 16px;
@@ -397,10 +397,8 @@ div.logo_container{
 	font-size: 12px;
 	width: 12.2%;
 	min-width: 220px;
-	height: 50px;
+	height: auto;
 	display: inline-block;
-	border: #111111 solid 1px;
-	background-color: rgba(0,0,0,.1);
 	border-radius: 5px;
 	z-index: 2;
 	
@@ -428,9 +426,8 @@ div.logo_container{
 	z-index: 90;
 	
 }
-.draggable_focus_in{
+.draggable_focus_in .myTableTitle{
 	box-shadow: 0px 0px 20px #0550a5;
-	background-color: rgba(239,239,239, .8) !important;
 }
 .container .th{
 	padding: 5px;
@@ -548,8 +545,13 @@ div.logo_container{
 	margin-top: 20px;
 	float: left;
 }
+
+/*Plugin fixes*/
 .ui-state-disabled.ui-resizable-disabled { opacity : 1 !important; filter: alpha(opacity = 50); }
 .ui-state-disabled.ui-draggable-disabled { opacity : 1 !important; filter: alpha(opacity = 50); }
+ul.jstree-children{
+	height: auto !important;	
+}
 @media (max-width: 400px) {
 	img{
 		width: 320px !important;

@@ -6,7 +6,7 @@
 <link rel="stylesheet" type="text/css" href="res/external/dist/themes/default/style.min.css" />
 <script type="text/javascript" src="res/external/jquery-ui.min.js"></script> <!-- jquery ui library -->
 <script type="text/javascript" src="res/external/jquery-ui-touch-punch-min.js"></script> <!-- jquery ui library -->
-<script src="res/external/dist/jstree.min.js"></script>
+<script src="res/external/dist/jstree.js"></script>
 <script src="http://cam.aprsworld.com:8888/res/swfobject-2.2.min.js"></script> <!-- SWFObject [Flash fallback for web_socket_js] -->
 <script src="http://cam.aprsworld.com:8888/res/web-socket-js/web_socket.js"></script> <!-- git.com/gimite/web-socket-js WebSockets Compatibility Fall-Back library -->
 <!-- Global Settings for web-socket-js library -->
@@ -334,47 +334,57 @@ function data_update(data) {
             }
         });
         $("#ws_status").draggable({}); //makes the little green "connected" span draggable
-        $(".controls").draggable({
-            disabled: true,			
-			start: function(event, ui) {
-                $(this).addClass('draggable_focus_in');
-            },
-			stop: function(event, ui) {
-                $(this).removeClass('draggable_focus_in');
-            }
-		}).resizable({ //makes our controls div resizable and draggable
-			disabled: true,
+        $(".controls").resizable({ //makes our controls div resizable and draggable
             minHeight: 70,
-            minWidth: 150,
+			maxWidth: 250
         });
         $(document).ready(function() {
-            //mapTable(id_arr);
 			setInterval(timer,1000);
 			populateCams(cams);
 			var lastk = "#";
 			var jsonArray = [];
 			var json = iterateStations(data, "", jsonArray, lastk);
-			$(function () {$('#stationTree').jstree({ 'core' : {'multiple' : false, 'data' : jsonArray}})});
+			$(function () {$('#stationTree').jstree({ 'core' : {'multiple' : false, 'cache':false, 'data' : jsonArray}})});
+			$("#stationTree").bind("open_node.jstree", function (event,  data) {
+				$(".jstree-leaf").draggable({
+					helper: "clone"
+				});
+			});
 			$(".top-container").droppable({
         		accept: '.jstree-leaf',
 				drop: function( event, ui ) {
 					var $element, $me, $newElement;
 					$element = $(ui.draggable);
 					var id = $($element).attr('id');
-					var treeNode = $.jstree.reference('#stationTree').select_node(id);
+					var new_id = "div_"+id;
+					var treeNode = $.jstree.reference('#stationTree').get_node(id);
 					var path = $('#stationTree').jstree(true).get_node(id).original.obj.path;
 					path_arr.push(path);
-					id_arr.push(id);
+					id_arr.push(new_id);
 					console.log("IDs " + id_arr);
 					console.log("paths " + path_arr);
 					var pageX = event.pageX;
 					var pageY = event.pageY;
 					$('.top-container').append('<div class="tr draggable" id="' + (cellCount) + '"><div class="td dg-arrange-table-rows-drag-icon"></div><div class="td myTableID"> ID: <span>' + (cellCount) + '</span> </div><div class="td myTableTitle"><input title="Original text: '+ id_arr[cellCount] +'" class="titleEdit" type="text"></input><input title="Add a unit label -- Example: &deg;C" class="labelEdit" placeholder="Add a unit label" type="text"></input><p class="titleText">' + id_arr[cellCount] + '</p></div><div class="td myTableValue" id="' + id_arr[cellCount] + '"><p>Unknown</p> <span class="label"></span></div><div class="td dg-arrange-table-rows-close-icon"><span>Hide:</span><input autocomplete="off" class="checkBox" type="checkbox"></div></div>');
-					$('.draggable').draggable({});
+					$(".draggable").draggable({ //makes our data cells draggable
+						disabled: true,
+						grid: [1, 1],
+						snap: true,
+						snapTolerance: 10,
+						start: function(event, ui) {
+							$(this).addClass('draggable_focus_in');
+						},
+						stop: function(event, ui) {
+							$(this).removeClass('draggable_focus_in');
+						}
+					});
 					$('#'+cellCount).css('position', 'absolute');
 					$('#'+cellCount).css('top',pageY);
 					$('#'+cellCount).css('left',pageX);
 					cellCount++;
+					//TEMPORARY	FIX
+					nonEdit();
+					edit();
 				}
 			});
 			
@@ -508,7 +518,6 @@ function createText(){
 //change function of button
     $('#createImg').attr('onclick', 'createImage()');
     $('#createText').attr('onclick', 'submitText()');
-	$('.controls').css('height', '400px');
 }
 function submitText(){
 	var textBlock, textTitle, textContent, title, index;
@@ -537,14 +546,13 @@ function submitText(){
 					stop: function(event, ui) {
 						$(this).removeClass('draggable_focus_in');
 					}
-				}).resizable({ //makes our controls div resizable and draggable
+				}).resizable({ 
 					minHeight: 70,
 					minWidth: 150,
 				});	
 	//reset buttons, input fields, and control div back to defaults
 		$('#createText').text('Create Text');
 		$('#createText').attr('onclick', 'createText()');
-		$('.controls').css('height', '300px');
 		$('#createTextTitle').hide();
 		$('#createTextBody').hide();	
 	}
@@ -560,7 +568,6 @@ function createImage(){
 //change function of button
     $('#createText').attr('onclick', 'createText()');
     $('#createImg').attr('onclick', 'submitURL()');
-	$('.controls').css('height', '400px');
 }
 function submitURL(){
 	var imgURL, index;
@@ -571,7 +578,7 @@ function submitURL(){
 		$(".imgBlockContainer").draggable({
 					handle: ".cam-drag-handle"
 				});
-		$("#img"+index+"").resizable({ //makes our controls div resizable and draggable
+		$("#img"+index+"").resizable({ 
 					minHeight: 70,
 					minWidth: 150,
 					aspectRatio: true
@@ -669,7 +676,7 @@ function edit(handler) {
 	$('.hide').css('visibility','visible');
 	
 	//delegate events
-	$('#myTableBody').delegate('.tr','click', editWindow);
+	$('.top-container').delegate('.tr','click', editWindow);
 	$('#content').delegate('.textBlockContainer','click', editWindow);	
 	$('#content').delegate('.imgBlockContainer','click',editWindow);
 	
@@ -680,7 +687,6 @@ function edit(handler) {
 	$(".imgCamContainer").draggable({disabled: false}).resizable({disabled: false});
 	$(".draggable").draggable({ disabled: false});
 	$('#ws_status').draggable({disabled: false});
-	//$(".controls").draggable({disabled: false}).resizable({disabled: false});
 
 }
 function nonEdit(handler) {
@@ -690,10 +696,9 @@ function nonEdit(handler) {
 	$('.textBlockContainer').css('cursor','initial');
 	$('.hide').css('visibility', 'hidden');
 	$('.editWindow').hide();
-	
 	//delegate events
 	$('#container').undelegate('.textBlockContainer','click', editWindow);
-	$('#myTableBody').undelegate('.tr','click', editWindow);
+	$('.top-container').undelegate('.tr','click', editWindow);
 	$('#content').delegate('.imgBlockContainer','click',editWindow);
 
 	
@@ -701,7 +706,6 @@ function nonEdit(handler) {
 	$(".imgCamContainer").draggable({disabled: true}).resizable({disabled: true});
 	$(".draggable").draggable({ disabled: true});
 	$('#ws_status').draggable({disabled: true});
-	$(".controls").draggable({disabled: true}).resizable({disabled: true});
 	
 }
 function hideModule(id) {
@@ -736,7 +740,7 @@ function showModule(id) {
 				</div>-->
 			</div>
 				<div class="controls">
-					<h2> Controls </h2>
+					<h2> Station Tree </h2>
 					<!--<div class="controlRow">
 						<span class="verticalAlign"></span>
 						<button id="editTable" onclick="editTable();">Modify Table</button>
@@ -759,6 +763,13 @@ function showModule(id) {
 						</select>
 						<button id="loadState" onclick="resetTable(savedStates[$('#stateSelect').val()])">Load Table</button>
 					</div>-->
+					<div id="stationTree"></div>
+					<div class="controlRow">
+						<select id="feedSelect">
+							
+						</select>
+						<button id="createFeed" onclick="createCam()">Create Cam</button>
+					</div>
 					<div class="controlRow">
 						<input id="createTextTitle" type="text" placeholder="Title"></input>
 						<input id="createImageURL" type="text" placeholder="Enter Image URL"></input>
@@ -767,13 +778,7 @@ function showModule(id) {
 						<button id="createImg" onclick="createImage()"> Create Image </button>
 						
 					</div>
-					<div class="controlRow">
-						<select id="feedSelect">
-							
-						</select>
-						<button id="createFeed" onclick="createCam()">Create Cam</button>
-					</div>
-					<div id="stationTree"></div>
+					
 					<div class="drag-handle"></div>
 				</div>
 		</div>
