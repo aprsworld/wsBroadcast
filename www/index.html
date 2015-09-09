@@ -120,7 +120,7 @@ function iterateStations(obj, stack, arr, lastk) {
 				jsonItem ["id"] = id;
 				jsonItem ["parent"] = parent;
 				jsonItem ["text"] = property;
-				//jsonItem ["data"] = {"path": stack + '.' + property};
+				jsonItem ["obj"] = {"path": stack + '.' + property};
 				arr.push(jsonItem)
                 lastk = property; //keeps track of last property which is stored in a global variable
                 iterateStations(obj[property], stack + '.' + property, arr, lastk); //combine stack and property and call function recurssively
@@ -132,7 +132,7 @@ function iterateStations(obj, stack, arr, lastk) {
 				jsonItem ["id"] = id;
 				jsonItem ["parent"] = parent;
 				jsonItem ["text"] = property;
-				//jsonItem ["data"] = {"path": stack + '.' + property};
+				jsonItem ["obj"] = {"path": stack + '.' + property};
                 arr.push(jsonItem);
             }
         }
@@ -153,6 +153,7 @@ function ref(obj, str) {
 function dynamicUpdate($id_arr, $path_arr, data) {
     for ($i = 0; $i < $id_arr.length; $i++) {
 		var value = ref(data, $path_arr[$i]); //finds value of object
+		console.log(value);
         $('div#' + $id_arr[$i] + '').children('p').text(value);
     }
 }
@@ -318,8 +319,8 @@ function data_update(data) {
 	time=0;
 	var cams = getCamData(data);
     if (started === false) { //we only want the below block of code to execute once because it is in charge of data creation and initiating a path to the various nested object properties
-        path_arr = iteratePath(data, '');
-        //$('#myTableBody').empty().append(create_table(iterateID(data, ''), iterateName(data, ''))); //creates our table
+        //path_arr = iteratePath(data, '');
+		var cellCount = 0;
         $(".draggable").draggable({ //makes our data cells draggable
             disabled: true,
 			grid: [1, 1],
@@ -347,7 +348,7 @@ function data_update(data) {
             minWidth: 150,
         });
         $(document).ready(function() {
-            mapTable(id_arr);
+            //mapTable(id_arr);
 			setInterval(timer,1000);
 			populateCams(cams);
 			var lastk = "#";
@@ -359,20 +360,26 @@ function data_update(data) {
 				drop: function( event, ui ) {
 					var $element, $me, $newElement;
 					$element = $(ui.draggable);
-					$newElement = $element.clone();
-					$newElement.css('z-index','100');
-					$newElement.css('position','absolute');
-					$newElement.css('top','200');
-					$newElement.css('left','500');			
-					$newElement.appendTo('.top-container');
-					$($newElement).removeClass('jstree-leaf');
-					$($newElement).draggable({});
+					var id = $($element).attr('id');
+					var treeNode = $.jstree.reference('#stationTree').select_node(id);
+					var path = $('#stationTree').jstree(true).get_node(id).original.obj.path;
+					path_arr.push(path);
+					id_arr.push(id);
+					console.log("IDs " + id_arr);
+					console.log("paths " + path_arr);
+					var pageX = event.pageX;
+					var pageY = event.pageY;
+					$('.top-container').append('<div class="tr draggable" id="' + (cellCount) + '"><div class="td dg-arrange-table-rows-drag-icon"></div><div class="td myTableID"> ID: <span>' + (cellCount) + '</span> </div><div class="td myTableTitle"><input title="Original text: '+ id_arr[cellCount] +'" class="titleEdit" type="text"></input><input title="Add a unit label -- Example: &deg;C" class="labelEdit" placeholder="Add a unit label" type="text"></input><p class="titleText">' + id_arr[cellCount] + '</p></div><div class="td myTableValue" id="' + id_arr[cellCount] + '"><p>Unknown</p> <span class="label"></span></div><div class="td dg-arrange-table-rows-close-icon"><span>Hide:</span><input autocomplete="off" class="checkBox" type="checkbox"></div></div>');
+					$('.draggable').draggable({});
+					$('#'+cellCount).css('position', 'absolute');
+					$('#'+cellCount).css('top',pageY);
+					$('#'+cellCount).css('left',pageX);
+					cellCount++;
 				}
 			});
 			
         });
 		lastImage = data.DEEPLAKE.image_url;
-    	//console.log(iterateStations(data, "", jsonArray, lastk));
 	}
     started = true; //sets our boolean to true so the above only executes once
     $('#ws_status').text('Connected');
