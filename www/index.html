@@ -162,7 +162,7 @@ function dynamicUpdate($id_arr, $path_arr, data) {
 function create_table($id_arr, $name_arr) {
     var $myTable = "";
     for ($i = 0; $i < $id_arr.length; $i++) { //generates the divs that hold all of our values
-        $myTable += '<div class="tr draggable" id="' + ($i + 1) + '"><div class="td dg-arrange-table-rows-drag-icon"></div><div class="td myTableID"> ID: <span>' + ($i + 1) + '</span> </div><div class="td myTableTitle"><input title="Original text: '+ $name_arr[$i] +'" class="titleEdit" type="text"></input><input title="Add a unit label -- Example: &deg;C" class="labelEdit" placeholder="Add a unit label" type="text"></input><p class="titleText">' + $name_arr[$i] + '</p></div><div class="td myTableValue" id="' + $id_arr[$i] + '"><p>Unknown</p> <span class="label"></span></div><div class="td dg-arrange-table-rows-close-icon"><span>Hide:</span><input autocomplete="off" class="checkBox" type="checkbox"></div></div>';
+        $myTable += '<div class="tr draggable" id="' + ($i + 1) + '"><div class="td dg-arrange-table-rows-drag-icon"></div><div class="td myTableID"> ID: <span>' + ($i + 1) + '</span> </div><div class="td myTableTitle"><input title="Original text: '+ $name_arr[$i] +'" class="titleEdit" type="text"></input><input title="Add a unit label -- Example: &deg;C" class="labelEdit" placeholder="Add a unit label" type="text"></input><p class="titleText">' + $name_arr[$i] + '</p></div><div class="td myTableValue" id="' + $id_arr[$i] + '"><p>Loading...</p> <span class="label"></span></div><div class="td dg-arrange-table-rows-close-icon"><span>Hide:</span><input autocomplete="off" class="checkBox" type="checkbox"></div></div>';
     }
 
     return $myTable;
@@ -236,11 +236,9 @@ function createCam(){
 	var selection = $('#feedSelect').val();
 	console.log(selection);
 	$("#"+selection).css('display','inline');
-	$('.imgCamContainer').draggable({disabled: true}).resizable({disabled: true, aspectRatio: true});
+	$('.imgCamContainer').draggable({disabled: false}).resizable({disabled: false, aspectRatio: true});
 	preloadCam(selection);
-//TEMPORARY	
-	nonEdit();
-	edit();
+	
 }
 	
 function refreshCams(cam_arr){
@@ -365,7 +363,7 @@ function data_update(data) {
 					console.log("paths " + path_arr);
 					var pageX = event.pageX;
 					var pageY = event.pageY;
-					$('.top-container').append('<div class="tr draggable" id="' + (cellCount) + '"><div class="td dg-arrange-table-rows-drag-icon"></div><div class="td myTableID"> ID: <span>' + (cellCount) + '</span> </div><div class="td myTableTitle"><input title="Original text: '+ id_arr[cellCount] +'" class="titleEdit" type="text"></input><input title="Add a unit label -- Example: &deg;C" class="labelEdit" placeholder="Add a unit label" type="text"></input><p class="titleText">' + id_arr[cellCount] + '</p></div><div class="td myTableValue" id="' + id_arr[cellCount] + '"><p>Unknown</p> <span class="label"></span></div><div class="td dg-arrange-table-rows-close-icon"><span>Hide:</span><input autocomplete="off" class="checkBox" type="checkbox"></div></div>');
+					$('.top-container').append('<div class="tr draggable" id="' + (cellCount) + '"><div class="td dg-arrange-table-rows-drag-icon"></div><div class="td myTableID"> ID: <span>' + (cellCount) + '</span> </div><div class="td myTableTitle"><input title="Original text: '+ id_arr[cellCount] +'" class="titleEdit" type="text"></input><input title="Add a unit label -- Example: &deg;C" class="labelEdit" placeholder="Add a unit label" type="text"></input><p class="titleText">' + id_arr[cellCount] + '</p></div><div class="td myTableValue" id="' + id_arr[cellCount] + '"><p>Loading...</p> <span class="label"></span></div><div class="td dg-arrange-table-rows-close-icon"><span>Hide:</span><input autocomplete="off" class="checkBox" type="checkbox"></div></div>');
 					$(".draggable").draggable({ //makes our data cells draggable
 						disabled: true,
 						grid: [1, 1],
@@ -378,13 +376,12 @@ function data_update(data) {
 							$(this).removeClass('draggable_focus_in');
 						}
 					});
+					$(".draggable").draggable({ disabled: false});
 					$('#'+cellCount).css('position', 'absolute');
 					$('#'+cellCount).css('top',pageY);
 					$('#'+cellCount).css('left',pageX);
 					cellCount++;
-					//TEMPORARY	FIX
-					nonEdit();
-					edit();
+
 				}
 			});
 			
@@ -601,7 +598,7 @@ var editWindow =  function() {
 	fontMinus = $('#fontSizeMinus');
 	$('#titleRow, #labelRow, #urlRow, #bodyRow, #fontSizeRow').hide();
 	
-	$('.editWindow').show();
+	$('.editWindow').show(150);
 	selectedModule = $(this).attr('id');
 	console.log($(this));
 	
@@ -655,17 +652,17 @@ var editWindow =  function() {
 		$( document ).on( "keyup", "input.labelChange" , function() {	
 			label.text(labelChange.val());
 		});
-		$('.editWindow h2').text('Edit ' + title.text() + ' cell');
+		$('.editWindow h2').text('Edit cell');
 		$(titleChange).val(title.text());
 	}
 	
 	if($("#"+selectedModule).hasClass('hide')){
 		$('#hideModule').attr('onclick', "showModule('"+ selectedModule +"')");
-		$('#hideModule').text('unhide');
+		$('#hideModule').text('unhide selected');
 	}
 	else{
 		$('#hideModule').attr('onclick', "hideModule('"+ selectedModule +"')");
-		$('#hideModule').text('hide');
+		$('#hideModule').text('hide selected');
 	}
 };
 function edit(handler) {
@@ -674,7 +671,7 @@ function edit(handler) {
 	$('.tr').css('cursor','pointer');
 	$('.textBlockContainer').css('cursor','pointer');
 	$('.hide').css('visibility','visible');
-	
+	$('.controls').show(200);
 	//delegate events
 	$('.top-container').delegate('.tr','click', editWindow);
 	$('#content').delegate('.textBlockContainer','click', editWindow);	
@@ -695,7 +692,8 @@ function nonEdit(handler) {
 	$('.tr').css('cursor','initial');
 	$('.textBlockContainer').css('cursor','initial');
 	$('.hide').css('visibility', 'hidden');
-	$('.editWindow').hide();
+	$('.editWindow').hide(150);
+	$('.controls').hide(200);
 	//delegate events
 	$('#container').undelegate('.textBlockContainer','click', editWindow);
 	$('.top-container').undelegate('.tr','click', editWindow);
@@ -712,13 +710,13 @@ function hideModule(id) {
 	$("#"+id).addClass('hide');
 	$("#"+id).css('opacity','.2');
 	$('#hideModule').attr('onclick', "showModule('"+ id +"')");	
-	$('#hideModule').text('unhide');
+	$('#hideModule').text('unhide selected');
 }
 function showModule(id) {
 	$("#"+id).css('opacity','1.0');
 	$("#"+id).removeClass('hide');
 	$('#hideModule').attr('onclick', "hideModule('"+ id +"')");
-	$('#hideModule').text('hide');
+	$('#hideModule').text('hide selected');
 }
 </script>
 <link rel="stylesheet" type="text/css" href="styles/style.css">
@@ -799,29 +797,28 @@ function showModule(id) {
 	<span id="camTimer"> loading data... </span>
 
 </div>
-<div class="editWindow">
+<div class="editWindow" class="editWindowRow">
 	<h2> Edit Cell </h2>
-	<div id="titleRow"class="controlRow">
-		<span> Edit Title: </span><input title="" class="titleChange" type="text"></input>
+	<div id="titleRow" class="editWindowRow">
+		<span> Edit Title </span><input title="" class="titleChange" type="text"></input>
 	</div>	
-	<div id="labelRow" class="controlRow">
-		<span> Edit Label: </span><input title="Add a unit label" class="labelChange" type="text" placeholder="Add a Label"></input>
+	<div id="labelRow" class="editWindowRow">
+		<span> Edit Label </span><input title="Add a unit label" class="labelChange" type="text" placeholder="Add a Label"></input>
 	</div>
-	<div id="urlRow" class="controlRow">
-		<span> Edit URL: </span><input title="" class="urlChange" type="text" placeholder="Add a Label"></input>
+	<div id="urlRow" class="editWindowRow">
+		<span> Edit URL </span><input title="" class="urlChange" type="text" placeholder="Add a Label"></input>
 	</div>
-	<div id="bodyRow" class="controlRow">
-		<span> Edit Body: </span><textarea rows"6" title="" class="bodyChange" type="text" placeholder="Change Text"></textarea>
+	<div id="bodyRow" class="editWindowRow">
+		<span> Edit Body </span><textarea rows"6" title="" class="bodyChange" type="text" placeholder="Change Text"></textarea>
 	</div>
-	<div id="fontSizeRow"class="controlRow">
-		<span> Adjust Font Size: </span>
+	<div id="fontSizeRow" class="editWindowRow">
+		<span> Font Size </span>
 		<button id="fontSizeMinus" onclick="">-</button>		
 		<input id="fontSize" type="text"> </input>
 		<button id="fontSizePlus" onclick="">+</button>
 	</div>
-	<div class="controlRow">
-		<span> Hide </span>	
-		<button id="hideModule"> Hide </button>
+	<div >
+		<button id="hideModule"> Hide Selected</button>
 	</div>
 </div>
 </body>

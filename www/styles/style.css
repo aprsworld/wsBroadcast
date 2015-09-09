@@ -4,6 +4,12 @@ body{
 	padding: 0;
 	font-family: Arial,Helvetica Neue,Helvetica,sans-serif;
 }
+button{
+	cursor: pointer;	
+}
+select{
+	cursor: pointer;	
+}
 #header{
 	height: 35px;	
 	padding: 10px;
@@ -59,22 +65,24 @@ body{
 	top: 0;
 	left: 0;
 	z-index: 1;
-
+	box-shadow: 0px 0px 4px #222;
+	text-align: center;
+	display: none;
 }
 .controls h2{
-	font-size: 16px;
+	font-size: 26px;
 	margin: 1px;
 	padding: 0px;
 	text-align: center;
 	color: #333 !important;
 }
 .controlRow{
-	width: 250px;
-	float: left;
-	margin-top: 5px;
-	text-align: left;
-	height: 30px;
-	margin-bottom: 10px;
+	width: 210px;
+	display: inline-block;
+	margin-left: auto;
+	margin-right: auto;
+	margin-top: 10px;
+	height: auto;
 }
 .verticalAlign{
 	height: 50px;
@@ -159,6 +167,10 @@ div.logo_container{
 	border-radius: .2em;
 	color: white;
 	display: none;
+}
+#feedSelect{
+	height: 40px;
+	width: 100px;
 }
 #stateSelect{
 	height: 30px;
@@ -507,32 +519,53 @@ div.logo_container{
 	position: absolute;	
 	right: 0px;
 	top: 100px;
-	width: 400px;
+	width: 180px;
 	height: auto;
 	display: none;
-	background-color: #888888;
-	border-radius: .5em;
+	background-color: rgba(222,222,222,.5);
 	padding: 10px;
 	z-index: 2;
 	color: #333;
+	text-align: center;
+	box-shadow: 0px 0px 3px #222;
+}
+.editWindowRow{
+	height: 50px;
+	width: 150px;
+	display: inline-block !important;
+	text-align: left;
+}
+.editWindowRow span{
+	margin: 2px;
+	color: #333333;
+	display: inline-block;
+	width: 100%;
+	font-weight: 300;
 }
 .editWindow h2{
+	margin-top: 5px;
+	padding-top: 0;
+	text-align: center;
+	font-size: 24px;
 	text-transform:capitalize;
-	
+	color: #333;
 }
 
 .titleChange{
-	width:50%;
+	width:100%;
 }
 .labelChange{
-	width: 50%;
+	width: 100%;
 }
 .bodyChange{
-	width: 50%;
-	
+	width: 100%;	
 }
 .urlChange{
-	width: 50%;
+	width: 100%;
+}
+#hideModule{
+	margin-top: 15px;
+	width: 70%;
 }
 #titleRow, #labelRow, #urlRow, #bodyRow, #fontSizeRow{
 	display:none;	
@@ -542,8 +575,16 @@ div.logo_container{
 	min-height: 60px;
 }
 #stationTree{
+	padding-top: 10px;
+	background-color: rgba(255, 255, 255, 0.5);
 	margin-top: 20px;
 	float: left;
+	width: 100%;
+	height: 450px;
+	overflow-y: auto;
+	box-shadow: inset 0px 0px 3px white;
+	text-align: left !important;
+
 }
 
 /*Plugin fixes*/
