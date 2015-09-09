@@ -572,9 +572,7 @@ function submitURL(){
 	imgURL = $('#createImageURL').val();
 	if(imgURL != ""){
 		$('#content').append('<div class="imgBlockContainer"><div class="cam-drag-handle"></div><img onerror="brokenImg(img'+index+')" id=img'+index+' alt=img'+index+' src='+imgURL+'></img></div>');
-		$(".imgBlockContainer").draggable({
-					handle: ".cam-drag-handle"
-				});
+		$(".imgBlockContainer").draggable({	});
 		$("#img"+index+"").resizable({ 
 					minHeight: 70,
 					minWidth: 150,
@@ -588,7 +586,7 @@ function brokenImg(id){
 	$(id).closest('.imgBlockContainer').remove();
 }
 var editWindow =  function() {
-	var selectedModule, title, label, titleChange, labelChange, urlChange, id, value, submitButton, fontPlus, fontMinus, body;
+	var selectedModule, body, title, label, url, titleChange, labelChange, urlChange, id, value, submitButton, fontPlus, fontMinus, bodyChange, fontSize;
 	titleChange = $('.titleChange');
 	labelChange = $('.labelChange');
 	bodyChange = $('.bodyChange');
@@ -621,6 +619,22 @@ var editWindow =  function() {
 		$( document ).on( "keyup", "textarea.bodyChange" , function() {	
 			body.text(bodyChange.val());
 		});
+	}
+	if($(this).hasClass('imgBlockContainer')){
+		$('#urlRow').show();
+		
+		url = $(this).find('img');
+		$(urlChange).val(url.attr('src'));
+		
+		$( document ).off( "paste", "input.urlChange"); //unbind old events, and bind a new one		
+		$( document ).on( "paste", "input.urlChange" , function() {	
+			console.log('fired');
+			var element = this;
+ 			setTimeout(function () {
+				url.attr('src', urlChange.val());
+			}, 100);	 
+		});
+		
 	}
 	if($(this).hasClass('tr')){
 		$('#titleRow, #labelRow, #fontSizeRow').show();
@@ -806,7 +820,7 @@ function showModule(id) {
 		<span> Edit Label </span><input title="Add a unit label" class="labelChange" type="text" placeholder="Add a Label"></input>
 	</div>
 	<div id="urlRow" class="editWindowRow">
-		<span> Edit URL </span><input title="" class="urlChange" type="text" placeholder="Add a Label"></input>
+		<span> Edit URL </span><input title="" class="urlChange" type="text" placeholder="Change URL"></input>
 	</div>
 	<div id="bodyRow" class="editWindowRow">
 		<span> Edit Body </span><textarea rows"6" title="" class="bodyChange" type="text" placeholder="Change Text"></textarea>

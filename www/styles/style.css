@@ -532,7 +532,7 @@ div.logo_container{
 .editWindowRow{
 	height: 50px;
 	width: 150px;
-	display: inline-block !important;
+	display: inline-block;
 	text-align: left;
 }
 .editWindowRow span{
