@@ -255,10 +255,11 @@ function createCamFromTree(tree_id){
 }
 function refreshCams1(cam_arr){
 	for(var i =1; i<cam_arr.length; i++){
-		if($('div_ws_'+cam_arr[i][0]+'image_url_x').is(":visible")){
+		if($('#div_ws_'+cam_arr[i][0]+'image_url_x').is(":visible")){
+			console.log('refreshed');
 			$('#preload_div_ws_'+cam_arr[i][0]+'image_url_x').attr('src',cam_arr[i][1]);
 			var src = $('#preload_div_ws_'+cam_arr[i][0]+'image_url_x').attr('src');
-			var cam = $('div_ws_'+cam_arr[i][0]+'image_url_x');
+			var cam = $('#div_ws_'+cam_arr[i][0]+'image_url_x');
 			$('#preload_div_ws_'+cam_arr[i][0]+'image_url_x').load(function() {
 				$(cam).css('background-image', 'url(' + src + ')');
 			});
