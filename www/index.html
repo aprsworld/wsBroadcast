@@ -375,7 +375,7 @@ function data_update(data) {
 						stop: function(event, ui) {
 							$(this).removeClass('draggable_focus_in');
 						}
-					});
+					}).resizable({});
 					$(".draggable").draggable({ disabled: false});
 					$('#'+cellCount).css('position', 'absolute');
 					$('#'+cellCount).css('top',pageY);
@@ -660,13 +660,22 @@ var editWindow =  function() {
 		$( document ).off( "keyup", "input.titleChange"); //unbind old events, and bind a new one
 		$( document ).on( "keyup", "input.titleChange" , function() {	
 			title.text(titleChange.val());
+			//gets makes background-color on title transparent if the title field is empty
+			if(titleChange.val() == ""){
+				title.parent().css('background-color','transparent');	
+			}
+			else{
+				title.parent().css('background-color','rgba(0, 0, 0, 0.35)');	
+			}
 		});
 		// label change event handler
 		$( document ).off( "keyup", "input.labelChange"); //unbind old events, and bind a new one
 		$( document ).on( "keyup", "input.labelChange" , function() {	
-			label.text(labelChange.val());
+			label.text(htmlEntities(labelChange.val()));
 		});
 		$('.editWindow h2').text('Edit cell');
+		//tool tip shows original title
+		$(titleChange).attr('title','Original Title: '+id);
 		$(titleChange).val(title.text());
 	}
 	
@@ -732,8 +741,13 @@ function showModule(id) {
 	$('#hideModule').attr('onclick', "hideModule('"+ id +"')");
 	$('#hideModule').text('hide selected');
 }
+function htmlEntities(str) {
+   	var decoded = $('<div/>').html(str).text();
+	return decoded
+}
 </script>
 <link rel="stylesheet" type="text/css" href="styles/style.css">
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 </head>
 
 <body onload="data_start();">

@@ -390,7 +390,7 @@ div.logo_container{
 .container .myTableValue p{
 	margin:0;
 	padding: 0;
-	display: inline;
+	display: inline-block;
 }
 .container .dg-arrange-table-rows-close-icon{
 	display: none;
@@ -413,7 +413,6 @@ div.logo_container{
 	display: inline-block;
 	border-radius: 5px;
 	z-index: 2;
-	
 }
 .cam-drag-handle{
 	display: none;
