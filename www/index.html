@@ -153,7 +153,6 @@ function ref(obj, str) {
 function dynamicUpdate($id_arr, $path_arr, data) {
     for ($i = 0; $i < $id_arr.length; $i++) {
 		var value = ref(data, $path_arr[$i]); //finds value of object
-		console.log(value);
         $('div#' + $id_arr[$i] + '').children('p').text(value);
     }
 }
@@ -225,27 +224,12 @@ function getCamData(data){
 	}
 	return pairs;
 }
-/*function populateCams(cam_arr){
-	for(var i =1; i<cam_arr.length; i++){
-		$('#content').append('<div class="imgCamContainer" id=cam'+i+'_'+cam_arr[i][0]+' style="background-image:url('+cam_arr[i][1]+'); display: none;"></div>');
-		$('#preload').append('<img id="preload_cam'+i+'_'+cam_arr[i][0]+'" >');
-		$('#feedSelect').append('<option value="cam'+i+'_'+cam_arr[i][0]+'">'+cam_arr[i][0]+'</option>');
-	}
-}*/
 function populateCams(cam_arr){
 	for(var i =1; i<cam_arr.length; i++){
 		$('#content').append('<div class="imgCamContainer" id=div_ws_'+cam_arr[i][0]+'image_url_x style="background-image:url('+cam_arr[i][1]+'); display: none;"></div>');
 		$('#preload').append('<img id="preload_div_ws_'+cam_arr[i][0]+'image_url_x" >');
 	}	
 }
-/*function createCam(){
-	var selection = $('#feedSelect').val();
-	console.log(selection);
-	$("#"+selection).css('display','inline');
-	$('.imgCamContainer').draggable({disabled: false}).resizable({disabled: false, aspectRatio: true});
-	preloadCam(selection);
-	
-}*/
 function createCamFromTree(tree_id){
 	var selection = tree_id;
 	console.log(selection+" this id");
@@ -253,10 +237,9 @@ function createCamFromTree(tree_id){
 	$('.imgCamContainer').draggable({disabled: false}).resizable({disabled: false, aspectRatio: true});
 	preloadCam(selection);
 }
-function refreshCams1(cam_arr){
+function refreshCams(cam_arr){
 	for(var i =1; i<cam_arr.length; i++){
 		if($('#div_ws_'+cam_arr[i][0]+'image_url_x').is(":visible")){
-			console.log('refreshed');
 			$('#preload_div_ws_'+cam_arr[i][0]+'image_url_x').attr('src',cam_arr[i][1]);
 			var src = $('#preload_div_ws_'+cam_arr[i][0]+'image_url_x').attr('src');
 			var cam = $('#div_ws_'+cam_arr[i][0]+'image_url_x');
@@ -266,19 +249,6 @@ function refreshCams1(cam_arr){
 		}
 	}
 }	
-function refreshCams(cam_arr){
-	for(var i =1; i<cam_arr.length; i++){
-		if($('#cam'+i+'_'+cam_arr[i][0]+'').is(":visible")){
-			$('#preload_cam'+i+'_'+cam_arr[i][0]).attr('src',cam_arr[i][1]);
-			var src = $('#preload_cam'+i+'_'+cam_arr[i][0]).attr('src');
-			var cam = $('#cam'+i+'_'+cam_arr[i][0]+'');
-			$('#preload_cam'+i+'_'+cam_arr[i][0]+'').load(function() {
-				$(cam).css('background-image', 'url(' + src + ')');
-			});
-		}
-	}
-}
-
 function preloadCam(selection){
 	var url = $('#'+selection).css('background-image').replace(/^url\(["']?/, '').replace(/["']?\)$/, ''); //gets url from background-image prop
 	$('#preload_'+selection).attr('src', url);
@@ -424,7 +394,7 @@ function data_update(data) {
     started = true; //sets our boolean to true so the above only executes once
     $('#ws_status').text('Connected');
     $('#ws_status').css('color', 'green');
-	refreshCams1(cams);
+	refreshCams(cams);
     dynamicUpdate(id_arr, path_arr, data); //updates all data cells to their current values
 	
 
