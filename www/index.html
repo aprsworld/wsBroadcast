@@ -364,6 +364,7 @@ function data_update(data) {
 						$('#div_'+id).css('position', 'absolute');
 						$('#div_'+id).css('top',pageY);
 						$('#div_'+id).css('left',pageX);
+					cellCount++;
 					}
 					else{
 						$('.top-container').append('<div class="tr draggable" id="' + (cellCount) + '"><div class="td dg-arrange-table-rows-drag-icon"></div><div class="td myTableID"> ID: <span>' + (cellCount) + '</span> </div><div class="td myTableTitle"><input title="Original text: '+ id_arr[cellCount] +'" class="titleEdit" type="text"></input><input title="Add a unit label -- Example: &deg;C" class="labelEdit" placeholder="Add a unit label" type="text"></input><p class="titleText">' + id_arr[cellCount] + '</p></div><div class="td myTableValue" id="' + id_arr[cellCount] + '"><p>Loading...</p> <span class="label"></span></div><div class="td dg-arrange-table-rows-close-icon"><span>Hide:</span><input autocomplete="off" class="checkBox" type="checkbox"></div></div>');
