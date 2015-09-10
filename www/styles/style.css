@@ -363,18 +363,18 @@ div.logo_container{
 	position: absolute;
 	top: 15%;
 	left: 20%;
-	height: 224px;
-	width: 400px;
 	z-index: 0;
+	width: 500px;
+	height: 300px;
 	background-repeat: no-repeat;
 	background-position: center; 
 	background-size: contain;
 }
-.textBlockContainer h2{
-	color: #333;
-}
+
 .textBlockContainer p{
 	color: #333;
+	margin: 0;
+	padding: 0;
 }
 .container .myTableValue{
 	width: 65%;

@@ -232,10 +232,12 @@ function populateCams(cam_arr){
 }
 function createCamFromTree(tree_id){
 	var selection = tree_id;
-	console.log(selection+" this id");
 	$("#div_"+selection).css('display','inline');
 	$('.imgCamContainer').draggable({disabled: false}).resizable({disabled: false, aspectRatio: true});
 	preloadCam(selection);
+	$('#preload_div_'+selection).load(function() {
+		console.log($('#preload_div_'+selection).naturalWidth);
+	});
 }
 function refreshCams(cam_arr){
 	for(var i =1; i<cam_arr.length; i++){
@@ -243,16 +245,13 @@ function refreshCams(cam_arr){
 			$('#preload_div_ws_'+cam_arr[i][0]+'image_url_x').attr('src',cam_arr[i][1]);
 			var src = $('#preload_div_ws_'+cam_arr[i][0]+'image_url_x').attr('src');
 			var cam = $('#div_ws_'+cam_arr[i][0]+'image_url_x');
-			$('#preload_div_ws_'+cam_arr[i][0]+'image_url_x').load(function() {
-				$(cam).css('background-image', 'url(' + src + ')');
-			});
 		}
 	}
 }	
 function preloadCam(selection){
 	var url = $('#'+selection).css('background-image').replace(/^url\(["']?/, '').replace(/["']?\)$/, ''); //gets url from background-image prop
-	$('#preload_'+selection).attr('src', url);
-	
+	$('#preload_div_'+selection).attr('src', url);
+
 }
 /* resets div positions to a selected saved state*/
 function resetTable($originalTable) {
@@ -299,8 +298,8 @@ function fontSizeChange(direction, id){
 function timer(){
 	camTime = camTime+1;
 	time = time+1;
-	$('#timer').text("Table data from approximately " + time + " seconds ago ");
-	$('#camTimer').text("Camera image from approximately " + camTime + " seconds ago");
+	$('#timer').text("Last data received" + time + " seconds ago ");
+	//$('#camTimer').text("Camera image from approximately " + camTime + " seconds ago");
 	if(time > 30){
 		$('#timer').text("30+ seconds since last data received. Try refreshing your browser window.");
 	}
@@ -507,7 +506,7 @@ function disableEdit() {
     $('#editTable').text('Modify Table');
     $('#editTable').attr('onclick', 'editTable()');
 }
-function createText(){
+/*function createText1(){
 //unhide inputs
 	$('#createTextTitle').show();
 	$('#createTextBody').show();
@@ -535,7 +534,7 @@ function submitText(){
 		textBlock.id = "block"+index;
 	//append h2 holding title text
 		$(textBlock).append('<h2>'+textTitle+'</h2>');
-	/*get text content from text area and append it to our div*/
+	//get text content from text area and append it to our div
 		$(textBlock).append('<p>'+textContent+'</p>');
 		$('#content').append(textBlock);
 		textBlocks.push("block"+index);
@@ -557,7 +556,38 @@ function submitText(){
 		$('#createTextTitle').hide();
 		$('#createTextBody').hide();	
 	}
+}*/
+function createText(){
+	var textBlock, textTitle, textContent, title, index;
+	
+	index = textBlocks.length;
+	//set default text
+	textContent = "Click to change text";
+	//create a div to hold the text
+	textBlock = document.createElement("div");
+	textBlock.className = "textBlockContainer";
+	//incremental ID attribute
+	textBlock.id = "block"+index;
+	//appends a textblock to the div with our default text
+	$(textBlock).append('<p>'+textContent+'</p>');
+	//appends the textblock to the page
+	$('#content').append(textBlock);
+	//pushes our id to the global array
+	textBlocks.push("block"+index);
+	//makes block draggable and resizable
+	$("#block"+index).draggable({
+					start: function(event, ui) {
+						$(this).addClass('draggable_focus_in');
+					},
+					stop: function(event, ui) {
+						$(this).removeClass('draggable_focus_in');
+					}
+					}).resizable({ 
+						minHeight: 65,
+						minWidth: 150,
+					});	
 }
+	
 function createImage(){
 //unhide inputs
 	$('#createTextTitle').hide();
@@ -605,26 +635,29 @@ var editWindow =  function() {
 	console.log($(this));
 	
 	if($(this).hasClass('textBlockContainer')){
-		$('#titleRow, #bodyRow, #fontSizeRow').show();
+		$('#bodyRow, #fontSizeRow').show();
 		
-		title = $(this).children('h2');
+		id = $(this).attr('id');
 		body = $(this).children('p');
-		$(titleChange).val(title.text());
 		$(bodyChange).val(body.text());
-		$('.editWindow h2').text('Edit ' + title.text() + "text block");
 		
-		//title change event handler		
-		$( document ).off( "keyup", "input.titleChange"); //unbind old events, and bind a new one		
-		$( document ).on( "keyup", "input.titleChange" , function() {	
-			title.text(titleChange.val());
-		});
+		fontPlus.attr('onclick', "fontSizeChange('increase','"+ id +"')");
+		fontMinus.attr('onclick', "fontSizeChange('decrease','"+ id +"')");					 
+		fontSize.val($(this).css('font-size').slice(0, - 2));	//takes 'px' off end
 
+		//fontsize input change event handler
+		$( document ).off( "keyup", "input#fontSize") //unbind old events, and bind a new one
+		$( document ).on( "keyup", "input#fontSize" , function() {	
+			fontsize = $('#'+id).css('font-size');
+			$('#'+id).css('font-size', fontSize.val());				
+		});
+		
 		$( document ).off( "keyup", "textarea.bodyChange"); //unbind old events, and bind a new one		
 		$( document ).on( "keyup", "textarea.bodyChange" , function() {	
 			body.text(bodyChange.val());
 		});
 	}
-	if($(this).hasClass('imgBlockContainer')){
+	else if($(this).hasClass('imgBlockContainer')){
 		$('#urlRow').show();
 		
 		url = $(this).find('img');
@@ -640,7 +673,7 @@ var editWindow =  function() {
 		});
 		
 	}
-	if($(this).hasClass('tr')){
+	else if($(this).hasClass('tr')){
 		$('#titleRow, #labelRow, #fontSizeRow').show();
 		
 		title = $(this).children('.myTableTitle').children('p');
@@ -745,6 +778,8 @@ function showModule(id) {
 	$('#hideModule').attr('onclick', "hideModule('"+ id +"')");
 	$('#hideModule').text('hide selected');
 }
+	
+//function that allows for the safe decoding of html entities	
 function htmlEntities(str) {
    	var decoded = $('<div/>').html(str).text();
 	return decoded
@@ -823,7 +858,7 @@ function htmlEntities(str) {
 <div id="statusBar">
 	<span id="timer"> loading data... </span>
 	<button id="masterEdit" onclick="edit()"> </button>
-	<span id="camTimer"> loading data... </span>
+	<span id="camTimer"> Edit Window </span>
 
 </div>
 <div class="editWindow" class="editWindowRow">
