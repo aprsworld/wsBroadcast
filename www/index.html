@@ -506,57 +506,6 @@ function disableEdit() {
     $('#editTable').text('Modify Table');
     $('#editTable').attr('onclick', 'editTable()');
 }
-/*function createText1(){
-//unhide inputs
-	$('#createTextTitle').show();
-	$('#createTextBody').show();
-	$('#createTextTitle').val('');
-	$('#createTextBody').val('');
-	$('#createImageURL').hide();
-	$('#createText').text('Submit Text');
-	$('#createImg').text('Create Image');
-//change function of button
-    $('#createImg').attr('onclick', 'createImage()');
-    $('#createText').attr('onclick', 'submitText()');
-}
-function submitText(){
-	var textBlock, textTitle, textContent, title, index;
-//index is the size of our global array - this is used to create distinct ids for each textbox so that they may be referenced later on
-	index = textBlocks.length;
-//get title text from our input field
-	textTitle = $('#createTextTitle').val();
-//get content text from our body text area
-	textContent = $('#createTextBody').val();
-//create a div to hold our information
-	if(textContent != "" || textTitle != ""){
-		textBlock = document.createElement("div");
-		textBlock.className = "textBlockContainer";
-		textBlock.id = "block"+index;
-	//append h2 holding title text
-		$(textBlock).append('<h2>'+textTitle+'</h2>');
-	//get text content from text area and append it to our div
-		$(textBlock).append('<p>'+textContent+'</p>');
-		$('#content').append(textBlock);
-		textBlocks.push("block"+index);
-	//make our div draggable and resizable
-		$("#block"+index).draggable({
-					start: function(event, ui) {
-						$(this).addClass('draggable_focus_in');
-					},
-					stop: function(event, ui) {
-						$(this).removeClass('draggable_focus_in');
-					}
-				}).resizable({ 
-					minHeight: 70,
-					minWidth: 150,
-				});	
-	//reset buttons, input fields, and control div back to defaults
-		$('#createText').text('Create Text');
-		$('#createText').attr('onclick', 'createText()');
-		$('#createTextTitle').hide();
-		$('#createTextBody').hide();	
-	}
-}*/
 function createText(){
 	var textBlock, textTitle, textContent, title, index;
 	
