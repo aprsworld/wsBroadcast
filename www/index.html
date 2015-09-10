@@ -603,7 +603,10 @@ var editWindow =  function() {
 		
 		$( document ).off( "keyup", "textarea.bodyChange"); //unbind old events, and bind a new one		
 		$( document ).on( "keyup", "textarea.bodyChange" , function() {	
-			body.text(bodyChange.val());
+			var enteredText = bodyChange.val();
+			//allows line breaks and consecutive spaces but also replaces "<" with the entity to remove possibility of script injection
+			enteredText = enteredText.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g,  "<br>").replace(/ /g, " &nbsp;");
+			$(body).html(enteredText);
 		});
 	}
 	else if($(this).hasClass('imgBlockContainer')){
@@ -641,7 +644,6 @@ var editWindow =  function() {
 			fontsize = $('#'+id).css('font-size');
 			$('#'+id).css('font-size', fontSize.val());				
 		});
-		//TODO: find a way to make a tool tip that includes the original text
 		//title change event handler
 		$( document ).off( "keyup", "input.titleChange"); //unbind old events, and bind a new one
 		$( document ).on( "keyup", "input.titleChange" , function() {	
