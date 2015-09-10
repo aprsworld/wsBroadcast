@@ -578,7 +578,6 @@ var editWindow =  function() {
 	fontPlus = $('#fontSizePlus');
 	fontMinus = $('#fontSizeMinus');
 	$('#titleRow, #labelRow, #urlRow, #bodyRow, #fontSizeRow').hide();
-	
 	$('.editWindow').show(150);
 	selectedModule = $(this).attr('id');
 	console.log($(this));
@@ -757,6 +756,7 @@ function htmlEntities(str) {
 			</div>
 				<div class="controls">
 					<h2> Station Tree </h2>
+					<hr>
 					<!--<div class="controlRow">
 						<span class="verticalAlign"></span>
 						<button id="editTable" onclick="editTable();">Modify Table</button>
@@ -814,6 +814,7 @@ function htmlEntities(str) {
 </div>
 <div class="editWindow" class="editWindowRow">
 	<h2> Edit Cell </h2>
+	<hr>
 	<div id="titleRow" class="editWindowRow">
 		<span> Edit Title </span><input title="" class="titleChange" type="text"></input>
 	</div>	
@@ -824,7 +825,7 @@ function htmlEntities(str) {
 		<span> Edit URL </span><input title="" class="urlChange" type="text" placeholder="Change URL"></input>
 	</div>
 	<div id="bodyRow" class="editWindowRow">
-		<span> Edit Body </span><textarea rows"6" title="" class="bodyChange" type="text" placeholder="Change Text"></textarea>
+		<span> Edit Body </span><textarea title="" class="bodyChange" type="text" placeholder="Change Text"></textarea>
 	</div>
 	<div id="fontSizeRow" class="editWindowRow">
 		<span> Font Size </span>
