@@ -225,22 +225,46 @@ function getCamData(data){
 	}
 	return pairs;
 }
-function populateCams(cam_arr){
+/*function populateCams(cam_arr){
 	for(var i =1; i<cam_arr.length; i++){
 		$('#content').append('<div class="imgCamContainer" id=cam'+i+'_'+cam_arr[i][0]+' style="background-image:url('+cam_arr[i][1]+'); display: none;"></div>');
 		$('#preload').append('<img id="preload_cam'+i+'_'+cam_arr[i][0]+'" >');
 		$('#feedSelect').append('<option value="cam'+i+'_'+cam_arr[i][0]+'">'+cam_arr[i][0]+'</option>');
 	}
+}*/
+function populateCams(cam_arr){
+	for(var i =1; i<cam_arr.length; i++){
+		$('#content').append('<div class="imgCamContainer" id=div_ws_'+cam_arr[i][0]+'image_url_x style="background-image:url('+cam_arr[i][1]+'); display: none;"></div>');
+		$('#preload').append('<img id="preload_div_ws_'+cam_arr[i][0]+'image_url_x" >');
+	}	
 }
-function createCam(){
+/*function createCam(){
 	var selection = $('#feedSelect').val();
 	console.log(selection);
 	$("#"+selection).css('display','inline');
 	$('.imgCamContainer').draggable({disabled: false}).resizable({disabled: false, aspectRatio: true});
 	preloadCam(selection);
 	
+}*/
+function createCamFromTree(tree_id){
+	var selection = tree_id;
+	console.log(selection+" this id");
+	$("#div_"+selection).css('display','inline');
+	$('.imgCamContainer').draggable({disabled: false}).resizable({disabled: false, aspectRatio: true});
+	preloadCam(selection);
 }
-	
+function refreshCams1(cam_arr){
+	for(var i =1; i<cam_arr.length; i++){
+		if($('div_ws_'+cam_arr[i][0]+'image_url_x').is(":visible")){
+			$('#preload_div_ws_'+cam_arr[i][0]+'image_url_x').attr('src',cam_arr[i][1]);
+			var src = $('#preload_div_ws_'+cam_arr[i][0]+'image_url_x').attr('src');
+			var cam = $('div_ws_'+cam_arr[i][0]+'image_url_x');
+			$('#preload_div_ws_'+cam_arr[i][0]+'image_url_x').load(function() {
+				$(cam).css('background-image', 'url(' + src + ')');
+			});
+		}
+	}
+}	
 function refreshCams(cam_arr){
 	for(var i =1; i<cam_arr.length; i++){
 		if($('#cam'+i+'_'+cam_arr[i][0]+'').is(":visible")){
@@ -253,6 +277,7 @@ function refreshCams(cam_arr){
 		}
 	}
 }
+
 function preloadCam(selection){
 	var url = $('#'+selection).css('background-image').replace(/^url\(["']?/, '').replace(/["']?\)$/, ''); //gets url from background-image prop
 	$('#preload_'+selection).attr('src', url);
@@ -363,25 +388,32 @@ function data_update(data) {
 					console.log("paths " + path_arr);
 					var pageX = event.pageX;
 					var pageY = event.pageY;
-					$('.top-container').append('<div class="tr draggable" id="' + (cellCount) + '"><div class="td dg-arrange-table-rows-drag-icon"></div><div class="td myTableID"> ID: <span>' + (cellCount) + '</span> </div><div class="td myTableTitle"><input title="Original text: '+ id_arr[cellCount] +'" class="titleEdit" type="text"></input><input title="Add a unit label -- Example: &deg;C" class="labelEdit" placeholder="Add a unit label" type="text"></input><p class="titleText">' + id_arr[cellCount] + '</p></div><div class="td myTableValue" id="' + id_arr[cellCount] + '"><p>Loading...</p> <span class="label"></span></div><div class="td dg-arrange-table-rows-close-icon"><span>Hide:</span><input autocomplete="off" class="checkBox" type="checkbox"></div></div>');
-					$(".draggable").draggable({ //makes our data cells draggable
-						disabled: true,
-						grid: [1, 1],
-						snap: true,
-						snapTolerance: 10,
-						start: function(event, ui) {
-							$(this).addClass('draggable_focus_in');
-						},
-						stop: function(event, ui) {
-							$(this).removeClass('draggable_focus_in');
-						}
-					}).resizable({});
-					$(".draggable").draggable({ disabled: false});
-					$('#'+cellCount).css('position', 'absolute');
-					$('#'+cellCount).css('top',pageY);
-					$('#'+cellCount).css('left',pageX);
+					if(id.indexOf("image_url") >= 0){
+						createCamFromTree(id);
+						$('#div_'+id).css('position', 'absolute');
+						$('#div_'+id).css('top',pageY);
+						$('#div_'+id).css('left',pageX);
+					}
+					else{
+						$('.top-container').append('<div class="tr draggable" id="' + (cellCount) + '"><div class="td dg-arrange-table-rows-drag-icon"></div><div class="td myTableID"> ID: <span>' + (cellCount) + '</span> </div><div class="td myTableTitle"><input title="Original text: '+ id_arr[cellCount] +'" class="titleEdit" type="text"></input><input title="Add a unit label -- Example: &deg;C" class="labelEdit" placeholder="Add a unit label" type="text"></input><p class="titleText">' + id_arr[cellCount] + '</p></div><div class="td myTableValue" id="' + id_arr[cellCount] + '"><p>Loading...</p> <span class="label"></span></div><div class="td dg-arrange-table-rows-close-icon"><span>Hide:</span><input autocomplete="off" class="checkBox" type="checkbox"></div></div>');
+						$(".draggable").draggable({ //makes our data cells draggable
+							disabled: true,
+							grid: [1, 1],
+							snap: true,
+							snapTolerance: 10,
+							start: function(event, ui) {
+								$(this).addClass('draggable_focus_in');
+							},
+							stop: function(event, ui) {
+								$(this).removeClass('draggable_focus_in');
+							}
+						}).resizable({});						
+						$(".draggable").draggable({ disabled: false});
+						$('#'+cellCount).css('position', 'absolute');
+						$('#'+cellCount).css('top',pageY);
+						$('#'+cellCount).css('left',pageX);
 					cellCount++;
-
+					}
 				}
 			});
 			
@@ -391,7 +423,7 @@ function data_update(data) {
     started = true; //sets our boolean to true so the above only executes once
     $('#ws_status').text('Connected');
     $('#ws_status').css('color', 'green');
-	refreshCams(cams);
+	refreshCams1(cams);
     dynamicUpdate(id_arr, path_arr, data); //updates all data cells to their current values
 	
 
@@ -790,12 +822,12 @@ function htmlEntities(str) {
 						<button id="loadState" onclick="resetTable(savedStates[$('#stateSelect').val()])">Load Table</button>
 					</div>-->
 					<div id="stationTree"></div>
-					<div class="controlRow">
+					<!--<div class="controlRow">
 						<select id="feedSelect">
 							
 						</select>
 						<button id="createFeed" onclick="createCam()">Create Cam</button>
-					</div>
+					</div>-->
 					<div class="controlRow">
 						<input id="createTextTitle" type="text" placeholder="Title"></input>
 						<input id="createImageURL" type="text" placeholder="Enter Image URL"></input>
@@ -815,9 +847,6 @@ function htmlEntities(str) {
 			</div>
 		</div>
 	</div>
-</div>
-<div id="footer">
-	<p>Powered by an <a href="http://www.aprsworld.com/"> APRS World, LLC</a> solution.</p>
 </div>
 <div id="statusBar">
 	<span id="timer"> loading data... </span>
