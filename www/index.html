@@ -119,7 +119,15 @@ function iterateStations(obj, stack, arr, lastk) {
 				}
 				jsonItem ["id"] = id;
 				jsonItem ["parent"] = parent;
-				jsonItem ["text"] = property;
+				console.log(obj['title']);
+				if('undefined' !== typeof obj[property]['title']){
+					jsonItem ["text"] = obj[property]['title'];
+					console.log('blah');
+
+				}
+				else{
+					jsonItem ["text"] = property;
+				}
 				jsonItem ["obj"] = {"path": stack + '.' + property};
 				arr.push(jsonItem)
                 lastk = property; //keeps track of last property which is stored in a global variable
@@ -131,7 +139,13 @@ function iterateStations(obj, stack, arr, lastk) {
 				var parent = ("ws_"+stack+"_x").replace(/\./g, "");
 				jsonItem ["id"] = id;
 				jsonItem ["parent"] = parent;
-				jsonItem ["text"] = property;
+				if('undefined' !== typeof property['title']){
+					jsonItem ["text"] = stack + '.' + property['title'];
+					console.log('blah');
+				}
+				else{
+					jsonItem ["text"] = property;
+				}
 				jsonItem ["obj"] = {"path": stack + '.' + property};
                 arr.push(jsonItem);
             }
@@ -347,6 +361,7 @@ function data_update(data) {
         		accept: '.jstree-leaf',
 				drop: function( event, ui ) {
 					var $element, $me, $newElement;
+					
 					$element = $(ui.draggable);
 					var id = $($element).attr('id');
 					var new_id = "div_"+id;
@@ -358,6 +373,7 @@ function data_update(data) {
 					console.log("paths " + path_arr);
 					var pageX = event.pageX;
 					var pageY = event.pageY;
+					//check if id contains image_url - if it does, then we create a camera feed, if it does not we create a data cell
 					if(id.indexOf("image_url") >= 0){
 						createCamFromTree(id);
 						$('#div_'+id).css('position', 'absolute');
@@ -829,9 +845,12 @@ function htmlEntities(str) {
 	</div>
 	<div id="fontSizeRow" class="editWindowRow">
 		<span> Font Size </span>
-		<button id="fontSizeMinus" onclick="">-</button>		
-		<input id="fontSize" type="text"> </input>
-		<button id="fontSizePlus" onclick="">+</button>
+		<div class="fontContainer">
+			<input id="fontSize" type="text"> </input>
+			<button id="fontSizePlus" onclick="">+</button>
+			<button id="fontSizeMinus" onclick="">-</button>		
+
+		</div>
 	</div>
 	<div >
 		<button id="hideModule"> Hide Selected</button>
