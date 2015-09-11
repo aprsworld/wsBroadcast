@@ -37,6 +37,9 @@ input{
 	background-color: #ddd;	
 	color: #333;
 }
+input:focus{
+	border-color: #0550a5;
+}
 select{
 	cursor: pointer;	
 }
@@ -461,8 +464,7 @@ div.logo_container{
 	padding: 1px;
 	font-size: 12px;
 	width: 12.2%;
-	min-width: 220px;
-	height: auto;
+	height: 75px;
 	display: inline-block;
 	border-radius: 5px;
 	z-index: 2;
@@ -664,6 +666,7 @@ div.logo_container{
 #stationTree{
 	padding-top: 10px;
 	background-color: rgba(255, 255, 255, 0.5);
+	margin-right: 5px;
 	margin-top: 20px;
 	float: left;
 	width: 100%;
@@ -671,7 +674,7 @@ div.logo_container{
 	overflow-y: auto;
 	box-shadow: inset 0px 0px 3px white;
 	text-align: left !important;
-
+	border: 3px solid #555;
 }
 
 /*Plugin fixes*/

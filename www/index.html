@@ -119,36 +119,45 @@ function iterateStations(obj, stack, arr, lastk) {
 				}
 				jsonItem ["id"] = id;
 				jsonItem ["parent"] = parent;
+				//checks for specific child properties of nested object - this will allow for dynamically adding units and titles to the cells
 				if('undefined' !== typeof obj[property]['title'] || 'undefined' !== typeof obj[property]['value'] || 'undefined' !== typeof obj[property]['units']){
 					jsonItem ["id"] = id;
 					jsonItem ["parent"] = parent;
+					//case for all three child properties existing
 					if('undefined' !== typeof obj[property]['title'] && 'undefined' !== typeof obj[property]['value'] && 'undefined' !== typeof obj[property]['units']){
 						jsonItem ["text"] = obj[property]['title'];
 						jsonItem ["obj"] = {"path": stack + '.' + property + ".value", "value": obj[property]['value'], "units": obj[property]['units'], "title": obj[property]['title']};
 					}
+					//case for missing title property
 					else if('undefined' !== typeof obj[property]['value'] && 'undefined' !== typeof obj[property]['units']){
 						jsonItem ["text"] = property;
 						jsonItem ["obj"] = {"path": stack + '.' + property + ".value", "value": obj[property]['value'], "units": obj[property]['units']};
 					}
+					//case for missing value property
 					else if('undefined' !== typeof obj[property]['title'] && 'undefined' !== typeof obj[property]['units']){
 						jsonItem ["obj"] = {"path": stack + '.' + property, "units": obj[property]['units'], "title": obj[property]['title']};
 					}
+					//case for missing units property
 					else if('undefined' !== typeof obj[property]['title'] && 'undefined' !== typeof obj[property]['value']){
 						jsonItem ["obj"] = {"path": stack + '.' + property + ".value", "value": obj[property]['value'], "title": obj[property]['title']};
 					}
+					//case fo rmissing units and value property
 					else if('undefined' !== typeof obj[property]['title']){
 						jsonItem ["obj"] = {"path": stack + '.' + property, "title": obj[property]['title']};						
 					}
+					//case for missing units and title property
 					else if('undefined' !== typeof obj[property]['value']){
 						jsonItem ["text"] = property;
 						jsonItem ["obj"] = {"path": stack + '.' + property + ".value"};						
 					}
+					//case for missing value and title property
 					else if('undefined' !== typeof obj[property]['units']){
 						jsonItem ["text"] = property;
 						jsonItem ["obj"] = {"path": stack + '.' + property, "units": obj[property]['units']};												
 					}
 					arr.push(jsonItem);
 				}
+				//if not child properties, recurssively call function once more to find next level of objects/properties
 				else{
 					jsonItem ["id"] = id;
 					jsonItem ["parent"] = parent;
@@ -332,13 +341,13 @@ function fontSizeChange(direction, id){
 function timer(){
 	camTime = camTime+1;
 	time = time+1;
-	$('#timer').text("Last data received" + time + " seconds ago ");
+	$('#timer').text("Last data received " + time + " seconds ago ");
 	//$('#camTimer').text("Camera image from approximately " + camTime + " seconds ago");
 	if(time > 30){
 		$('#timer').text("30+ seconds since last data received. Try refreshing your browser window.");
 	}
 	if(camTime > 90){
-		$('#camTimer').text("90+ seconds since last camera image received. Try refreshing your browser window.");	
+		//$('#camTimer').text("90+ seconds since last camera image received. Try refreshing your browser window.");	
 	}
 }
 /*function that periodically updates the data */
@@ -418,7 +427,7 @@ function data_update(data) {
 					cellCount++;
 					}
 					else{
-						$('.top-container').append('<div class="tr draggable" id="' + (cellCount) + '"><div class="td dg-arrange-table-rows-drag-icon"></div><div class="td myTableID"> ID: <span>' + (cellCount) + '</span> </div><div class="td myTableTitle"><input title="Original text: '+ title +'" class="titleEdit" type="text"></input><input title="Add a unit label -- Example: &deg;C" class="labelEdit" placeholder="Add a unit label" type="text"></input><p class="titleText">' + title + '</p></div><div class="td myTableValue" id="' + id_arr[cellCount] + '"><p>Loading...</p> <span class="label">'+ units +'</span></div><div class="td dg-arrange-table-rows-close-icon"><span>Hide:</span><input autocomplete="off" class="checkBox" type="checkbox"></div></div>');
+						$('.top-container').append('<div class="tr draggable" id="' + cellCount + '"><div class="td dg-arrange-table-rows-drag-icon"></div><div class="td myTableID"> ID: <span>' + title + '</span> </div><div class="td myTableTitle"><input title="Original text: '+ title +'" class="titleEdit" type="text"></input><input title="Add a unit label -- Example: &deg;C" class="labelEdit" placeholder="Add a unit label" type="text"></input><p class="titleText">' + title + '</p></div><div class="td myTableValue" id="' + id_arr[cellCount] + '"><p>Loading...</p> <span class="label">'+ units +'</span></div><div class="td dg-arrange-table-rows-close-icon"><span>Hide:</span><input autocomplete="off" class="checkBox" type="checkbox"></div></div>');
 						$(".draggable").draggable({ //makes our data cells draggable
 							disabled: true,
 							grid: [1, 1],
@@ -448,7 +457,6 @@ function data_update(data) {
     $('#ws_status').css('color', 'green');
 	refreshCams(cams);
     dynamicUpdate(id_arr, path_arr, data); //updates all data cells to their current values
-	
 
 	/*newImage = data.DEEPLAKE.image_url;
 //compares the last image url to the new image url and checks if it is different. If it is, it resets the timer for the camera.
@@ -623,7 +631,7 @@ function brokenImg(id){
 	$(id).closest('.imgBlockContainer').remove();
 }
 var editWindow =  function() {
-	var selectedModule, body, title, label, url, titleChange, labelChange, urlChange, id, value, submitButton, fontPlus, fontMinus, bodyChange, fontSize;
+	var selectedModule, body, title, label, url, titleChange, labelChange, urlChange, id, value, submitButton, fontPlus, fontMinus, bodyChange, fontSize, originalTitle;
 	titleChange = $('.titleChange');
 	labelChange = $('.labelChange');
 	bodyChange = $('.bodyChange');
@@ -685,7 +693,7 @@ var editWindow =  function() {
 		label = $(this).children('.myTableValue').children('.label');
 		value = $(this).children('.myTableValue');
 		id = $(this).children('.myTableValue').attr('id');
-		
+		originalTitle = $(this).children('.myTableID').children('span').text();
 
 		fontPlus.attr('onclick', "fontSizeChange('increase','"+ id +"')");
 		fontMinus.attr('onclick', "fontSizeChange('decrease','"+ id +"')");					 
@@ -714,10 +722,11 @@ var editWindow =  function() {
 		$( document ).on( "keyup", "input.labelChange" , function() {	
 			label.text(htmlEntities(labelChange.val()));
 		});
-		$('.editWindow h2').text('Edit cell');
+		$('.editWindow h2').text(title.text());
 		//tool tip shows original title
-		$(titleChange).attr('title','Original Title: '+id);
+		$(titleChange).attr('title','Original Title: '+originalTitle);
 		$(titleChange).val(title.text());
+		$(labelChange).val(label.text());
 	}
 	
 	if($("#"+selectedModule).hasClass('hide')){
