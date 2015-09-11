@@ -254,40 +254,50 @@ function getCamData(data){
 	var pairs = []; //array to hold serial key pairs
 	var serials; //names of each camera
 	var keys; //image url source for each camera
+	var path
 	var i = 0;
 	for(var k in data){
 		if( i = 0){
 			//do nothing since this is not a station	
 		}
 		else{
-			keys = (data[k]['image_url']);
-			serials = (data[k]['source_serial']);
-			pairs.push([serials, keys]);
+			for(var c in data[k]['cameras']){
+				var stationName = k;
+				var camNumber = c;
+				keys = (data[k]['cameras'][c]['image_url']);
+				serials = (data[k]['cameras'][c]['source_serial']);
+				path = stationName+"cameras"+camNumber;
+				pairs.push([serials, keys, path]);
+			}
 		}
 	}
 	return pairs;
 }
 function populateCams(cam_arr){
 	for(var i =1; i<cam_arr.length; i++){
-		$('#content').append('<div class="imgCamContainer" id=div_ws_'+cam_arr[i][0]+'image_url_x style="background-image:url('+cam_arr[i][1]+'); display: none;"></div>');
-		$('#preload').append('<img id="preload_div_ws_'+cam_arr[i][0]+'image_url_x" >');
+		$('#content').append('<div class="imgCamContainer" id=div_ws_'+cam_arr[i][2]+'image_url_x style="background-image:url('+cam_arr[i][1]+'); display: none;"></div>');
+		$('#preload').append('<img id="preload_div_ws_'+cam_arr[i][2]+'image_url_x" >');
 	}	
 }
 function createCamFromTree(tree_id){
 	var selection = tree_id;
+	console.log('create ' + tree_id);
 	$("#div_"+selection).css('display','inline');
 	$('.imgCamContainer').draggable({disabled: false}).resizable({disabled: false, aspectRatio: true});
 	preloadCam(selection);
 	$('#preload_div_'+selection).load(function() {
-		console.log($('#preload_div_'+selection).naturalWidth);
+		//console.log($('#preload_div_'+selection).naturalWidth);
 	});
 }
 function refreshCams(cam_arr){
 	for(var i =1; i<cam_arr.length; i++){
-		if($('#div_ws_'+cam_arr[i][0]+'image_url_x').is(":visible")){
-			$('#preload_div_ws_'+cam_arr[i][0]+'image_url_x').attr('src',cam_arr[i][1]);
-			var src = $('#preload_div_ws_'+cam_arr[i][0]+'image_url_x').attr('src');
-			var cam = $('#div_ws_'+cam_arr[i][0]+'image_url_x');
+		if($('#div_ws_'+cam_arr[i][2]+'image_url_x').is(":visible")){
+			$('#preload_div_ws_'+cam_arr[i][2]+'image_url_x').attr('src',cam_arr[i][1]);
+			var src = $('#preload_div_ws_'+cam_arr[i][2]+'image_url_x').attr('src');
+			var cam = $('#div_ws_'+cam_arr[i][2]+'image_url_x');
+			setTimeout(function(){ 
+				$(cam).css('background-image','url('+src+')');
+			}, 5000);
 		}
 	}
 }	
@@ -481,7 +491,7 @@ function data_start() {
         url_ajax: 'http://cam.aprsworld.com:8888/.data',
         url_ws: 'ws://cam.aprsworld.com:1228/.data'
     });
-    document.title = 'DEEPLAKE Station Monitor';
+    document.title = 'APRSWorld LLC, wsBroadcast System';
     $('#header').html('<div class="logo_container"> </div><h1>DEEPLAKE Station Monitor</h1>');
     $('#ws_status').text('Connecting...');
 }
@@ -624,6 +634,9 @@ function submitURL(){
 					aspectRatio: true
 				});	
 	}
+}
+function refreshTree(){
+	$('#stationTree').jstree("refresh");
 }
 /* function that removes an image if it returns a 404 error.*/
 function brokenImg(id){
@@ -854,10 +867,11 @@ function htmlEntities(str) {
 						<input id="createImageURL" type="text" placeholder="Enter Image URL"></input>
 						<textarea id="createTextBody" placeholder= "Text Body" rows"6"></textarea>
 						<button id="createText" onclick="createText()"> Create Text </button>
-						<button id="createImg" onclick="createImage()"> Create Image </button>
-						
+						<button id="createImg" onclick="createImage()"> Create Image </button>						
 					</div>
-					
+					<div class="controlRow">
+						<button id="refreshTree" onclick="refreshTree()"> Refresh Tree </button>						
+					</div>	
 					<div class="drag-handle"></div>
 				</div>
 		</div>
@@ -889,6 +903,9 @@ function htmlEntities(str) {
 	</div>
 	<div id="bodyRow" class="editWindowRow">
 		<span> Edit Body </span><textarea title="" class="bodyChange" type="text" placeholder="Change Text"></textarea>
+	</div>
+	<div id="backgroundColorRow" class="editWindowRow">
+		<span> Background Color </span><input title="Type in a color" class="backgroundColorChange" type="text" placeholder="Type in a color"></input>
 	</div>
 	<div id="fontSizeRow" class="editWindowRow">
 		<span> Font Size </span>

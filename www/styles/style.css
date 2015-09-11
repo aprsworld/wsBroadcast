@@ -349,7 +349,6 @@ div.logo_container{
 .container .myTableTitle p{
 	margin: 0;
 	padding: 0;
-	text-transform:capitalize;
 }
 .container .myTableTitle .titleEdit{
 	display: none;
@@ -631,6 +630,12 @@ div.logo_container{
 	font-size: 14px;
 	height: 150px;
 }
+.backgroundColorChange{
+	width: 100%;
+}
+.bodyChange:focus{
+	border-color:#0550a5;	
+}
 .urlChange{
 	width: 100%;
 }
@@ -638,12 +643,15 @@ div.logo_container{
 	margin-top: 15px;
 	width: 70%;
 }
-#titleRow, #labelRow, #urlRow, #bodyRow, #fontSizeRow{
+#titleRow, #labelRow, #urlRow, #bodyRow, #fontSizeRow, #backgroundColorRow{
 	display:none;	
 }
 #bodyRow{
 	height: auto;
 	min-height: 60px;
+}
+#backgroundColorRow span{
+	text-align: left;	
 }
 #bodyRow span{
 	text-align: left;	
