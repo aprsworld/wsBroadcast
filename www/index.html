@@ -297,7 +297,7 @@ function refreshCams(cam_arr){
 			var cam = $('#div_ws_'+cam_arr[i][2]+'image_url_x');
 			setTimeout(function(){ 
 				$(cam).css('background-image','url('+src+')');
-			}, 5000);
+			}, 5000); //temporary fix
 		}
 	}
 }	
@@ -629,10 +629,11 @@ function submitURL(){
 		$('#content').append('<div class="imgBlockContainer"><div class="cam-drag-handle"></div><img onerror="brokenImg(img'+index+')" id=img'+index+' alt=img'+index+' src='+imgURL+'></img></div>');
 		$(".imgBlockContainer").draggable({	});
 		$("#img"+index+"").resizable({ 
+					disabled: false,
 					minHeight: 70,
 					minWidth: 150,
 					aspectRatio: true
-				});	
+		});	
 	}
 }
 function refreshTree(){
@@ -764,6 +765,7 @@ function edit(handler) {
 	$('#content').delegate('.imgBlockContainer','click',editWindow);
 	
 	//enable draggables and resizables
+	$('.ui-icon').show();
 	$(".jstree-leaf").draggable({
 		helper: "clone"
 	});
@@ -771,6 +773,7 @@ function edit(handler) {
 	$(".draggable").draggable({ disabled: false}).resizable({disabled:false});
 	$('#ws_status').draggable({disabled: false}).resizable({disabled:false});
 	$('.textBlockContainer').draggable({disabled: false}).resizable({disabled: false});
+	$('.imgBlockContainer').draggable({disabled: false}).resizable({disabled: false});
 }
 function nonEdit(handler) {
 	$('#masterEdit').css('background-color',' rgba(222,222,222,.0)');
@@ -783,14 +786,16 @@ function nonEdit(handler) {
 	//delegate events
 	$('#content').undelegate('.textBlockContainer','click', editWindow);
 	$('.top-container').undelegate('.tr','click', editWindow);
-	$('#content').delegate('.imgBlockContainer','click',editWindow);
+	$('#content').undelegate('.imgBlockContainer','click',editWindow);
 
 	
 	//disable draggables and resizables
+	$('.ui-icon').hide();
 	$(".imgCamContainer").draggable({disabled: true}).resizable({disabled: true});
 	$(".draggable").draggable({ disabled: true}).resizable({ disabled: true });
 	$('#ws_status').draggable({disabled: true}).resizable({ disabled: true});
 	$('.textBlockContainer').draggable({disabled: true}).resizable({disabled: true});	
+	$('.imgBlockContainer').draggable({disabled: true}).resizable({disabled: true});	
 }
 function hideModule(id) {
 	$("#"+id).addClass('hide');
