@@ -119,12 +119,34 @@ function iterateStations(obj, stack, arr, lastk) {
 				}
 				jsonItem ["id"] = id;
 				jsonItem ["parent"] = parent;
-				console.log(obj['title']);
-				if('undefined' !== typeof obj[property]['title']){
+				if('undefined' !== typeof obj[property]['title'] || 'undefined' !== typeof obj[property]['value'] || 'undefined' !== typeof obj[property]['units']){
 					jsonItem ["id"] = id;
 					jsonItem ["parent"] = parent;
-					jsonItem ["text"] = obj[property]['title'];
-					jsonItem ["obj"] = {"path": stack + '.' + property + ".value", "value": obj[property]['value'], "units": obj[property]['units'], "title": obj[property]['title']};
+					if('undefined' !== typeof obj[property]['title'] && 'undefined' !== typeof obj[property]['value'] && 'undefined' !== typeof obj[property]['units']){
+						jsonItem ["text"] = obj[property]['title'];
+						jsonItem ["obj"] = {"path": stack + '.' + property + ".value", "value": obj[property]['value'], "units": obj[property]['units'], "title": obj[property]['title']};
+					}
+					else if('undefined' !== typeof obj[property]['value'] && 'undefined' !== typeof obj[property]['units']){
+						jsonItem ["text"] = property;
+						jsonItem ["obj"] = {"path": stack + '.' + property + ".value", "value": obj[property]['value'], "units": obj[property]['units']};
+					}
+					else if('undefined' !== typeof obj[property]['title'] && 'undefined' !== typeof obj[property]['units']){
+						jsonItem ["obj"] = {"path": stack + '.' + property, "units": obj[property]['units'], "title": obj[property]['title']};
+					}
+					else if('undefined' !== typeof obj[property]['title'] && 'undefined' !== typeof obj[property]['value']){
+						jsonItem ["obj"] = {"path": stack + '.' + property + ".value", "value": obj[property]['value'], "title": obj[property]['title']};
+					}
+					else if('undefined' !== typeof obj[property]['title']){
+						jsonItem ["obj"] = {"path": stack + '.' + property, "title": obj[property]['title']};						
+					}
+					else if('undefined' !== typeof obj[property]['value']){
+						jsonItem ["text"] = property;
+						jsonItem ["obj"] = {"path": stack + '.' + property + ".value"};						
+					}
+					else if('undefined' !== typeof obj[property]['units']){
+						jsonItem ["text"] = property;
+						jsonItem ["obj"] = {"path": stack + '.' + property, "units": obj[property]['units']};												
+					}
 					arr.push(jsonItem);
 				}
 				else{
@@ -367,6 +389,7 @@ function data_update(data) {
 					var path = $('#stationTree').jstree(true).get_node(id).original.obj.path;
 					var value = $('#stationTree').jstree(true).get_node(id).original.obj.value; 
 					var units;
+					
 					if($('#stationTree').jstree(true).get_node(id).original.obj.units){
 						units = $('#stationTree').jstree(true).get_node(id).original.obj.units;
 					}
@@ -553,14 +576,16 @@ function createText(){
 	//pushes our id to the global array
 	textBlocks.push("block"+index);
 	//makes block draggable and resizable
-	$("#block"+index).draggable({
+	$(".textBlockContainer").draggable({
+					disabled: false,
 					start: function(event, ui) {
 						$(this).addClass('draggable_focus_in');
 					},
 					stop: function(event, ui) {
 						$(this).removeClass('draggable_focus_in');
 					}
-					}).resizable({ 
+					}).resizable({
+						disabled: false,
 						minHeight: 65,
 						minWidth: 150,
 					});	
@@ -716,14 +741,14 @@ function edit(handler) {
 	$('#content').delegate('.textBlockContainer','click', editWindow);	
 	$('#content').delegate('.imgBlockContainer','click',editWindow);
 	
-	//enable draggables
+	//enable draggables and resizables
 	$(".jstree-leaf").draggable({
 		helper: "clone"
 	});
 	$(".imgCamContainer").draggable({disabled: false}).resizable({disabled: false});
-	$(".draggable").draggable({ disabled: false});
-	$('#ws_status').draggable({disabled: false});
-
+	$(".draggable").draggable({ disabled: false}).resizable({disabled:false});
+	$('#ws_status').draggable({disabled: false}).resizable({disabled:false});
+	$('.textBlockContainer').draggable({disabled: false}).resizable({disabled: false});
 }
 function nonEdit(handler) {
 	$('#masterEdit').css('background-color',' rgba(222,222,222,.0)');
@@ -734,16 +759,16 @@ function nonEdit(handler) {
 	$('.editWindow').hide(150);
 	$('.controls').hide(200);
 	//delegate events
-	$('#container').undelegate('.textBlockContainer','click', editWindow);
+	$('#content').undelegate('.textBlockContainer','click', editWindow);
 	$('.top-container').undelegate('.tr','click', editWindow);
 	$('#content').delegate('.imgBlockContainer','click',editWindow);
 
 	
-	//disable draggables
+	//disable draggables and resizables
 	$(".imgCamContainer").draggable({disabled: true}).resizable({disabled: true});
-	$(".draggable").draggable({ disabled: true});
-	$('#ws_status').draggable({disabled: true});
-	
+	$(".draggable").draggable({ disabled: true}).resizable({ disabled: true });
+	$('#ws_status').draggable({disabled: true}).resizable({ disabled: true});
+	$('.textBlockContainer').draggable({disabled: true}).resizable({disabled: true});	
 }
 function hideModule(id) {
 	$("#"+id).addClass('hide');
