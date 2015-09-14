@@ -644,7 +644,7 @@ function brokenImg(id){
 	$(id).closest('.imgBlockContainer').remove();
 }
 var editWindow =  function() {
-	var selectedModule, body, title, label, url, titleChange, labelChange, urlChange, id, value, submitButton, fontPlus, fontMinus, bodyChange, fontSize, originalTitle;
+	var selectedModule, body, title, label, url, titleChange, labelChange, textColor, bgColor, urlChange, id, value, submitButton, fontPlus, fontMinus, bodyChange, fontSize, originalTitle;
 	titleChange = $('.titleChange');
 	labelChange = $('.labelChange');
 	bodyChange = $('.bodyChange');
@@ -652,7 +652,10 @@ var editWindow =  function() {
 	fontSize = $('#fontSize');
 	fontPlus = $('#fontSizePlus');
 	fontMinus = $('#fontSizeMinus');
-	$('#titleRow, #labelRow, #urlRow, #bodyRow, #fontSizeRow').hide();
+	bgColor = $('.backgroundColorChange');
+	textColor= $('.textColorChange');
+	
+	$('#titleRow, #labelRow, #urlRow, #bodyRow, #fontSizeRow, #backgroundColorRow, #textColorRow').hide();
 	$('.editWindow').show(150);
 	selectedModule = $(this).attr('id');
 	console.log($(this));
@@ -666,11 +669,13 @@ var editWindow =  function() {
 		});
 	}
 	else if($(this).hasClass('textBlockContainer')){
-		$('#bodyRow, #fontSizeRow').show();
+		$('#bodyRow, #fontSizeRow, #backgroundColorRow, #textColorRow').show();
 		$('.editWindow h2').text("Edit Text Block");
 		id = $(this).attr('id');
 		body = $(this).children('p');
-		$(bodyChange).val(body.text());
+		$(bodyChange).val(body.html());
+		$(bgColor).val($('#'+id).css('background-color'));
+		$(textColor).val($('#'+id).children('p').css('color'));
 		
 		fontPlus.attr('onclick', "fontSizeChange('increase','"+ id +"')");
 		fontMinus.attr('onclick', "fontSizeChange('decrease','"+ id +"')");					 
@@ -681,6 +686,18 @@ var editWindow =  function() {
 		$( document ).on( "keyup", "input#fontSize" , function() {	
 			fontsize = $('#'+id).css('font-size');
 			$('#'+id).css('font-size', fontSize.val());				
+		});
+		//background color input change event handler
+		$( document ).off( "keyup", "input.backgroundColorChange") //unbind old events, and bind a new one
+		$( document ).on( "keyup", "input.backgroundColorChange" , function() {	
+			var enteredColor = bgColor.val();
+			$('#'+id).css('background-color', enteredColor);				
+		});
+		//color input change event handler
+		$( document ).off( "keyup", "input.textColorChange") //unbind old events, and bind a new one
+		$( document ).on( "keyup", "input.textColorChange" , function() {	
+			var enteredTextColor = textColor.val();
+			$('#'+id).children('p').css('color', enteredTextColor);				
 		});
 		// delete event hanlder
 		$( document ).off( "click", "#deleteModule"); //unbind old events, and bind a new one
@@ -924,22 +941,25 @@ function htmlEntities(str) {
 	<h2> Edit Cell </h2>
 	<hr>
 	<div id="titleRow" class="editWindowRow">
-		<span> Edit Title </span><input title="" class="titleChange" type="text"></input>
+		<label> Edit Title </label><input title="" class="titleChange" type="text"></input>
 	</div>	
 	<div id="labelRow" class="editWindowRow">
-		<span> Edit Label </span><input title="Add a unit label" class="labelChange" type="text" placeholder="Add a Label"></input>
+		<label> Edit Label </label><input title="Add a unit label" class="labelChange" type="text" placeholder="Add a Label"></input>
 	</div>
 	<div id="urlRow" class="editWindowRow">
-		<span> Edit URL </span><input title="" class="urlChange" type="text" placeholder="Change URL"></input>
+		<label> Edit URL </label><input title="" class="urlChange" type="text" placeholder="Change URL"></input>
 	</div>
 	<div id="bodyRow" class="editWindowRow">
-		<span> Edit Body </span><textarea title="" class="bodyChange" type="text" placeholder="Change Text"></textarea>
+		<label id="editBodyLabel"> Edit Body </label><textarea title="" class="bodyChange" type="text" placeholder="Change Text"></textarea>
 	</div>
 	<div id="backgroundColorRow" class="editWindowRow">
-		<span> Background Color </span><input title="Type in a color" class="backgroundColorChange" type="text" placeholder="Type in a color"></input>
+		<label id="bgColorLabel"> Background Color</label><input title="Type in a color" class="backgroundColorChange" type="text" placeholder="Type in a color"></input>
+	</div>
+	<div id="textColorRow" class="editWindowRow">
+		<label id="textColorLabel"> Font Color</label><input title="Type in a color" class="textColorChange" type="text" placeholder="Type in a color"></input>
 	</div>
 	<div id="fontSizeRow" class="editWindowRow">
-		<span> Font Size </span>
+		<label id="fontSizeLabel"> Font Size </label>
 		<div class="fontContainer">
 			<input id="fontSize" type="text"> </input>
 			<button id="fontSizePlus" onclick="">+</button>

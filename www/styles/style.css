@@ -16,7 +16,7 @@ button{
 	-moz-border-radius: 5;
 	border-radius: 5px;
 	font-family: Arial;
-	color: #EEEEEE !important;
+	color: #CCC !important;
 	font-size: 16px;
 	padding-top: 5px;
 	padding-bottom: 5px;
@@ -34,8 +34,9 @@ button:hover{
 	text-decoration: none;	
 }
 input{
-	background-color: #ddd;	
+	background-color: #AAA;	
 	color: #333;
+	border-color: #333;
 }
 input:focus{
 	border-color: #0550a5;
@@ -239,10 +240,12 @@ div.logo_container{
 #fontSize{
 	float: left;
 	width: 30px;
-	background: #DDD;
+	background: #AAA;
+	border-color: #333;
 	border: 0;
 	color: #333;
 	height: 28px;
+	text-align: center;
 }
 #fontSizeMinus{
 	float: right;
@@ -584,23 +587,39 @@ div.logo_container{
 	box-shadow: 0px 0px 3px #222;
 }
 .editWindowRow{
-	height: 50px;
+	height: 30px;
 	width: 250px;
 	display: inline-block;
 	text-align: center;
 	margin: 10px;
-	margin-top: 15px;
-	margin-bottom: 15px;
+	margin-top: 10px;
+	margin-bottom: 10px;
 }
-.editWindowRow span{
+.editWindowRow input{
+	height: 28px;	
+}
+.editWindowRow label{
 	margin: 2px;
 	color: #999;
 	display: inline-block;
-	width: 100%;
+	width: 30%;
 	font-weight: 300;
-	text-align: middle;
+	text-align: center;
 	font-size: 16px;
 	margin-bottom: 5px;
+	margin-right: 15px;
+}
+#fontSizeLabel{
+	float: left;
+	margin-right: 20px !important;
+}
+#bgColorLabel, #textColorLabel{
+	float: left;
+	width: 98% !important;
+	text-align: left !important;
+}
+#editBodyLabel{
+	float: left;
 }
 .editWindow h2{
 	margin-top: 5px;
@@ -617,21 +636,23 @@ div.logo_container{
 	background-image: linear-gradient(to right, rgba(153, 153, 153, 0), rgba(153, 153, 153, 0.75), rgba(153, 153, 153, 0));
 }
 .titleChange{
-	width:100%;
+	width:60%;
 }
 .labelChange{
-	width: 100%;
+	width: 60%;
 }
 .bodyChange{
-	width: 100%;
-	background-color: #ddd;	
+	padding: 3px;
+	width: 95%;
+	background-color: #AAA;	
 	color: #333;
 	font-family: arial;
 	font-size: 14px;
 	height: 150px;
+	border-color: #333;
 }
-.backgroundColorChange{
-	width: 100%;
+.backgroundColorChange, .textColorChange{
+	width: 96%;
 }
 .bodyChange:focus{
 	border-color:#0550a5;	
@@ -647,12 +668,15 @@ div.logo_container{
 	margin-top: 15px;
 	width: 35%;
 }
-#titleRow, #labelRow, #urlRow, #bodyRow, #fontSizeRow, #backgroundColorRow{
+#titleRow, #labelRow, #urlRow, #bodyRow, #fontSizeRow, #backgroundColorRow, #textColorRow{
 	display:none;	
 }
 #bodyRow{
 	height: auto;
 	min-height: 60px;
+}
+#backgroundColorRow, #textColorRow{
+	height: 50px;	
 }
 #backgroundColorRow span{
 	text-align: left;	
