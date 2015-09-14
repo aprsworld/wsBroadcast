@@ -274,7 +274,7 @@ function getCamData(data){
 	return pairs;
 }
 function populateCams(cam_arr){
-	for(var i =1; i<cam_arr.length; i++){
+	for(var i =0; i<cam_arr.length; i++){
 		$('#content').append('<div class="imgCamContainer" id=div_ws_'+cam_arr[i][2]+'image_url_x style="background-image:url('+cam_arr[i][1]+'); display: none;"></div>');
 		$('#preload').append('<img id="preload_div_ws_'+cam_arr[i][2]+'image_url_x" >');
 	}	
@@ -290,7 +290,7 @@ function createCamFromTree(tree_id){
 	});
 }
 function refreshCams(cam_arr){
-	for(var i =1; i<cam_arr.length; i++){
+	for(var i =0; i<cam_arr.length; i++){
 		if($('#div_ws_'+cam_arr[i][2]+'image_url_x').is(":visible")){
 			$('#preload_div_ws_'+cam_arr[i][2]+'image_url_x').attr('src',cam_arr[i][1]);
 			var src = $('#preload_div_ws_'+cam_arr[i][2]+'image_url_x').attr('src');
@@ -657,10 +657,17 @@ var editWindow =  function() {
 	$('.editWindow').show(150);
 	selectedModule = $(this).attr('id');
 	console.log($(this));
-	
-	if($(this).hasClass('textBlockContainer')){
+	if($(this).hasClass('imgCamContainer')){
+		$('.editWindow h2').text("Edit Camera");
+		// delete event hanlder
+		$( document ).off( "click", "#deleteModule"); //unbind old events, and bind a new one
+		$( document ).on( "click", "#deleteModule" , function() {	
+			$("#"+selectedModule).hide();
+		});
+	}
+	else if($(this).hasClass('textBlockContainer')){
 		$('#bodyRow, #fontSizeRow').show();
-		
+		$('.editWindow h2').text("Edit Text Block");
 		id = $(this).attr('id');
 		body = $(this).children('p');
 		$(bodyChange).val(body.text());
@@ -668,7 +675,7 @@ var editWindow =  function() {
 		fontPlus.attr('onclick', "fontSizeChange('increase','"+ id +"')");
 		fontMinus.attr('onclick', "fontSizeChange('decrease','"+ id +"')");					 
 		fontSize.val($(this).css('font-size').slice(0, - 2));	//takes 'px' off end
-
+		
 		//fontsize input change event handler
 		$( document ).off( "keyup", "input#fontSize") //unbind old events, and bind a new one
 		$( document ).on( "keyup", "input#fontSize" , function() {	
@@ -690,6 +697,7 @@ var editWindow =  function() {
 	}
 	else if($(this).hasClass('imgBlockContainer')){
 		$('#urlRow').show();
+		$('.editWindow h2').text("Edit Image");
 		selectedModule = $(this).children().children('img').attr('id');
 		url = $(this).find('img');
 		$(urlChange).val(url.attr('src'));
@@ -712,7 +720,7 @@ var editWindow =  function() {
 	}
 	else if($(this).hasClass('tr')){
 		$('#titleRow, #labelRow, #fontSizeRow').show();
-		
+		$('.editWindow h2').text("Edit Cell");
 		title = $(this).children('.myTableTitle').children('p');
 		label = $(this).children('.myTableValue').children('.label');
 		value = $(this).children('.myTableValue');
@@ -751,7 +759,6 @@ var editWindow =  function() {
 		$( document ).on( "click", "#deleteModule" , function() {	
 			$("#"+selectedModule).remove();
 		});
-		$('.editWindow h2').text(title.text());
 		//tool tip shows original title
 		$(titleChange).attr('title','Original Title: '+originalTitle);
 		$(titleChange).val(title.text());
@@ -777,6 +784,8 @@ function edit(handler) {
 	$('.top-container').delegate('.tr','click', editWindow);
 	$('#content').delegate('.textBlockContainer','click', editWindow);	
 	$('#content').delegate('.imgBlockContainer','click',editWindow);
+	$('#content').delegate('.imgCamContainer','click',editWindow);
+
 	
 	//enable draggables and resizables
 	$('.ui-icon').show();
