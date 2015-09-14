@@ -641,7 +641,11 @@ div.logo_container{
 }
 #hideModule{
 	margin-top: 15px;
-	width: 70%;
+	width: 35%;
+}
+#deleteModule{
+	margin-top: 15px;
+	width: 35%;
 }
 #titleRow, #labelRow, #urlRow, #bodyRow, #fontSizeRow, #backgroundColorRow{
 	display:none;	

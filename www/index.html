@@ -736,20 +736,24 @@ var editWindow =  function() {
 		$( document ).on( "keyup", "input.labelChange" , function() {	
 			label.text(htmlEntities(labelChange.val()));
 		});
+		// delete event hanlder
+		$( document ).off( "click", "#deleteModule"); //unbind old events, and bind a new one
+		$( document ).on( "click", "#deleteModule" , function() {	
+			$("#"+selectedModule).remove();
+		});
 		$('.editWindow h2').text(title.text());
 		//tool tip shows original title
 		$(titleChange).attr('title','Original Title: '+originalTitle);
 		$(titleChange).val(title.text());
 		$(labelChange).val(label.text());
 	}
-	
 	if($("#"+selectedModule).hasClass('hide')){
 		$('#hideModule').attr('onclick', "showModule('"+ selectedModule +"')");
-		$('#hideModule').text('unhide selected');
+		$('#hideModule').text('Unhide selected');
 	}
 	else{
 		$('#hideModule').attr('onclick', "hideModule('"+ selectedModule +"')");
-		$('#hideModule').text('hide selected');
+		$('#hideModule').text('Hide selected');
 	}
 };
 function edit(handler) {
@@ -809,7 +813,6 @@ function showModule(id) {
 	$('#hideModule').attr('onclick', "hideModule('"+ id +"')");
 	$('#hideModule').text('hide selected');
 }
-	
 //function that allows for the safe decoding of html entities	
 function htmlEntities(str) {
    	var decoded = $('<div/>').html(str).text();
@@ -923,6 +926,7 @@ function htmlEntities(str) {
 	</div>
 	<div >
 		<button id="hideModule"> Hide Selected</button>
+		<button id="deleteModule"> Delete Selected </button>
 	</div>
 </div>
 </body>
