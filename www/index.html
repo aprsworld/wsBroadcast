@@ -420,7 +420,7 @@ function data_update(data) {
 						title = $('#stationTree').jstree(true).get_node(id).original.obj.title; 
 					}
 					else{
-						title = new_id;
+						title = $($element).text();
 					}
 					path_arr.push(path);
 					id_arr.push(new_id);
@@ -602,9 +602,7 @@ function createText(){
 						$(this).removeClass('draggable_focus_in');
 					}
 					}).resizable({
-						disabled: false,
-						minHeight: 65,
-						minWidth: 150,
+						disabled: false
 					});	
 }
 	
@@ -690,7 +688,6 @@ var editWindow =  function() {
 		//background color input change event handler
 		$( document ).off( "keyup", "input.backgroundColorChange") //unbind old events, and bind a new one
 		$( document ).on( "keyup", "input.backgroundColorChange" , function() {	
-			var enteredColor = bgColor.val();
 			$('#'+id).css('background-color', enteredColor);				
 		});
 		//color input change event handler
