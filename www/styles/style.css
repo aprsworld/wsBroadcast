@@ -408,20 +408,21 @@ div.logo_container{
 	height: 400px;
 	padding: 10px;
 	background-color: grey;
+	z-index: 0;
 }
 .imgBlockContainer{
 	position: absolute;
 	top: 15%;
 	left: 20%;
 	width: auto;
-	z-index: 90;
+	z-index: 1;
 	display: inline;
 }
 .imgCamContainer{
 	position: absolute;
 	top: 15%;
 	left: 20%;
-	z-index: 0;
+	z-index: 1;
 	width: 500px;
 	height: 300px;
 	background-repeat: no-repeat;
