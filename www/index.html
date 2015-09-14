@@ -692,7 +692,7 @@ var editWindow =  function() {
 		$( document ).on( "keyup", "textarea.bodyChange" , function() {	
 			var enteredText = bodyChange.val();
 			//allows line breaks and consecutive spaces but also replaces "<" with the entity to remove possibility of script injection
-			enteredText = enteredText.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "").replace(/\n/g,  "<br>").replace(/ /g, " &nbsp;");
+			enteredText = enteredText.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "").replace(/\n/g,  "<br>");
 			$(body).html(enteredText);
 		});
 	}
