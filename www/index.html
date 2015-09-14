@@ -675,7 +675,11 @@ var editWindow =  function() {
 			fontsize = $('#'+id).css('font-size');
 			$('#'+id).css('font-size', fontSize.val());				
 		});
-		
+		// delete event hanlder
+		$( document ).off( "click", "#deleteModule"); //unbind old events, and bind a new one
+		$( document ).on( "click", "#deleteModule" , function() {	
+			$("#"+selectedModule).remove();
+		});
 		$( document ).off( "keyup", "textarea.bodyChange"); //unbind old events, and bind a new one		
 		$( document ).on( "keyup", "textarea.bodyChange" , function() {	
 			var enteredText = bodyChange.val();
@@ -686,7 +690,7 @@ var editWindow =  function() {
 	}
 	else if($(this).hasClass('imgBlockContainer')){
 		$('#urlRow').show();
-		
+		selectedModule = $(this).children().children('img').attr('id');
 		url = $(this).find('img');
 		$(urlChange).val(url.attr('src'));
 		
@@ -697,6 +701,12 @@ var editWindow =  function() {
  			setTimeout(function () {
 				url.attr('src', urlChange.val());
 			}, 100);	 
+		});
+		
+		// delete event hanlder
+		$( document ).off( "click", "#deleteModule"); //unbind old events, and bind a new one
+		$( document ).on( "click", "#deleteModule" , function() {	
+			$("#"+selectedModule).parent().parent().remove();
 		});
 		
 	}
@@ -802,6 +812,7 @@ function nonEdit(handler) {
 	$('.imgBlockContainer').draggable({disabled: true}).resizable({disabled: true});	
 }
 function hideModule(id) {
+	console.log(id);
 	$("#"+id).addClass('hide');
 	$("#"+id).css('opacity','.2');
 	$('#hideModule').attr('onclick', "showModule('"+ id +"')");	
