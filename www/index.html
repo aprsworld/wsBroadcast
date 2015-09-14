@@ -663,6 +663,7 @@ var editWindow =  function() {
 		$( document ).off( "click", "#deleteModule"); //unbind old events, and bind a new one
 		$( document ).on( "click", "#deleteModule" , function() {	
 			$("#"+selectedModule).hide();
+			$('.editWindow').hide(150);
 		});
 	}
 	else if($(this).hasClass('textBlockContainer')){
@@ -686,6 +687,7 @@ var editWindow =  function() {
 		$( document ).off( "click", "#deleteModule"); //unbind old events, and bind a new one
 		$( document ).on( "click", "#deleteModule" , function() {	
 			$("#"+selectedModule).remove();
+			$('.editWindow').hide(150);
 		});
 		$( document ).off( "keyup", "textarea.bodyChange"); //unbind old events, and bind a new one		
 		$( document ).on( "keyup", "textarea.bodyChange" , function() {	
@@ -715,6 +717,7 @@ var editWindow =  function() {
 		$( document ).off( "click", "#deleteModule"); //unbind old events, and bind a new one
 		$( document ).on( "click", "#deleteModule" , function() {	
 			$("#"+selectedModule).parent().parent().remove();
+			$('.editWindow').hide(150);
 		});
 		
 	}
@@ -758,6 +761,7 @@ var editWindow =  function() {
 		$( document ).off( "click", "#deleteModule"); //unbind old events, and bind a new one
 		$( document ).on( "click", "#deleteModule" , function() {	
 			$("#"+selectedModule).remove();
+			$('.editWindow').hide(150);
 		});
 		//tool tip shows original title
 		$(titleChange).attr('title','Original Title: '+originalTitle);
