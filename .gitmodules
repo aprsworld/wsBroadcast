@@ -1,0 +1,3 @@
+[submodule "jsUtils"]
+	path = jsUtils
+	url = https://github.com/aprsworld/jsUtils

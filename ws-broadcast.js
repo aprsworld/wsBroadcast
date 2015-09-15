@@ -1,37 +1,5 @@
 var util = require('util');
-
-// TODO: Clean this up
-function merge_objects(o1, o2) {
-	var out = {};
-
-	if (typeof o1 !== 'object') {
-		return merge_objects(out, o2);
-	}
-
-	for (var p in o1) {
-		if (typeof o1[p] !== 'object') {
-			out[p] = o1[p];
-		} else {
-			out[p] = merge_objects({}, o1[p]);
-		}
-	}
-
-	if (typeof o2 !== 'object') {
-		return o2;
-	}
-
-	for (var q in o2) {
-		if (typeof o1[q] !== 'object') {
-			out[q] = o2[q];
-		} else if (typeof o2[q] === 'object') {
-			out[q] = merge_objects(o1[q], o2[q]);
-		} else {
-			out[q] = o2[q];
-		}
-	}
-
-	return out;
-}
+var om = require('./jsUtils');
 
 function decPad (num, size) {
 	var ret = '';
@@ -87,7 +55,7 @@ DataManager.prototype.update = function(data, dserv, source) {
 			} else {
 				data_origsub = { data: data[p] };
 			}
-			var data_newsub = merge_objects(data_origsub, {
+			var data_newsub = om.object_merge(data_origsub, {
 				'_bserver_': {
 					'dserv': dserv.info,
 					'source': source,
@@ -99,7 +67,7 @@ DataManager.prototype.update = function(data, dserv, source) {
 			});
 			data_new[p] = data_newsub;
 		}
-		this.data = merge_objects(this.data, data_new);
+		this.data = om.object_merge(this.data, data_new);
 	}
 	data = this.data;
 	//this.data = data;
@@ -177,7 +145,7 @@ function DataServer() {
 DataServer.prototype.setup = function(manager, defaults, config) {
 	this.manager = manager;
 	this.dserv = this;
-	this.config = merge_objects(defaults, config);
+	this.config = om.object_merge(defaults, config);
 	this.info = {};
 	this.info.name = this.config.server_name;
 	this.info.config = this.config;
