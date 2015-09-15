@@ -383,6 +383,7 @@ function data_update(data) {
         $(".controls").resizable({ //makes our controls div resizable and draggable
             minHeight: 70,
 			maxWidth: 250
+			
         });
         $(document).ready(function() {
 			setInterval(timer,1000);
@@ -393,7 +394,32 @@ function data_update(data) {
 			$(function () {$('#stationTree').jstree({ 'core' : {'multiple' : false, 'cache':false, 'data' : jsonArray}})});
 			$("#stationTree").bind("open_node.jstree", function (event,  data) {
 				$(".jstree-leaf").draggable({
-					helper: "clone"
+					helper: "clone",
+					start: function (event, ui) {
+						$('.controls').animate({
+							width: '10px'
+						},100);
+						$('.editWindow').animate({
+							width: '0px',
+							margin: '0',
+							padding: '0'
+						},50);
+						$('.controlRow').hide();
+						$('.controls h2').hide();
+						
+					},
+					stop: function (event, ui) {
+						$('.controls').animate({
+							width: '250px'
+						},200);
+						$('.editWindow').animate({
+							width: '280px',
+							margin: '10px',
+							padding: '20px'
+						},200);
+						$('.controlRow').show();
+						$('.controls h2').show();
+					}
 				});
 			});
 			$(".top-container").droppable({
@@ -654,7 +680,7 @@ var editWindow =  function() {
 	textColor= $('.textColorChange');
 	
 	$('#titleRow, #labelRow, #urlRow, #bodyRow, #fontSizeRow, #backgroundColorRow, #textColorRow').hide();
-	$('.editWindow').show(150);
+	$('.editWindow').show(150).draggable({});
 	selectedModule = $(this).attr('id');
 	console.log($(this));
 	if($(this).hasClass('imgCamContainer')){
@@ -688,6 +714,7 @@ var editWindow =  function() {
 		//background color input change event handler
 		$( document ).off( "keyup", "input.backgroundColorChange") //unbind old events, and bind a new one
 		$( document ).on( "keyup", "input.backgroundColorChange" , function() {	
+			var enteredColor = bgColor.val();
 			$('#'+id).css('background-color', enteredColor);				
 		});
 		//color input change event handler
