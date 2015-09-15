@@ -30,49 +30,33 @@ function DataManager() {
 	};
 	this.servers = [];
 	this.servers_count = 0;
-
-	var self = this;
-	setInterval(function() { self.timer.call(self); }, 10*1000);
+	this.updates = [];
 }
-DataManager.prototype.timer = function() {
-	if (!this.data._bserver_) {
-		console.log('FUBAR: _bserver_ unset!');
-		this.data._bserver_ = { uptime: 0 };
-	} else {
-		this.data._bserver_.uptime += 10;
-	}
-	return this.update(null);
-};
 
 DataManager.prototype.update = function(data, dserv, source) {
-	var ts = new Date();
-	if (data && typeof data === 'object') {
-		var data_new = {};
-		for (var p in data) {
-			var data_origsub;
-			if (typeof data[p] === 'object') {
-				data_origsub = data[p];
-			} else {
-				data_origsub = { data: data[p] };
-			}
-			var data_newsub = om.object_merge(data_origsub, {
-				'_bserver_': {
-					'dserv': dserv.info,
-					'source': source,
-					'date': ts.toUTCString(),
-					'uptime': this.data._bserver_.uptime,
-					'epoch_ms': ts.getTime(),
-					'epoch': Math.floor(ts.getTime() / 1000)
-				}
-			});
-			data_new[p] = data_newsub;
-		}
-		this.data = om.object_merge(this.data, data_new);
-	}
-	data = this.data;
-	//this.data = data;
 
-	/* send data to each server to broadcast */
+	// compose update
+	var ts = new Date();
+	var update = {
+		ts: ts,
+		data: data,
+		dserv: dserv,
+		source: source,
+		links: []
+	};
+	this.updates.push(update);
+
+	// merge update
+	om.object_merge_hooks.before = function(prop, dst, src) {
+		if (!dst || typeof dst !== 'object') {
+			// src._bserver_ = update;
+			update.links.push(src);
+		}
+		return src;
+	};
+	om.object_merge(this.data, data);
+
+	/* send update to each server for broadcast */
 	this.servers.forEach(function(serv) {
 		serv.broadcast(data);
 	});
@@ -145,7 +129,7 @@ function DataServer() {
 DataServer.prototype.setup = function(manager, defaults, config) {
 	this.manager = manager;
 	this.dserv = this;
-	this.config = om.object_merge(defaults, config);
+	this.config = om.object_merge({}, defaults, config);
 	this.info = {};
 	this.info.name = this.config.server_name;
 	this.info.config = this.config;
@@ -349,6 +333,7 @@ var serv_ws = new WebSocketDataServer(dm, {});
  */
 var TCPDataServerConfigDefaults = {
 	server_name:		'Server_TCP',
+	type:			'server',
 	port:			1229,
 	term:			0x0a,	// 0x0A for newline testing w/ telnet
 					// 0x00 for real release
@@ -361,8 +346,13 @@ function TCPDataServer(manager, config) {
 	if (config.port <= 0) { 
 		return false; // BUG: ?
 	}
-	
-	this.serv = net.createServer(function(c) {
+
+	var self = this;
+	this.connection_handler = function(oc) {
+		var c = oc;
+		if (!c) {
+			c = self.serv;
+		}
 		c.message_buffer = new Buffer(0);
 		c.process_buffer = function() {
 			var start = 0;
@@ -412,7 +402,16 @@ function TCPDataServer(manager, config) {
 			this.dserv.log(this.client_string + ' Message', data);
 			this.dserv.manager.update(data, this.dserv, this.info);
 		});
-	});
+	};
+
+	if (config.type == 'client') {
+		this.serv = net.createConnection(config.port, config.host, this.connection_handler);
+	} else if (config.type == 'server') {
+		this.serv = net.createServer(this.connection_handler);
+	} else {
+		// BUG: XXX:
+	}
+
 	this.hook();
 
 	// Send latest data on this port
@@ -422,12 +421,16 @@ function TCPDataServer(manager, config) {
 		});
 	}
 
-	this.serv.listen(config.port);
+	if (config.type == 'server') {
+		this.serv.listen(config.port);
+	}
 	return this;
 }
 util.inherits(TCPDataServer, DataServer);
 var serv_tcp = new TCPDataServer(dm, {});
 var serv_tcp2 = new TCPDataServer(dm, { 'port': 1230, 'mode': 'send' });
+
+var serv_tcp3 = new TCPDataServer(dm, { 'host': 'cam.aprsworld.com', 'port': 1230, 'type': 'client' });
 
 
 /* EOF */
