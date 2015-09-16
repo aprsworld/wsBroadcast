@@ -382,8 +382,7 @@ function data_update(data) {
         $("#ws_status").draggable({}); //makes the little green "connected" span draggable
         $(".controls").resizable({ //makes our controls div resizable and draggable
             minHeight: 70,
-			maxWidth: 250
-			
+			maxWidth: 250	
         });
         $(document).ready(function() {
 			setInterval(timer,1000);
@@ -463,7 +462,7 @@ function data_update(data) {
 					cellCount++;
 					}
 					else{
-						$('.top-container').append('<div class="tr draggable" id="' + cellCount + '"><div class="td dg-arrange-table-rows-drag-icon"></div><div class="td myTableID"> ID: <span>' + title + '</span> </div><div class="td myTableTitle"><input title="Original text: '+ title +'" class="titleEdit" type="text"></input><input title="Add a unit label -- Example: &deg;C" class="labelEdit" placeholder="Add a unit label" type="text"></input><p class="titleText">' + title + '</p></div><div class="td myTableValue" id="' + id_arr[cellCount] + '"><p>Loading...</p> <span class="label">'+ units +'</span></div><div class="td dg-arrange-table-rows-close-icon"><span>Hide:</span><input autocomplete="off" class="checkBox" type="checkbox"></div></div>');
+						$('.top-container').append('<div class="tr draggable" id="' + cellCount + '"><div class="td dg-arrange-table-rows-drag-icon"></div><div class="td myTableID"> ID: <span>' + title + '</span> </div><div class="td myTableTitle"><input title="Original text: '+ title +'" class="titleEdit" type="text"></input><input title="Add a unit label -- Example: &deg;C" class="labelEdit" placeholder="Add a unit label" type="text"></input><p class="titleText">' + title + '</p></div><div class="td myTableValue" id="' + id_arr[cellCount] + '"><p>Loading...</p><span class="path">'+ path +'</span><span class="label">'+ units +'</span></div><div class="td dg-arrange-table-rows-close-icon"><span>Hide:</span><input autocomplete="off" class="checkBox" type="checkbox"></div></div>');
 						$(".draggable").draggable({ //makes our data cells draggable
 							disabled: true,
 							grid: [1, 1],
@@ -483,13 +482,10 @@ function data_update(data) {
 					cellCount++;
 					}
 				}
-			});
-			
+			});		
         });
 	}
     started = true; //sets our boolean to true so the above only executes once
-    $('#ws_status').text('Connected');
-    $('#ws_status').css('color', 'green');
 	refreshCams(cams);
     dynamicUpdate(id_arr, path_arr, data); //updates all data cells to their current values
 
@@ -647,6 +643,7 @@ function createImage(){
 function submitURL(){
 	var imgURL, index;
 	index = imgBlocks.length;
+	imgBlocks.push("img"+index);
 	imgURL = $('#createImageURL').val();
 	if(imgURL != ""){
 		$('#content').append('<div class="imgBlockContainer"><div class="cam-drag-handle"></div><img onerror="brokenImg(img'+index+')" id=img'+index+' alt=img'+index+' src='+imgURL+'></img></div>');
@@ -660,7 +657,7 @@ function submitURL(){
 	}
 }
 function refreshTree(){
-	$('#stationTree').jstree("refresh");
+	$('#stationTree').jstree(true).refresh();
 }
 /* function that removes an image if it returns a 404 error.*/
 function brokenImg(id){
@@ -854,7 +851,7 @@ function nonEdit(handler) {
 	$('#content').undelegate('.textBlockContainer','click', editWindow);
 	$('.top-container').undelegate('.tr','click', editWindow);
 	$('#content').undelegate('.imgBlockContainer','click',editWindow);
-
+	$('#content').undelegate('.imgCamContainer','click',editWindow);
 	
 	//disable draggables and resizables
 	$('.ui-icon').hide();
@@ -881,6 +878,122 @@ function showModule(id) {
 function htmlEntities(str) {
    	var decoded = $('<div/>').html(str).text();
 	return decoded
+}
+/*A function that will iterate through all instances of the ".tr, .imgBlockContainer, .textBlockContainer, .imgCamContainer" class selectors
+and record all relevant data from the elements with these classes, create objects using the data as properties, and then load the objects into
+individual arrays for each type of selector class. once Each array has been created, a saved state array will encompass all of the data.*/
+function captureState(){
+	//saved_state array to hold individual object arrays
+	var saved_State = [];
+	//object arrays for different types of objects
+	var cells = [];
+	var text_Blocks = [];
+	var cameras = [];
+	var img_Blocks = [];
+	//object for storing data
+	var SavedElement = function SavedElement() {
+		//default attributes
+		SavedElement.prototype.top;
+		SavedElement.prototype.left;
+		SavedElement.prototype.width;
+		SavedElement.prototype.height;
+		SavedElement.prototype.fontSize;
+		SavedElement.prototype.fontColor;
+		SavedElement.prototype.bgColor;
+		SavedElement.prototype.id;
+		SavedElement.prototype.innerHTML;
+		SavedElement.prototype.src;
+		SavedElement.prototype.title;
+		SavedElement.prototype.label;
+		SavedElement.prototype.path;
+		SavedElement.prototype.divID;	
+		SavedElement.prototype.hidden;	
+		
+	}
+	//iterate through cells currently on screen
+	$( '.tr' ).each(function( index ) {
+		//create an instance of the SavedElement object
+		var savedCell = new SavedElement;
+		//set attributes to the values of the current cell
+		savedCell.top = $(this).css('top');
+		savedCell.left = $(this).css('left');
+		savedCell.width = $(this).css('width');
+		savedCell.height = $(this).css('height');
+		savedCell.title = $(this).children('.myTableTitle').children('.titleText').text();
+		savedCell.label = $(this).children('.myTableValue').children('.label').text();
+		savedCell.fontSize = $(this).children('.myTableValue').css('font-size');
+		savedCell.divID = $(this).attr('id');
+		savedCell.id = $(this).children('.myTableValue').attr('id');
+		savedCell.path = $(this).children('.myTableValue').children('.path').text();
+		if($(this).hasClass("hide")){
+				savedCell.hidden = true;
+		}
+		//push the object to the cell array
+		cells.push(savedCell);
+	});
+	//iterate through user created images
+	$( '.imgBlockContainer' ).each(function( index ) {
+		//create an instance of the SavedElement object
+		var savedImg = new SavedElement;
+		//set attributes to the values of the current image
+		savedImg.top = $(this).css('top');
+		savedImg.left = $(this).css('left');
+		savedImg.width = $(this).children('.ui-wrapper').children('img').css('width');
+		savedImg.height = $(this).children('.ui-wrapper').children('img').css('height');
+		savedImg.src = $(this).children('.ui-wrapper').children('img').attr('src');
+		savedImg.id = $(this).children('.ui-wrapper').children('img').attr('id');
+		if($(this).hasClass("hide")){
+				savedImg.hidden = true;
+		}
+		//push the object to the img_Blocks array
+		img_Blocks.push(savedImg);
+	});
+	//iterate through user created text
+	$( '.textBlockContainer' ).each(function( index ) {
+		//create an instance of the savedElement object
+		var savedText = new SavedElement;
+		//set attributes to the values of the current text block
+		savedText.top = $(this).css('top');
+		savedText.left = $(this).css('left');
+		savedText.width = $(this).css('width');
+		savedText.height = $(this).css('height');
+		savedText.fontSize = $(this).css('font-size');
+		savedText.fontColor = $(this).children('p').css('color');
+		savedText.bgColor = $(this).css('background-color');
+		savedText.divID = $(this).attr('id');
+		savedText.innerHTML = $(this).children('p').html();
+		if($(this).hasClass("hide")){
+				savedText.hidden = true;
+		}
+		//push the object to the img_Blocks array
+		text_Blocks.push(savedText);
+	});
+	//iterate through active cams
+	$( '.imgCamContainer' ).each(function( index ) {
+		var savedCam = new SavedElement;
+		if($(this).is(":visible") && !$(this).hasClass("hide")){
+			savedCam.top = $(this).css('top');
+			savedCam.left = $(this).css('left');
+			savedCam.width = $(this).css('width');
+			savedCam.height = $(this).css('height');
+			savedCam.divID = $(this).attr('id');
+		cameras.push(savedCam);	
+		}
+		else if($(this).hasClass("hide")){
+						savedCam.top = $(this).css('top');
+			savedCam.left = $(this).css('left');
+			savedCam.width = $(this).css('width');
+			savedCam.height = $(this).css('height');
+			savedCam.divID = $(this).attr('id');
+			if($(this).hasClass("hide")){
+				savedCam.hidden = true;
+			}
+		cameras.push(savedCam);		
+		}
+	});
+	//load our object arrays into the saved state array
+	saved_state = {"cells":cells, "text_Blocks":text_Blocks, "cameras":cameras, "img_Blocks":img_Blocks};
+	console.log(JSON.stringify(saved_state));
 }
 </script>
 <link rel="stylesheet" type="text/css" href="styles/style.css">
@@ -942,7 +1055,7 @@ function htmlEntities(str) {
 						<button id="createImg" onclick="createImage()"> Create Image </button>						
 					</div>
 					<div class="controlRow">
-						<button id="refreshTree" onclick="refreshTree()"> Refresh Tree </button>						
+						<button id="refreshTree" onclick="captureState()"> Refresh Tree </button>						
 					</div>	
 					<div class="drag-handle"></div>
 				</div>

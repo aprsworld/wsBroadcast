@@ -114,7 +114,7 @@ select{
 	display: inline-block;
 	margin-left: auto;
 	margin-right: auto;
-	margin-top: 10px;
+	margin-top: 5px;
 	height: auto;
 }
 .verticalAlign{
@@ -450,6 +450,9 @@ div.logo_container{
 	padding: 0;
 	display: inline-block;
 }
+.container .myTableValue .path{
+	display:none;	
+}
 .container .dg-arrange-table-rows-close-icon{
 	display: none;
 	width: 10%;
@@ -580,6 +583,7 @@ div.logo_container{
 	height: auto;
 	display: none;
 	background-color: rgba(0,0,0,.5);
+	border: 1px solid #000;
 	padding: 20px;
 	padding-top: 10px;
 	z-index: 2;
