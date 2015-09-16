@@ -291,13 +291,17 @@ function createCamFromTree(tree_id){
 }
 function refreshCams(cam_arr){
 	for(var i =0; i<cam_arr.length; i++){
+		var count = i;
 		if($('#div_ws_'+cam_arr[i][2]+'image_url_x').is(":visible")){
-			$('#preload_div_ws_'+cam_arr[i][2]+'image_url_x').attr('src',cam_arr[i][1]);
-			var src = $('#preload_div_ws_'+cam_arr[i][2]+'image_url_x').attr('src');
-			var cam = $('#div_ws_'+cam_arr[i][2]+'image_url_x');
-			setTimeout(function(){ 
-				$(cam).css('background-image','url('+src+')');
-			}, 5000); //temporary fix
+			$('#preload_div_ws_'+cam_arr[i][2]+'image_url_x').load(function() {
+				var src = $(this).attr('src');
+				var cam = $(this).attr('id').replace("preload_","");
+				console.log(cam);
+				//var cam = $('#div_ws_'+cam_arr[count][2]+'image_url_x');
+				$("#"+cam).css('background-image','url('+src+')');
+			});
+			$('#preload_div_ws_'+cam_arr[i][2]+'image_url_x').attr('src',cam_arr[i][1]);		
+			
 		}
 	}
 }	
@@ -980,7 +984,7 @@ function captureState(){
 		cameras.push(savedCam);	
 		}
 		else if($(this).hasClass("hide")){
-						savedCam.top = $(this).css('top');
+			savedCam.top = $(this).css('top');
 			savedCam.left = $(this).css('left');
 			savedCam.width = $(this).css('width');
 			savedCam.height = $(this).css('height');
