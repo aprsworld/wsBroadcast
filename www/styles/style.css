@@ -427,6 +427,10 @@ div.logo_container{
 	background-repeat: no-repeat;
 	background-position: center; 
 	background-size: contain;
+	-webkit-backface-visibility: hidden;
+	-moz-backface-visibility:    hidden;
+	-ms-backface-visibility:     hidden;
+	-webkit-transform: translate3d(0, 0, 0);
 }
 
 .textBlockContainer p{

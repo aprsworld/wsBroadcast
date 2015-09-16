@@ -248,8 +248,7 @@ function getStations(data){
 			iterateStations(k, "",station_arr, lastk);
 		}
 	}
-}
-	
+}	
 function getCamData(data){
 	var pairs = []; //array to hold serial key pairs
 	var serials; //names of each camera
@@ -289,17 +288,20 @@ function createCamFromTree(tree_id){
 		//console.log($('#preload_div_'+selection).naturalWidth);
 	});
 }
+	
+//function that refreshes cams and preloads the refreshed image before displaying it	
 function refreshCams(cam_arr){
+	//iterates through known cams
 	for(var i =0; i<cam_arr.length; i++){
-		var count = i;
+		//only finds cams that are visible
 		if($('#div_ws_'+cam_arr[i][2]+'image_url_x').is(":visible")){
+			//the camera image is not displayed until the image is done loading
 			$('#preload_div_ws_'+cam_arr[i][2]+'image_url_x').load(function() {
 				var src = $(this).attr('src');
 				var cam = $(this).attr('id').replace("preload_","");
-				console.log(cam);
-				//var cam = $('#div_ws_'+cam_arr[count][2]+'image_url_x');
 				$("#"+cam).css('background-image','url('+src+')');
 			});
+			//src is set after the .load() function
 			$('#preload_div_ws_'+cam_arr[i][2]+'image_url_x').attr('src',cam_arr[i][1]);		
 			
 		}
