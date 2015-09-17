@@ -16,21 +16,126 @@ function decPad (num, size) {
  * Data Manager
  */
 var fs = require('fs');
-function DataManager() {
+var DataManagerConfig = {
+	expire:		60
+};
+function DataManager(config) {
 	var ts = new Date();
-	this.data = {
-		_bserver_: {
-			uptime: 0,
-			start: {
-				date: ts.toUTCString(),
-				epoch_ms: ts.getTime(),
-				epoch: Math.floor(ts.getTime() / 1000)
-			}
+	this.meta = {
+		updated: {
+			date: null,
+			ms: 0
+		},
+		start: {
+			date: ts.toUTCString(),
+			epoch_ms: ts.getTime(),
+			epoch: Math.floor(ts.getTime() / 1000)
 		}
 	};
+	this.data = { _bserver_: this.meta };
 	this.servers = [];
 	this.servers_count = 0;
 	this.updates = [];
+	this.config = om.object_merge({}, DataManagerConfig, config);
+}
+
+function node_delete (data, node) {
+	// Node is a primative, do nothing
+	if (!data || typeof data !== 'object') {
+		return;
+	}
+
+	// Check all properties
+	// XXX: Does not handle hidden properties properly
+	for (p in data) {
+		var d = data[p];
+
+		// This *is* the droid you're looking for...
+		if (d === node) {
+			delete data[p];
+			continue;
+		}
+
+		// Recurse
+		node_delete(d, node);
+	}
+}
+
+DataManager.prototype.prune = function(ts_current) {
+
+	// Current time was not passed in
+	if (!ts_current) {
+		ts_current = new Date();
+	}
+
+	var ts = new Date(ts_current.getTime() - this.config.expire * 1000);
+	var updates = this.updates;
+	var i;
+	var links = [];
+
+	// Find all data to be pruned
+	for (i = 0; i < updates.length; i++) {
+		var update = updates[i];
+
+		// Don't prune if new enough
+		if (update.ts > ts) {
+			break;
+		}
+		
+		// Collect data to be pruned
+		for (var j in update.links) {
+			var link = update.links[j];
+			if (links.indexOf(link) >= 0) {
+				continue;
+			}
+			links.push(link);
+		}
+	}
+
+	// How much to prune, if nothing return immediately
+	if (i == 0) {
+		return 0;
+	}
+	var pruned = i;
+
+	// Make sure we don't prune new data
+	for (i = i; i < updates.length; i++) {
+		var update = updates[i];
+
+		// Check all new data
+		for (var j in update.links) {
+			var link = update.links[j];
+			var index = links.indexOf(link);
+			
+			// We don't want to prune this data
+			if (index >= 0) {
+				delete links[index];
+			}
+		}
+	}
+
+	// Nuke the actual data to be pruned
+	for (i in links) {
+		var link = links[i];
+		om.object_traverse(this.data, function(obj) {
+			if (!obj || typeof obj !== 'object') {
+				return;
+			}
+
+			for (var p in obj) {
+				if (obj[p] === link) {
+					delete obj[p];
+				}
+			}
+			return;
+		});
+	}
+
+	// Nuke the update references
+	this.updates = updates.slice(i);
+
+	// Return the number of updates pruned
+	return pruned;
 }
 
 DataManager.prototype.update = function(data, dserv, source) {
@@ -49,16 +154,32 @@ DataManager.prototype.update = function(data, dserv, source) {
 	// merge update
 	om.object_merge_hooks.before = function(prop, dst, src) {
 		if (!dst || typeof dst !== 'object') {
-			// src._bserver_ = update;
-			update.links.push(src);
+			// Update all sub-objects for pruning
+			om.object_traverse(src, function(obj) {
+				if (obj && typeof obj === 'object') {
+					//obj._bserver_ = update;
+					update.links.push(obj);
+				}
+			});
+		} else {
+			//dst._bserver_ = update;
+			update.links.push(dst);
 		}
 		return src;
 	};
-	om.object_merge(this.data, data);
 
+	// prune data
+	this.prune(ts);
+
+	// merge data
+	this.meta.updated.ms = ts.getTime() - this.meta.start.epoch;
+	this.meta.updated.date = ts.toUTCString();
+	om.object_merge(this.data, data, { _bserver_: this.meta });
+
+	var mdata = this.data;
 	/* send update to each server for broadcast */
 	this.servers.forEach(function(serv) {
-		serv.broadcast(data);
+		serv.broadcast(mdata);
 	});
 
 	/* log data to a file */
@@ -337,7 +458,8 @@ var TCPDataServerConfigDefaults = {
 	port:			1229,
 	term:			0x0a,	// 0x0A for newline testing w/ telnet
 					// 0x00 for real release
-	mode:			'recv'
+	mode:			'recv',
+	once:			true	// Disconnect after one update?
 };
 var net = require('net');
 function TCPDataServer(manager, config) {
@@ -417,7 +539,12 @@ function TCPDataServer(manager, config) {
 	// Send latest data on this port
 	if (config.mode == 'send') {
 		this.serv.on('connection', function (c) {
-			c.end(JSON.stringify(this.dserv.manager.data) + String.fromCharCode(config.term));
+			var data = JSON.stringify(this.dserv.manager.data) + String.fromCharCode(config.term);
+			if (config.once) {
+				c.end(data);
+			} else {
+				c.write(data);
+			}
 		});
 	}
 
@@ -430,7 +557,9 @@ util.inherits(TCPDataServer, DataServer);
 var serv_tcp = new TCPDataServer(dm, {});
 var serv_tcp2 = new TCPDataServer(dm, { 'port': 1230, 'mode': 'send' });
 
-var serv_tcp3 = new TCPDataServer(dm, { 'host': 'cam.aprsworld.com', 'port': 1230, 'type': 'client' });
+// TEMP
+var serv_tcp3 = new TCPDataServer(dm, { 'port': 1231, 'mode': 'send', once: false });
+var serv_tcp4 = new TCPDataServer(dm, { 'host': 'cam.aprsworld.com', 'port': 1230, 'type': 'client' });
 
 
 /* EOF */
