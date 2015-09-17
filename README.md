@@ -4,6 +4,8 @@ Node.js WebSockets Broadcast System.  Currently in heavy refactoring and develop
 
 Before the initial release it will be possible to pass in configuration parameters to the data manager and servers in order to customize the system.  The initial release should also be standards compliant except where commented where a deviation was made for compatiblity reasons and will be as compatible on the client side as humanly possible.
 
+This service requires the `node-getopt` package for parsing command line options.
+
 ## Data Manager
 
 This is the main object in this project despite being the simplest.  It basically just stores data that is to be broadcast and handles the broadcasting of this data to the servers which can be attached to it.
@@ -61,7 +63,8 @@ test.html is a simple Web Client that will display the data spit out from the sy
 ## Quick and Dirty Install
 
 * Install Node.js
-* `npm install --save ws`
+* `npm install node-getopt`
+* `npm install --save ws` _(SOON TO BE REPLACED)_
 * `npm install serve-static`
 * `npm install serve-index`
 * `npm install finalhandler`

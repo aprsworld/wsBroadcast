@@ -1,6 +1,35 @@
 var util = require('util');
 var om = require('./jsUtils');
 
+/*
+ * Process Command Line Options
+ */
+var config = {};
+var getopt = require('node-getopt').create([
+	['x',	'expire=SECS',	'Number of seconds to expire old data. [REQUIRED]'],
+	['l',	'log=DIR',	'Directory to log data into.'],
+	['h',	'help',		'Display this help.'],
+	['v',	'version',	'Display the version number.']
+])
+.on('log', function (argv, opt) {
+	// XXX: Make directory blah blah
+	config.log = opt;
+})
+.on('expire', function (argv, opt) {
+	var expire = Number.parseInt(opt.expire, 10);
+	console.log(util.inspect(expire));
+	if (Number.isNaN(expire) || expire <= 0) {
+		console.log('ERROR: expire must be a positive integer!');
+		getopt.showHelp();
+		process.exit(false);
+	}
+	config.expire = opt;
+})
+//.setHelp
+.bindHelp();
+
+var opt = getopt.parseSystem(); // Parse the command line
+
 function decPad (num, size) {
 	var ret = '';
 	while (Math.pow(10, --size) > num) {
@@ -17,7 +46,8 @@ function decPad (num, size) {
  */
 var fs = require('fs');
 var DataManagerConfig = {
-	expire:		60
+	expire:		null,
+	log:		null
 };
 function DataManager(config) {
 	var ts = new Date();
@@ -62,6 +92,11 @@ function node_delete (data, node) {
 }
 
 DataManager.prototype.prune = function(ts_current) {
+
+	// No expiration of data
+	if (!this.config.expire) {
+		return false;
+	}
 
 	// Current time was not passed in
 	if (!ts_current) {
@@ -183,13 +218,14 @@ DataManager.prototype.update = function(data, dserv, source) {
 	});
 
 	/* log data to a file */
+	if (this.config.log) { // XXX
 	var log_date = '' + ts.getUTCFullYear() + decPad(ts.getUTCMonth(), 2) + decPad(ts.getUTCDate(), 2);
 	var log_ts = ts.getUTCFullYear() + '-' + decPad(ts.getUTCMonth(), 2) + '-' + decPad(ts.getUTCDate(), 2) + ' ' + decPad(ts.getUTCHours(), 2) + ':' + decPad(ts.getUTCMinutes(), 2) + ':' + decPad(ts.getUTCSeconds(), 2);
 
 	// Open log file
 	var log_fd = -1;
 	try {
-		log_fd = fs.openSync('./datalog/' + log_date + '.json', 'a', 0644);
+		log_fd = fs.openSync(this.config.log + '/' + log_date + '.json', 'a', 0644);
 	} finally {
 		if (log_fd < 0) {
 			console.log('# DataLog: ERROR: Could not open log file - data not logged!');
@@ -209,6 +245,7 @@ DataManager.prototype.update = function(data, dserv, source) {
 
 	// Close log file
 	fs.closeSync(log_fd);
+	}
 
 	/* All Done */
 	return true;
@@ -232,7 +269,7 @@ DataManager.prototype.server_detach = function(serv) {
 	});
 	return true;
 };
-var dm = new DataManager();
+var dm = new DataManager(config);
 
 
 /*
