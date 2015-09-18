@@ -26,7 +26,7 @@ var getopt = require('node-getopt').create([
 	['v',	'version',	'Display the version number.']
 ])
 .on('version', function(argv, opt) {
-	console.log('v0.1.5');	// XXX
+	console.log('v0.0.0');	// XXX
 	process.exit(false);
 })
 .on('log', function (argv, opt) {
@@ -396,7 +396,7 @@ DataServer.prototype.broadcast = function(data) {
 var HTTPDataServerConfigDefaults = {
 	server_name:		'Server_HTTP',
 	port:			8888,
-	root_dir:		'www'
+	root_dir:		'WebClient'
 };
 var finalhandler = require('finalhandler');
 var http = require('http');
@@ -420,13 +420,13 @@ function HTTPDataServer(manager, config) {
 
 		// Request for data
 		var rurl = url.parse(req.url);
+		var refhost = "";
+		if (req.headers['referer']) {
+			var refurl = url.parse(req.headers['referer']);
+			refhost = refurl.protocol + "//" + refurl.host;
+		}
 		if (rurl.pathname == '/.data' || rurl.pathname == '/.data.json' || rurl.pathname == '/.data.dat') {
 			if (req.method == 'GET') {
-				var refhost = "";
-				if (req.headers['referer']) {
-					var refurl = url.parse(req.headers['referer']);
-					refhost = refurl.protocol + "//" + refurl.host;
-				}
 				// Work-around for IE problems with 'application/json' mimetype
 				if (rurl.pathname == '/.data.dat') {
 					res.writeHead(200, {
@@ -448,6 +448,15 @@ function HTTPDataServer(manager, config) {
 				));
 				res.end();
 				return;
+			}
+		} else if (rurl.pathname == '/.config') {
+			if (req.method == 'GET') {
+				res.writeHead(200, {
+					'Content-Type': 'application/json',
+					'Cache-Control': 'no-cache, no-store, must-revalidate',
+					'Expires': '0',
+					'Access-Control-Allow-Origin': refhost
+				});
 			}
 		}
 
