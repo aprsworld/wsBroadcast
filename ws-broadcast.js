@@ -1,3 +1,17 @@
+var version = {
+	commit: {
+		sha1: '$Format:%H$',
+		time: '$Format:%ci$',
+		name: '$Format:%cN$',
+		email: '$Format:%cE$',
+		signature: {
+			name: '$Format:%GS$',
+			type: '$Format:%G?$',
+			key: '$Format:%GK$'
+		}
+	},
+	refs: '$Format:%d$'
+};
 var util = require('util');
 var om = require('./jsUtils');
 
@@ -11,6 +25,10 @@ var getopt = require('node-getopt').create([
 	['h',	'help',		'Display this help.'],
 	['v',	'version',	'Display the version number.']
 ])
+.on('version', function(argv, opt) {
+	console.log('v0.1.5');	// XXX
+	process.exit(false);
+})
 .on('log', function (argv, opt) {
 	// XXX: Make directory blah blah
 	config.log = opt;
@@ -77,7 +95,7 @@ function node_delete (data, node) {
 
 	// Check all properties
 	// XXX: Does not handle hidden properties properly
-	for (p in data) {
+	for (var p in data) {
 		var d = data[p];
 
 		// This *is* the droid you're looking for...
@@ -105,12 +123,14 @@ DataManager.prototype.prune = function(ts_current) {
 
 	var ts = new Date(ts_current.getTime() - this.config.expire * 1000);
 	var updates = this.updates;
-	var i;
+	var i, j;
+	var update;
 	var links = [];
 
 	// Find all data to be pruned
+	var link;
 	for (i = 0; i < updates.length; i++) {
-		var update = updates[i];
+		update = updates[i];
 
 		// Don't prune if new enough
 		if (update.ts > ts) {
@@ -118,8 +138,8 @@ DataManager.prototype.prune = function(ts_current) {
 		}
 		
 		// Collect data to be pruned
-		for (var j in update.links) {
-			var link = update.links[j];
+		for (j in update.links) {
+			link = update.links[j];
 			if (links.indexOf(link) >= 0) {
 				continue;
 			}
@@ -128,19 +148,20 @@ DataManager.prototype.prune = function(ts_current) {
 	}
 
 	// How much to prune, if nothing return immediately
-	if (i == 0) {
+	if (i === 0) {
 		return 0;
 	}
 	var pruned = i;
 
 	// Make sure we don't prune new data
+	var index, p;
 	for (i = i; i < updates.length; i++) {
-		var update = updates[i];
+		update = updates[i];
 
 		// Check all new data
-		for (var j in update.links) {
-			var link = update.links[j];
-			var index = links.indexOf(link);
+		for (j in update.links) {
+			link = update.links[j];
+			index = links.indexOf(link);
 			
 			// We don't want to prune this data
 			if (index >= 0) {
@@ -151,13 +172,13 @@ DataManager.prototype.prune = function(ts_current) {
 
 	// Nuke the actual data to be pruned
 	for (i in links) {
-		var link = links[i];
+		link = links[i];
 		om.object_traverse(this.data, function(obj) {
 			if (!obj || typeof obj !== 'object') {
 				return;
 			}
 
-			for (var p in obj) {
+			for (p in obj) {
 				if (obj[p] === link) {
 					delete obj[p];
 				}
@@ -171,7 +192,7 @@ DataManager.prototype.prune = function(ts_current) {
 
 	// Return the number of updates pruned
 	return pruned;
-}
+};
 
 DataManager.prototype.update = function(data, dserv, source) {
 
