@@ -402,6 +402,7 @@ var finalhandler = require('finalhandler');
 var http = require('http');
 var serveIndex = require('serve-index');
 var serveStatic = require('serve-static');
+var memcache = require('memcache');
 var url = require('url');
 function HTTPDataServer(manager, config) {
 	HTTPDataServer.super_.call(this);
@@ -450,14 +451,55 @@ function HTTPDataServer(manager, config) {
 				return;
 			}
 		} else if (rurl.pathname == '/.config') {
+			res.writeHead(200, {
+				'Content-Type': 'application/json',
+				'Cache-Control': 'no-cache, no-store, must-revalidate',
+				'Expires': '0',
+				'Access-Control-Allow-Origin': refhost
+			});
+			var mc_client = new memcache.Client(11211, 'localhost');				mc_client.on('close', function() {
+				res.end();
+			});
+			mc_client.on('timeout', function() {
+				res.write('{"error": "memcached timeout!"}');
+			});
+			mc_client.on('error', function(e) {
+				res.write('{"error": "memcached error!"}');
+			});
+
 			if (req.method == 'GET') {
-				res.writeHead(200, {
-					'Content-Type': 'application/json',
-					'Cache-Control': 'no-cache, no-store, must-revalidate',
-					'Expires': '0',
-					'Access-Control-Allow-Origin': refhost
+				mc_client.on('connect', function() {
+					mc_client.get('wd_config', function(error, result) {
+						if (error) {
+							res.write('{"error": "memcached get error!"}');
+						} else {
+							res.write('{"result": ' + result + '}');
+						}
+						mc_client.close();
+					});
 				});
+				mc_client.connect();
+			} else if (req.method == 'POST') {
+				var data = '';
+				req.on('data', function(chunk) {
+					data = data + chunk;
+				});
+				req.on('end', function() {
+					mc_client.connect();
+				});
+				mc_client.on('connect', function() {
+					mc_client.set('wd_config', data, function(error, result) {
+						if (error) {
+							res.write('{"error": "memcached set error!"}');
+						} else {
+							res.write('{"result": "' + result + '"}');
+						}
+						mc_client.close();
+					});
+				});
+				
 			}
+			return;
 		}
 
 		// Static web request
