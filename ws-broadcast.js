@@ -1,3 +1,6 @@
+/*
+ * THAR BE DRAGONS
+ */
 var version = {
 	commit: {
 		sha1: '$Format:%H$',
@@ -14,39 +17,6 @@ var version = {
 };
 var util = require('util');
 var om = require('./jsUtils');
-
-/*
- * Process Command Line Options
- */
-var config = {};
-var getopt = require('node-getopt').create([
-	['x',	'expire=SECS',	'Number of seconds to expire old data. [REQUIRED]'],
-	['l',	'log=DIR',	'Directory to log data into.'],
-	['h',	'help',		'Display this help.'],
-	['v',	'version',	'Display the version number.']
-])
-.on('version', function(argv, opt) {
-	console.log('v0.0.0');	// XXX
-	process.exit(false);
-})
-.on('log', function (argv, opt) {
-	// XXX: Make directory blah blah
-	config.log = opt;
-})
-.on('expire', function (argv, opt) {
-	var expire = Number.parseInt(opt.expire, 10);
-	console.log(util.inspect(expire));
-	if (Number.isNaN(expire) || expire <= 0) {
-		console.log('ERROR: expire must be a positive integer!');
-		getopt.showHelp();
-		process.exit(false);
-	}
-	config.expire = opt;
-})
-//.setHelp
-.bindHelp();
-
-var opt = getopt.parseSystem(); // Parse the command line
 
 function decPad (num, size) {
 	var ret = '';
@@ -109,6 +79,7 @@ function node_delete (data, node) {
 	}
 }
 
+// XXX: DOES NOT PRUNE PRIMATIVES, ONLY OBJECTS
 DataManager.prototype.prune = function(ts_current) {
 
 	// No expiration of data
@@ -117,7 +88,7 @@ DataManager.prototype.prune = function(ts_current) {
 	}
 
 	// Current time was not passed in
-	if (!ts_current) {
+	if (ts_current === undefined) {
 		ts_current = new Date();
 	}
 
@@ -191,6 +162,7 @@ DataManager.prototype.prune = function(ts_current) {
 	this.updates = updates.slice(i);
 
 	// Return the number of updates pruned
+	console.log('*** pruned nodes: ' + pruned);
 	return pruned;
 };
 
@@ -206,6 +178,13 @@ DataManager.prototype.update = function(data, dserv, source) {
 		links: []
 	};
 	this.updates.push(update);
+
+	// Handle meta data
+	if (data._bserver_) {
+		data._bserver_.source = dserv.info;
+		this.meta.updated._bserver_ = data._bserver_;
+		delete data._bserver_;
+	}
 
 	// merge update
 	om.object_merge_hooks.before = function(prop, dst, src) {
@@ -290,7 +269,6 @@ DataManager.prototype.server_detach = function(serv) {
 	});
 	return true;
 };
-var dm = new DataManager(config);
 
 
 /*
@@ -517,7 +495,6 @@ function HTTPDataServer(manager, config) {
 	this.serv.listen(config.port);
 }
 util.inherits(HTTPDataServer, DataServer);
-var serv_http = new HTTPDataServer(dm, {});
 
 
 /*
@@ -551,11 +528,10 @@ WebSocketDataServer.prototype.broadcast = function(data) {
 		try {
 			client.send(JSON.stringify(data));
 		} catch (e) { // TODO: XXX:
-			console.log('ERROR: Sending to dead client.');
+			console.log('ERROR: Sending to client.');
 		}
 	});
 };
-var serv_ws = new WebSocketDataServer(dm, {});
 
 
 /*
@@ -577,6 +553,7 @@ function TCPDataServer(manager, config) {
 	if (config.port <= 0) { 
 		return false; // BUG: ?
 	}
+	this.clients = [];
 
 	var self = this;
 	this.connection_handler = function(oc) {
@@ -633,6 +610,13 @@ function TCPDataServer(manager, config) {
 			this.dserv.log(this.client_string + ' Message', data);
 			this.dserv.manager.update(data, this.dserv, this.info);
 		});
+
+		c.on('close', function() {
+			if (this.dserv.config.mode == 'send') {
+				var index = this.dserv.clients.indexOf(this);
+				this.dserv.clients = this.dserv.clients.splice(index, 1);
+			}
+		});
 	};
 
 	if (config.type == 'client') {
@@ -652,6 +636,7 @@ function TCPDataServer(manager, config) {
 			if (config.once) {
 				c.end(data);
 			} else {
+				this.dserv.clients.push(c);
 				c.write(data);
 			}
 		});
@@ -663,12 +648,145 @@ function TCPDataServer(manager, config) {
 	return this;
 }
 util.inherits(TCPDataServer, DataServer);
-var serv_tcp = new TCPDataServer(dm, {});
-var serv_tcp2 = new TCPDataServer(dm, { 'port': 1230, 'mode': 'send' });
+TCPDataServer.prototype.broadcast = function (data) {
+	var config = this.config;
+	if (config.mode == 'send') {
+		this.clients.forEach(function each(client) {
+			try {
+				client.write(JSON.stringify(data) + String.fromCharCode(config.term)); // BUG
+			} catch (e) { // TODO: XXX:
+				console.log('ERROR: Sending to dead client.');
+			}
+		});
+	}
+};
 
-// TEMP
-var serv_tcp3 = new TCPDataServer(dm, { 'port': 1231, 'mode': 'send', once: false });
-var serv_tcp4 = new TCPDataServer(dm, { 'host': 'cam.aprsworld.com', 'port': 1230, 'type': 'client' });
+
+/*
+ * Process Command Line Options
+ */
+var config = {	server_http: {
+			port: 8888
+		},
+		server_ws: {
+			port: 8889
+		},
+		recv_tcp: {
+			port: 1230,
+			mode: 'recv'
+		},
+		send_tcp: {
+			port: 1231,
+			mode: 'send',
+			once: true
+		},
+		server_tcp: {
+			port: 1337,
+			mode: 'send',
+			once: false
+		}
+};
+var getopt = require('node-getopt').create([
+	['x',	'expire=SECS',	'Number of seconds to expire old data. [REQUIRED]'],
+	['p',	'http-server=PORT', 'Port to run HTTP server on. [DEFAULT: 8888]'],
+	['t',	'tcp-server=PORT', 'Port for TCP Broadcast Server. [DEFAULT: 1337]'],
+	['r',	'tcp-recv=PORT', 'Port to run simple TCP Server on to update data on. [DEFAULT: 1230]'],
+	['s',	'tcp-send=PORT', 'Port to run simple TCP Server on to retrive data on. [DEFAULT: 1231]'],
+	['w',	'ws-server=PORT', 'Port to run WebSockets HTTP server on. [DEPRECIATED][DEFAULT: 8889]'],
+	['',	'tcp-client=HOST:PORT', 'Mirror data from a remote TCP Broadcast Server.'],
+	['l',	'log=DIR',	'Directory to log data into.'],
+	['h',	'help',		'Display this help.'],
+	['v',	'version',	'Display the version number.']
+])
+.on('version', function(argv, opt) {
+	console.log('v0.0.1');	// XXX
+	process.exit(false);
+})
+.on('log', function (argv, opt) {
+	// XXX: Make directory blah blah
+	config.log = opt;
+})
+.on('expire', function (argv, opt) {
+	var expire = Number.parseInt(opt.expire, 10);
+	if (Number.isNaN(expire) || expire <= 0) {
+		console.log('ERROR: Invalid data expiration specified!');
+		getopt.showHelp();
+		process.exit(false);
+	}
+	config.expire = expire;
+})
+.on('http-server', function(argv, opt) {
+	var port = opt['http-server'];
+	port = Number.parseInt(port, 10);
+	if (Number.isNaN(port) || port <= 0) {
+		console.log('ERROR: Invalid http-server port specified!');
+		getopt.showHelp();
+		process.exit(false);
+	}
+	config.server_http.port = port;
+})
+.on('tcp-recv', function(argv, opt) {
+	var port = opt['tcp-recv'];
+	port = Number.parseInt(port, 10);
+	if (Number.isNaN(port) || port <= 0) {
+		console.log('ERROR: Invalid tcp-recv port specified!');
+		getopt.showHelp();
+		process.exit(false);
+	}
+	config.recv_tcp.port = port;
+})
+.on('tcp-send', function(argv, opt) {
+	var port = opt['tcp-send'];
+	port = Number.parseInt(port, 10);
+	if (Number.isNaN(port) || port <= 0) {
+		console.log('ERROR: Invalid tcp-send port specified!');
+		getopt.showHelp();
+		process.exit(false);
+	}
+	config.send_tcp.port = port;
+})
+.on('tcp-client', function (argv, opt) {
+	var str = opt['tcp-client'];
+	var index = str.indexOf(':');
+	var port = 1337;
+	var host = str;
+	if (index >= 0) {
+		host = str.substr(0, index);
+		port = str.substr(index+1);
+		port = Number.parseInt(port, 10);
+		if (Number.isNaN(port) || port <= 0) {
+			console.log('ERROR: Invalid tcp-client port specified!');
+			getopt.showHelp();
+			process.exit(false);
+		}
+	}
+	config.client_tcp = { type: 'client', host: host, port: port };
+})
+//.setHelp
+
+.bindHelp();
+
+var opt = getopt.parseSystem(); // Parse the command line
+
+if (!config.expire) {
+	console.log('ERROR: Data Expiration MUST be specified!');
+	getopt.showHelp();
+	process.exit(false);
+}
+
+
+/*
+ * Start everything up.
+ */
+var dm = new DataManager(config);
+var serv_http = new HTTPDataServer(dm, config.server_http);
+var serv_ws = new WebSocketDataServer(dm, config.server_ws);
+var serv_tcp = new TCPDataServer(dm, config.server_tcp);
+if (config.client_tcp) {
+	var serv_tcp_client = new TCPDataServer(dm, config.client_tcp);
+}
+var tcp_recv = new TCPDataServer(dm, config.recv_tcp);
+var tcp_send = new TCPDataServer(dm, config.send_tcp);
 
 
 /* EOF */
