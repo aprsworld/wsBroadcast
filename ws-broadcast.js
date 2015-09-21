@@ -611,9 +611,9 @@ function TCPDataServer(manager, config) {
 		});
 
 		c.on('close', function() {
-			if (this.dserv.config.mode == 'send') {
-				var index = this.dserv.clients.indexOf(this);
-				this.dserv.clients = this.dserv.clients.splice(index, 1);
+			var index = this.dserv.clients.indexOf(this);
+			if (index >= 0) {
+				this.dserv.clients.splice(index, 1);
 			}
 		});
 	};
