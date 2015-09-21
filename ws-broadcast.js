@@ -426,8 +426,8 @@ function HTTPDataServer(manager, config) {
 					this.dserv.manager.data
 				));
 				res.end();
-				return;
 			}
+			return;
 		} else if (rurl.pathname == '/.config') {
 			res.writeHead(200, {
 				'Content-Type': 'application/json',
@@ -435,7 +435,8 @@ function HTTPDataServer(manager, config) {
 				'Expires': '0',
 				'Access-Control-Allow-Origin': refhost
 			});
-			var mc_client = new memcache.Client(11211, 'localhost');				mc_client.on('close', function() {
+			var mc_client = new memcache.Client(11211, 'localhost');
+			mc_client.on('close', function() {
 				res.end();
 			});
 			mc_client.on('timeout', function() {
@@ -475,7 +476,6 @@ function HTTPDataServer(manager, config) {
 						mc_client.close();
 					});
 				});
-				
 			}
 			return;
 		}
