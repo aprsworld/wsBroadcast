@@ -162,7 +162,6 @@ DataManager.prototype.prune = function(ts_current) {
 	this.updates = updates.slice(i);
 
 	// Return the number of updates pruned
-	console.log('*** pruned nodes: ' + pruned);
 	return pruned;
 };
 
@@ -705,7 +704,7 @@ var getopt = require('node-getopt').create([
 })
 .on('log', function (argv, opt) {
 	// XXX: Make directory blah blah
-	config.log = opt;
+	config.log = opt.log;
 })
 .on('expire', function (argv, opt) {
 	var expire = Number.parseInt(opt.expire, 10);
