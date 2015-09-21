@@ -427,30 +427,58 @@ function HTTPDataServer(manager, config) {
 				res.end();
 			}
 			return;
-		} else if (rurl.pathname == '/.config') {
-			res.writeHead(200, {
-				'Content-Type': 'application/json',
-				'Cache-Control': 'no-cache, no-store, must-revalidate',
-				'Expires': '0',
-				'Access-Control-Allow-Origin': refhost
-			});
-			var mc_client = new memcache.Client(11211, 'localhost');
+		} else if (rurl.pathname.substr(0, 8) == '/.config') {
+			res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+			res.setHeader('Expires', '0');
+			res.setHeader('Access-Control-Allow-Origin', refhost);
+			res.setHeader('Content-Type', 'application/json');
+			var key = rurl.pathname.substr(8);
+			if (key.charAt(0) != '/') {
+				res.statusCode = 404;	// Not Found
+				res.end();
+				return;
+			}
+			key = key.substr(1);
+			if (key.indexOf('/') >= 0 || key.trim() == '') {
+				res.statusCode = 501;	// Not Implemented
+				res.statusMessage = 'Not Implemeted (Yet)'
+				res.write('{"error": "Invalid Key"}');
+				res.end();
+				return;
+			}
+			key = decodeURIComponent(key);
+			console.log(key);
+			if (key.search('\s') >= 0) {
+				res.statusCode = 501;	// Not Implemented
+				res.statusMessage = 'Invalid Key Name';
+				res.write('{"error": "Invalid Key Name"}');
+				res.end();
+				return;
+			}
+			var mc_client = new memcache.Client(config.memcache.port, config.memcache.host);
 			mc_client.on('close', function() {
 				res.end();
 			});
 			mc_client.on('timeout', function() {
-				res.write('{"error": "memcached timeout!"}');
+				res.statusCode = 504;	// Gateway Timeout
+				res.statusMessage = 'memcached Timed-Out';
+				res.write('{"error": "memcached Timeout"}');
 			});
 			mc_client.on('error', function(e) {
-				res.write('{"error": "memcached error!"}');
+				res.statusCode = 500;	// Internal Server Error
+				res.statusMessage = 'memcached Error';
+				res.write('{"error": "memcached Error"}');
 			});
 
 			if (req.method == 'GET') {
 				mc_client.on('connect', function() {
-					mc_client.get('wd_config', function(error, result) {
+					mc_client.get(key, function(error, result) {
 						if (error) {
+							res.statusCode = 500;
+							res.statusMessage = 'memcached Error';
 							res.write('{"error": "memcached get error!"}');
 						} else {
+							// XXX: result could in theory be bunk... Check it
 							res.write('{"result": ' + result + '}');
 						}
 						mc_client.close();
@@ -466,11 +494,18 @@ function HTTPDataServer(manager, config) {
 					mc_client.connect();
 				});
 				mc_client.on('connect', function() {
-					mc_client.set('wd_config', data, function(error, result) {
+					mc_client.set(key, data, function(error, result) {
 						if (error) {
-							res.write('{"error": "memcached set error!"}');
-						} else {
+							res.statusCode = 500;
+							res.statusMessage = 'memcached Error';
+							res.write('{"error": "memcached Error"}');
+						} else if (result == 'STORED') {
+							res.statusCode = 201;
 							res.write('{"result": "' + result + '"}');
+						} else {
+							res.statusCode = 500;
+							res.statusMessage = 'memcached Error';
+							res.write('{"error": "' + result + '"}');
 						}
 						mc_client.close();
 					});
@@ -665,7 +700,11 @@ TCPDataServer.prototype.broadcast = function (data) {
  * Process Command Line Options
  */
 var config = {	server_http: {
-			port: 8888
+			port: 8888,
+			memcache: {
+				port: 11211,
+				host: 'localhost'
+			}
 		},
 		server_ws: {
 			port: 8889
@@ -692,7 +731,8 @@ var getopt = require('node-getopt').create([
 	['r',	'tcp-recv=PORT', 'Port to run simple TCP Server on to update data on. [DEFAULT: 1230]'],
 	['s',	'tcp-send=PORT', 'Port to run simple TCP Server on to retrive data on. [DEFAULT: 1231]'],
 	['w',	'ws-server=PORT', 'Port to run WebSockets HTTP server on. [DEPRECIATED][DEFAULT: 8889]'],
-	['',	'tcp-client=HOST:PORT', 'Mirror data from a remote TCP Broadcast Server.'],
+	['',	'tcp-client=HOST[:PORT]', 'Mirror data from a remote TCP Broadcast Server.'],
+	['',	'memcache=HOST[:PORT]', 'Use HOST and PORT for memcache Connections. [DEFAULT: localhost:11211]'],
 	['',	'webdir=DIR', 'Root directory of the HTTP Server'],
 	['l',	'log=DIR',	'Directory to log data into.'],
 	['h',	'help',		'Display this help.'],
@@ -727,6 +767,24 @@ var getopt = require('node-getopt').create([
 })
 .on('webdir', function(argv, opt) {
 	config.server_http.root_dir = opt.webdir;
+})
+.on('memcache', function(argv, opt) {
+	var str = opt.memcache;
+	var index = str.indexOf(':');
+	var port = 11211;
+	var host = str;
+	if (index >= 0) {
+		host = str.substr(0, index);
+		port = str.substr(index+1);
+		port = Number.parseInt(port, 10);
+		if (Number.isNaN(port) || port <= 0) {
+			console.log('ERROR: Invalid memcache port specified!');
+			getopt.showHelp();
+			process.exit(false);
+		}
+	}
+	config.server_http.memcache.host = host;
+	config.server_http.memcache.port = port;
 })
 .on('tcp-recv', function(argv, opt) {
 	var port = opt['tcp-recv'];
