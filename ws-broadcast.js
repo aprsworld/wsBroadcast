@@ -389,7 +389,7 @@ function HTTPDataServer(manager, config) {
 		return false; // BUG: ?
 	}
 
-	var indexserv = serveIndex('www', {'icons': true});
+	var indexserv = serveIndex(config.root_dir, {'icons': true});
 	var staticserv = serveStatic(config.root_dir, {
 		'index': ['index.html']
 	});
@@ -694,6 +694,7 @@ var getopt = require('node-getopt').create([
 	['s',	'tcp-send=PORT', 'Port to run simple TCP Server on to retrive data on. [DEFAULT: 1231]'],
 	['w',	'ws-server=PORT', 'Port to run WebSockets HTTP server on. [DEPRECIATED][DEFAULT: 8889]'],
 	['',	'tcp-client=HOST:PORT', 'Mirror data from a remote TCP Broadcast Server.'],
+	['',	'webdir=DIR', 'Root directory of the HTTP Server'],
 	['l',	'log=DIR',	'Directory to log data into.'],
 	['h',	'help',		'Display this help.'],
 	['v',	'version',	'Display the version number.']
@@ -724,6 +725,9 @@ var getopt = require('node-getopt').create([
 		process.exit(false);
 	}
 	config.server_http.port = port;
+})
+.on('webdir', function(argv, opt) {
+	config.server_http.root_dir = opt.webdir;
 })
 .on('tcp-recv', function(argv, opt) {
 	var port = opt['tcp-recv'];
