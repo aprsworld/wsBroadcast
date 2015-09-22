@@ -1,16 +1,18 @@
 # wsBroadcast
 
-Node.js WebSockets Broadcast System.  Currently in heavy refactoring and development.  At this time the code base contains many "style" issues and lacks adequate comments, but before initial release all of that will be cleaned up.
+Node.js Broadcast System with HTTP, WebSockets, and TCP Servers.  Currently in heavy refactoring and development.  At this time the code base contains many "style" issues and lacks adequate comments, but before initial release all of that will be cleaned up.
 
-Before the initial release it will be possible to pass in configuration parameters to the data manager and servers in order to customize the system.  The initial release should also be standards compliant except where commented where a deviation was made for compatiblity reasons and will be as compatible on the client side as humanly possible.
-
-This service requires the `node-getopt` package for parsing command line options.
+The initial release should also be standards compliant except where commented where a deviation was made for compatiblity reasons.
 
 ## Data Manager
+
+_THIS DOCUMENTATION IS OUT OF DATE_
 
 This is the main object in this project despite being the simplest.  It basically just stores data that is to be broadcast and handles the broadcasting of this data to the servers which can be attached to it.
 
 ## Servers
+
+_THIS DOCUMENTATION IS OUT OF DATE_
 
 It currently has 3 server types; HTTP, WebSockets, and TCP.  The base server type from which these are derived handles logging and other glue components.  Each server takes in a configuration object which can be used to customize the instances of that server such as port and so on.  If any empty object is passed in all defaults will be used.
 
@@ -34,7 +36,7 @@ Currently the HTTP server defaults to running on port 8888.
 
 The WebSockets Server currently broadcasts the dynamic data to all connected clients.  In the future it may support updating the data as well.
 
-The WebSockets Server requires the 'ws' npm module.  (`npm install --save ws`)
+The WebSockets Server requires the 'ws' npm module.  (`npm install ws`)
 For diagnostic and debugging the 'wscat' module is recommended.  (`npm install -g wscat`)
 
 Currently the WebSocket server defaults to running on port 1228.
@@ -45,43 +47,32 @@ The TCP Server allows updating the dynamic data via standard JSON messages.  The
 
 Currently two TCP Servers are run, one on port 1229 which is for input, and one on port 1230 for a single output of the current data.
 
-## WWW Static Content
-
-The 'www/' directory currently contains some static html files for demonstration and diagnostic purposes.  'test.html' is the currently the only real file and makes use of the wsb-client.js library.
-
-### js/wsb-client.js
-
-A simple client library for browsers.  It supports native WebSockets, Flash Emulation of WebSockets provided by a slightly modified version of the 'web-socket-js' library, and falling back to AJAX polling.  It currently requires JQuery and should be ECMA3 compliant.
-
-* http://github.com/gimite/web-socket-js/
-* http://jquery.com/
-
-### test.html
-
-test.html is a simple Web Client that will display the data spit out from the system into a table that is dynamically generated using JQuery.  It uses the 'js/wsb-client.js' library. 
-
 ## Quick and Dirty Install
 
 * Install Node.js
-* `npm install node-getopt`
-* `npm install --save ws` _(SOON TO BE REPLACED)_
+* `git clone http://github.com/aprsworld/wsBroadcast`
+* `npm install node-getopt` _(LIKELY BE REPLACED)_
+* `npm install memcache` _(LIKELY BE REPLACED)_
+* `npm install ws` _(WILL BE REPLACED)_
 * `npm install serve-static`
 * `npm install serve-index`
 * `npm install finalhandler`
 * `npm install -g wscat` _(OPTIONAL FOR DEBUGGING)_
-* `git clone http://github.com/aprsworld/wsBroadcast`
 
 To execute:
 
-`node ws-broadcast.js` and point a web-browser at http://hostname:8888/test.html.
+* `node ws-broadcast.js --help` for usage and option information.
+* `node ws-broadcast.js -x 60 --webdir WebClient` and point a web-browser at http://hostname:8888/test.html.
+* `node ws-broadcast.js -x 60 --webdir WebClient  --tcp-client [server]` to mirror an existing server.
 
 ## Using wscat
-`wscat -c http://hostname:1228` to receive continuous updates of the data in JSON format.
+`wscat -c http://hostname:8889` to receive continuous updates of the data in JSON format.
 
 ## Using nc
-`nc hostname 1230` to receive the latest data in JSON format.
-`cat data.json | nc hostname 1229` to update the data with JSON.
+`cat data.json | nc hostname 1230` to update the data with JSON. *(The file MUST be terminated with the terminator character.  Currently: '\n'.)*
+`nc hostname 1231` to receive the latest data in JSON format.
 
+--
 Copyright (C) APRS World, LLC. 2015
 ALL RIGHTS RESERVED!
 david@aprsworld.com
