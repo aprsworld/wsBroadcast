@@ -20,6 +20,8 @@ At this time the data is always input and output as a JSON object.  In the futur
 
 ### HTTP Server
 
+_THIS DOCUMENTATION IS OUT OF DATE_
+
 The HTTP Server currently just serves static file content and the dynamic data (under '/.data') as a fallback for AJAX HTTP Polling and for other uses.  It is possible it may be extended to allow updates via HTTP as well.
 
 '/.data' serves the JSON data with a mime-type of 'application/json', though in the future may do some content negotation.
@@ -34,6 +36,8 @@ Currently the HTTP server defaults to running on port 8888.
 
 ### WebSockets Server
 
+_THIS DOCUMENTATION IS OUT OF DATE_
+
 The WebSockets Server currently broadcasts the dynamic data to all connected clients.  In the future it may support updating the data as well.
 
 The WebSockets Server requires the 'ws' npm module.  (`npm install ws`)
@@ -42,6 +46,8 @@ For diagnostic and debugging the 'wscat' module is recommended.  (`npm install -
 Currently the WebSocket server defaults to running on port 1228.
 
 ### TCP Server
+
+_THIS DOCUMENTATION IS OUT OF DATE_
 
 The TCP Server allows updating the dynamic data via standard JSON messages.  The protocol is a very simple input only terminated (At this time it is terminated with a '\n', 0x0A character though in the future may use the traditional null, '\0', 0x00 terminator) message passing system with each message being a JSON object with absolutely no handshake.  It may be extended in the future.
 
@@ -66,13 +72,14 @@ To execute:
 * `node ws-broadcast.js -x 60 --webdir WebClient  --tcp-client [server]` to mirror an existing server.
 
 ## Using wscat
-`wscat -c http://hostname:8889` to receive continuous updates of the data in JSON format.
+* `wscat -c http://hostname:8889` to receive continuous updates of the data in JSON format.
 
 ## Using nc
-`cat data.json | nc hostname 1230` to update the data with JSON. *(The file MUST be terminated with the terminator character.  Currently: '\n'.)*
-`nc hostname 1231` to receive the latest data in JSON format.
+* `cat data.json | nc hostname 1230` to update the data with JSON. *(The file MUST be terminated with the terminator character.  Currently: '\n'.)*
+* `nc hostname 1231` to receive the latest data in JSON format.
+* `nc hostname 1337` to receive continuous updates of the data in JSON format.
 
---
-Copyright (C) APRS World, LLC. 2015
-ALL RIGHTS RESERVED!
+---
+Copyright (C) APRS World, LLC. 2015  
+ALL RIGHTS RESERVED!  
 david@aprsworld.com
