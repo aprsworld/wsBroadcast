@@ -41,13 +41,14 @@ function DataManager(config) {
 	var ts = new Date();
 	this.meta = {
 		updated: {
-			date: null,
-			ms: 0
+			str: null,
+			iso8601: null,
+			epoch_ms: 0
 		},
 		start: {
-			date: ts.toUTCString(),
-			epoch_ms: ts.getTime(),
-			epoch: Math.floor(ts.getTime() / 1000)
+			str: ts.toUTCString(),
+			iso8601: ts.toISOString(),
+			epoch_ms: ts.getTime()
 		}
 	};
 	this.data = { _bserver_: this.meta };
@@ -57,27 +58,38 @@ function DataManager(config) {
 	this.config = om.object_merge({}, DataManagerConfig, config);
 }
 
-function node_delete (data, node) {
-	// Node is a primative, do nothing
-	if (!data || typeof data !== 'object') {
-		return;
+DataManager.prototype.data_log = function(data, ts, dserv, source) {
+	if (!this.config.log) {
+		return false;
 	}
 
-	// Check all properties
-	// XXX: Does not handle hidden properties properly
-	for (var p in data) {
-		var d = data[p];
+	var log_ts = ts.toISOString();
+	var log_date = ts.getUTCFullYear().toString() + decPad(ts.getUTCMonth(),2) + decPad(ts.getUTCDate(),2);
 
-		// This *is* the droid you're looking for...
-		if (d === node) {
-			delete data[p];
-			continue;
+	// Open log file
+	var log_fd = -1;
+	try {
+		log_fd = fs.openSync(this.config.log + '/' + log_date + '.json', 'a', 0644);
+	} finally {
+		if (log_fd < 0) {
+			console.log('# DataLog: ERROR: Could not open log file - data not logged!');
+			return false;	// XXX: Data updated, but not logged.
 		}
-
-		// Recurse
-		node_delete(d, node);
 	}
-}
+
+	// Write to log file
+	var log_data = JSON.stringify([log_ts, source, data]) + '\n';
+	var log_datasize = Buffer.byteLength(log_data, 'UTF-8');
+	var log_written = fs.writeSync(log_fd, log_data, null, 'UTF-8');
+	if (log_written <= 0) {
+		console.log('# DataLog: ERROR: Could not write to log file - data not logged and possibly corrupted file!');
+	} else if (log_written != log_data.length) {
+		console.log('# DataLog: ERROR: Could not write to log file - data not logged and corrupted file!');
+	}
+
+	// Close log file
+	fs.closeSync(log_fd);
+};
 
 // XXX: DOES NOT PRUNE PRIMATIVES, ONLY OBJECTS
 DataManager.prototype.prune = function(ts_current) {
@@ -178,6 +190,9 @@ DataManager.prototype.update = function(data, dserv, source) {
 	};
 	this.updates.push(update);
 
+	// prune old data
+	this.prune(ts);
+
 	// Handle meta data
 	if (data._bserver_) {
 		data._bserver_.source = dserv.info;
@@ -185,68 +200,46 @@ DataManager.prototype.update = function(data, dserv, source) {
 		delete data._bserver_;
 	}
 
-	// merge update
+	// merge update hook... XXX
 	om.object_merge_hooks.before = function(prop, dst, src) {
 		if (!dst || typeof dst !== 'object') {
 			// Update all sub-objects for pruning
 			om.object_traverse(src, function(obj) {
 				if (obj && typeof obj === 'object') {
-					//obj._bserver_ = update;
+					// XXX: Keep track of old updates
+					Object.defineProperty(obj, '_bserver_', { value: update, enumerable: false, configurable: true });
 					update.links.push(obj);
 				}
 			});
 		} else {
-			//dst._bserver_ = update;
+			// XXX: Keep track of old updates
+			Object.defineProperty(dst, '_bserver_', { value: update, enumerable: false, configurable: true });
 			update.links.push(dst);
 		}
 		return src;
 	};
 
-	// prune data
-	this.prune(ts);
-
 	// merge data
-	this.meta.updated.ms = ts.getTime() - this.meta.start.epoch;
-	this.meta.updated.date = ts.toUTCString();
+	this.meta.updated.epoch_ms = ts.getTime();
+	this.meta.updated.iso8601 = ts.toISOString();
+	this.meta.updated.str = ts.toUTCString();
 	om.object_merge(this.data, data, { _bserver_: this.meta });
 
+	// Reset hook... XXX
+	om.object_merge_hooks.before = function(prop, dst, src) {
+		return src;
+	};
+
+	// log the data
+	this.data_log(data, ts, dserv.info, source);
+
+	// broadcast updated data
 	var mdata = this.data;
-	/* send update to each server for broadcast */
 	this.servers.forEach(function(serv) {
 		serv.broadcast(mdata);
 	});
 
-	/* log data to a file */
-	if (this.config.log) { // XXX
-	var log_date = '' + ts.getUTCFullYear() + decPad(ts.getUTCMonth(), 2) + decPad(ts.getUTCDate(), 2);
-	var log_ts = ts.getUTCFullYear() + '-' + decPad(ts.getUTCMonth(), 2) + '-' + decPad(ts.getUTCDate(), 2) + ' ' + decPad(ts.getUTCHours(), 2) + ':' + decPad(ts.getUTCMinutes(), 2) + ':' + decPad(ts.getUTCSeconds(), 2);
-
-	// Open log file
-	var log_fd = -1;
-	try {
-		log_fd = fs.openSync(this.config.log + '/' + log_date + '.json', 'a', 0644);
-	} finally {
-		if (log_fd < 0) {
-			console.log('# DataLog: ERROR: Could not open log file - data not logged!');
-			return true;	// XXX: Data updated, but not logged.
-		}
-	}
-
-	// Write to log file
-	var log_data = JSON.stringify([log_ts, data]) + '\n';
-	var log_datasize = Buffer.byteLength(log_data, 'UTF-8');
-	var log_written = fs.writeSync(log_fd, log_data, null, 'UTF-8');
-	if (log_written <= 0) {
-		console.log('# DataLog: ERROR: Could not write to log file - data not logged and possibly corrupted file!');
-	} else if (log_written != log_data.length) {
-		console.log('# DataLog: ERROR: Could not write to log file - data not logged and corrupted file!');
-	}
-
-	// Close log file
-	fs.closeSync(log_fd);
-	}
-
-	/* All Done */
+	// All done
 	return true;
 };
 
@@ -305,6 +298,11 @@ DataServer.prototype.log = function () {
 
 DataServer.prototype.hook = function() {
 	this.serv.dserv = this;
+
+	this.serv.on('lookup', function(err, address, family) {
+		this.info.net.address = address;
+		this.info.net.family = family;
+	});
 
 	this.serv.on('listening', function() {
 		if (typeof this.address === 'function') {
@@ -447,7 +445,6 @@ function HTTPDataServer(manager, config) {
 				return;
 			}
 			key = decodeURIComponent(key);
-			console.log(key);
 			if (key.search('\s') >= 0) {
 				res.statusCode = 501;	// Not Implemented
 				res.statusMessage = 'Invalid Key Name';
@@ -536,7 +533,7 @@ util.inherits(HTTPDataServer, DataServer);
  */
 var WebSocketDataServerConfigDefaults = {
 	server_name:		'Server_WS',
-	port:			1228
+	port:			null
 };
 var WebSocketServer = require('ws').Server;
 function WebSocketDataServer(manager, config) {
@@ -574,7 +571,7 @@ WebSocketDataServer.prototype.broadcast = function(data) {
 var TCPDataServerConfigDefaults = {
 	server_name:		'Server_TCP',
 	type:			'server',
-	port:			1229,
+	port:			null,
 	term:			0x0a,	// 0x0A for newline testing w/ telnet
 					// 0x00 for real release
 	mode:			'recv',
@@ -641,7 +638,7 @@ function TCPDataServer(manager, config) {
 					message, error);
 				return;
 			}
-			this.dserv.log(this.client_string + ' Message', data);
+			this.dserv.log(this.client_string + ' Message'/*, data*/);
 			this.dserv.manager.update(data, this.dserv, this.info);
 		});
 
@@ -655,6 +652,8 @@ function TCPDataServer(manager, config) {
 
 	if (config.type == 'client') {
 		this.serv = net.createConnection(config.port, config.host, this.connection_handler);
+		this.serv.info = { net: { host: config.host, port: config.port }};
+		this.serv.client_string = '';
 	} else if (config.type == 'server') {
 		this.serv = net.createServer(this.connection_handler);
 	} else {
@@ -743,7 +742,7 @@ var getopt = require('node-getopt').create([
 	process.exit(false);
 })
 .on('log', function (argv, opt) {
-	// XXX: Make directory blah blah
+	// XXX: console.log(util.inspect(fs.readdirSync(opt.log)));
 	config.log = opt.log;
 })
 .on('expire', function (argv, opt) {
@@ -844,11 +843,12 @@ var getopt = require('node-getopt').create([
 	config.client_tcp = { type: 'client', host: host, port: port };
 })
 //.setHelp
-
 .bindHelp();
 
-var opt = getopt.parseSystem(); // Parse the command line
+// Parse the command line
+var opt = getopt.parseSystem(); 
 
+// Manditory options...
 if (!config.expire) {
 	console.log('ERROR: Data Expiration MUST be specified!');
 	getopt.showHelp();
