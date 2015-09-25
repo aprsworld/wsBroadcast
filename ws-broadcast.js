@@ -33,10 +33,6 @@ function decPad (num, size) {
  * Data Manager
  */
 var fs = require('fs');
-var DataManagerConfig = {
-	expire:		null,
-	log:		null
-};
 function DataManager(config) {
 	var ts = new Date();
 	this.meta = {
@@ -55,8 +51,13 @@ function DataManager(config) {
 	this.servers = [];
 	this.servers_count = 0;
 	this.updates = [];
-	this.config = om.object_merge({}, DataManagerConfig, config);
+	this.config = om.object_merge({}, this.config_default, config);
 }
+
+DataManager.prototype.config_default = {
+	expire:		null,
+	log:		null
+};
 
 DataManager.prototype.data_log = function(data, ts, dserv, source) {
 	if (!this.config.log) {
@@ -280,10 +281,10 @@ function DataServer() {
 	this.config = null;
 }
 
-DataServer.prototype.setup = function(manager, defaults, config) {
+DataServer.prototype.setup = function(manager, config) {
 	this.manager = manager;
 	this.dserv = this;
-	this.config = om.object_merge({}, defaults, config);
+	this.config = om.object_merge({}, this.config_default, config);
 	this.info = {};
 	this.info.name = this.config.server_name;
 	this.info.config = this.config;
@@ -436,20 +437,15 @@ DataServer.prototype.broadcast = function(data) {
 /*
  * HTTP Server
  */
-var HTTPDataServerConfigDefaults = {
-	server_name:		'Server_HTTP',
-	port:			8888,
-	root_dir:		'WebClient'
-};
-var finalhandler = require('finalhandler');
 var http = require('http');
+var url = require('url');
 var serveIndex = require('serve-index');
 var serveStatic = require('serve-static');
+var finalhandler = require('finalhandler');
 var memcache = require('memcache');
-var url = require('url');
 function HTTPDataServer(manager, config) {
 	HTTPDataServer.super_.call(this);
-	config = this.setup(manager, HTTPDataServerConfigDefaults, config);
+	config = this.setup(manager, config);
 	if (config.port <= 0) { 
 		return false; // BUG: ?
 	}
@@ -594,21 +590,20 @@ function HTTPDataServer(manager, config) {
 	this.serv.listen(config.port);
 }
 util.inherits(HTTPDataServer, DataServer);
+HTTPDataServer.prototype.config_default = om.object_merge({}, DataServer.config_default, {
+	server_name:	'Server_HTTP',
+	port:		8888,
+	root_dir:	'WebClient'
+});
 
 
 /*
  * WebSockets Server
  */
-var WebSocketDataServerConfigDefaults = {
-	server_name:		'Server_WS',
-	send: true,
-	recv: false,
-	once: false
-};
 var WebSocketServer = require('websocket').server;
 function WebSocketDataServer(manager, config) {
 	WebSocketDataServer.super_.call(this);
-	config = this.setup(manager, WebSocketDataServerConfigDefaults, config);
+	config = this.setup(manager, config);
 	
 	this.serv = new WebSocketServer({
 		httpServer: serv_http.serv, // XXX
@@ -629,23 +624,20 @@ function WebSocketDataServer(manager, config) {
 	return this;
 }
 util.inherits(WebSocketDataServer, DataServer);
+WebSocketDataServer.prototype.config_default = om.object_merge({}, DataServer.config_default, {
+	server_name:	'Server_WS',
+	send: 		true,
+	recv: 		false,
+	once: 		false
+});
 
 /*
  * TCP Server
  */
-var TCPDataServerConfigDefaults = {
-	server_name:		'Server_TCP',
-	type:			'server',
-	term:			0x0a,	// 0x0A for newline testing w/ telnet
-					// 0x00 for real release
-	once:			true,	// Disconnect after one update?
-	send:			true,
-	recv:			false
-};
 var net = require('net');
 function TCPDataServer(manager, config) {
 	TCPDataServer.super_.call(this);
-	config = this.setup(manager, TCPDataServerConfigDefaults, config);
+	config = this.setup(manager, config);
 	if (config.port <= 0) { 
 		return false; // BUG: ?
 	}
@@ -717,6 +709,15 @@ function TCPDataServer(manager, config) {
 	return this;
 }
 util.inherits(TCPDataServer, DataServer);
+TCPDataServer.prototype.config_default = om.object_merge({}, DataServer.config_default, {
+	server_name:	'Server_TCP',
+	type:		'server',
+	term:		0x0a,	// 0x0A for newline testing w/ telnet
+				// 0x00 for real release
+	once:		true,	// Disconnect after one update?
+	send:		true,
+	recv:		false
+});
 
 /*
  * Process Command Line Options
