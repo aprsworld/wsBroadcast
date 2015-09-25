@@ -89,6 +89,9 @@ DataManager.prototype.data_log = function(data, ts, dserv, source) {
 
 	// Close log file
 	fs.closeSync(log_fd);
+
+	// All done
+	return true;
 };
 
 // XXX: DOES NOT PRUNE PRIMATIVES, ONLY OBJECTS
@@ -252,6 +255,7 @@ DataManager.prototype.server_attach = function(serv) {
 	serv.info.server = ++this.servers_count;
 	return true;
 };
+
 DataManager.prototype.server_detach = function(serv) {
 	this.servers = this.servers.filter(function(serv_cur, serv_index, servers) {
 		if (serv_cur === serv) {
@@ -271,6 +275,7 @@ function DataServer() {
 	this.dserv = null;
 	this.serv = null;
 	this.info = { name: '0xDEADBABE', server: 0 };
+	this.clients = [];
 	this.client_count = 0;
 	this.config = null;
 }
@@ -296,7 +301,82 @@ DataServer.prototype.log = function () {
 		this.info.name + '": ' + args[0] + message);
 };
 
-DataServer.prototype.hook = function() {
+DataServer.prototype.client_hook = function(c) {
+	c.dserv = this;
+	c.info = { client: ++this.dserv.client_count, net: {} };
+	c.client_string = 'Client(' + c.info.client + ')';
+	if (c.remoteAddress) {	// XXX: Better test
+		c.info.net.address = c.remoteAddress;
+		c.info.net.port = c.remotePort;
+		c.info.net.family = c.remoteFamily;
+	}
+	this.log(c.client_string + ' Open', c.info);
+	this.clients.push(c);
+
+	// XXX: arguments
+	c.on('close', function(reason, description) {
+		// unlink client from server
+		var index = this.dserv.clients.indexOf(this);
+		if (index >= 0) {
+			// XXX: Do this more efficiently
+			this.dserv.clients.splice(index, 1);
+		}
+
+		// log
+		if (reason) {
+			this.dserv.log(c.client_string +
+				' Close', '[Unclean!]');
+		} else {
+			this.dserv.log(c.client_string + ' Close');
+		}
+	});
+		
+	c.on('error', function(e) {
+		// XXX: BUG: Unclear if safe to JSON e
+		this.dserv.log(c.client_string + ' Error',
+			this.info, e);
+	});
+
+	// XXX: Different formats
+	c.on('message', function(message) {
+		var config = this.dserv.config;
+
+		// Ignore?
+		if (!config.recv) {
+			this.dserv.log(this.client_string + ' IGNORED Message', message);
+			return;
+		}
+
+		// Sanity
+		if (message.type != 'utf8') {
+			this.dserv.log(this.client_string + ' INVALID Message', message);
+			return;
+		}
+
+		// Parse
+		var data = '';
+		try {
+			data = JSON.parse(message.utf8Data);
+		} catch (e) {
+			var error = '[JSON Parse Error!]'; // XXX: e
+			this.dserv.log(this.client_string + ' INVALID Message',
+				message, error);
+			return;
+		}
+
+		// Log
+		this.dserv.log(this.client_string + ' Message');
+
+		// Update
+		this.dserv.manager.update(data, this.dserv, this.info);
+	});
+
+	c.on('timeout', function() {
+		this.close();
+	});
+};
+
+DataServer.prototype.server_hook = function() {
 	this.serv.dserv = this;
 
 	this.serv.on('lookup', function(err, address, family) {
@@ -312,56 +392,44 @@ DataServer.prototype.hook = function() {
 	});
 
 	this.serv.on('close', function() {
+		// XXX: WS
 		this.dserv.log('Stopped');
 	});
-	
-	// TODO: XXX: c.on('error',
-	
-	this.serv.on('connection', function(c) {
-		c.dserv = this.dserv;
-		c.info = { client: ++this.dserv.client_count};
-		c.client_string = 'Client(' + c.info.client + ')';
-		if (c.remoteAddress) {	// XXX: Better test
-			c.info.net = {
-				address: c.remoteAddress,
-				port: c.remotePort,
-				family: c.remoteFamily
-			};
-		// Hack: Fix ws encapsulation for WebSocketServer
-		} else if (c._socket && c._socket.remoteAddress) { // XXX: Above
-			c.info.net = {
-				address: c._socket.remoteAddress,
-				port: c._socket.remotePort,
-				family: c._socket.remoteFamily
-			};
-		}
-		this.dserv.log(c.client_string + ' Open', c.info);
 
-		c.on('close', function(had_error) {
-			if (had_error) {
-				this.dserv.log(c.client_string +
-					' Close', '[Unclean!]');
-			} else {
-				this.dserv.log(c.client_string + ' Close');
+	// XXX: this.serv..on('error',
+	
+	this.serv.on('connection', function (c) {
+		var config = this.dserv.config;
+
+		// Hook
+		this.dserv.client_hook(c);
+
+		// Send Updates?
+		if (config.send) {
+			// XXX: Different formats
+			c.send(JSON.stringify(this.dserv.manager.data));
+
+			if (config.once) {
+				// XXX: BUG:
+				c.close();
 			}
-		});
-		
-		c.on('error', function(e) {
-			// XXX: BUG: Unclear from docs if safe to JSON e
-			this.dserv.log(c.client_string + ' Error',
-				this.info, e);
-		});
-
-		// TODO:
-		// c.on('message'
-		// c.on('open',
+		}
 	});
 };
 
+// XXX: Different formats
 DataServer.prototype.broadcast = function(data) {
-	//console.log('DataServer.prototype.broadcast() called but nothing is implemented in this stub');
-	//console.log('data=' + data);
-	//console.log('typeof data=' + typeof(data));
+	var config = this.config;
+	if (config.send) {
+		this.clients.forEach(function each(client) {
+			try {
+				client.send(JSON.stringify(data));
+			} catch (e) {
+				this.log(client.name + ' Error Sending Message');
+				client.close(); // XXX: Needed?
+			}
+		});
+	}
 };
 
 
@@ -397,8 +465,8 @@ function HTTPDataServer(manager, config) {
 		// Request for data
 		var rurl = url.parse(req.url);
 		var refhost = "";
-		if (req.headers['referer']) {
-			var refurl = url.parse(req.headers['referer']);
+		if (req.headers.referer) {
+			var refurl = url.parse(req.headers.referer);
 			refhost = refurl.protocol + "//" + refurl.host;
 		}
 		if (rurl.pathname == '/.data' || rurl.pathname == '/.data.json' || rurl.pathname == '/.data.dat') {
@@ -437,9 +505,9 @@ function HTTPDataServer(manager, config) {
 				return;
 			}
 			key = key.substr(1);
-			if (key.indexOf('/') >= 0 || key.trim() == '') {
+			if (key.indexOf('/') >= 0 || key.trim() === '') {
 				res.statusCode = 501;	// Not Implemented
-				res.statusMessage = 'Not Implemeted (Yet)'
+				res.statusMessage = 'Not Implemeted (Yet)';
 				res.write('{"error": "Invalid Key"}');
 				res.end();
 				return;
@@ -522,7 +590,7 @@ function HTTPDataServer(manager, config) {
 	});
 
 	// start the server
-	this.hook();
+	this.server_hook();
 	this.serv.listen(config.port);
 }
 util.inherits(HTTPDataServer, DataServer);
@@ -533,37 +601,34 @@ util.inherits(HTTPDataServer, DataServer);
  */
 var WebSocketDataServerConfigDefaults = {
 	server_name:		'Server_WS',
-	port:			null
+	send: true,
+	recv: false,
+	once: false
 };
-var WebSocketServer = require('ws').Server;
+var WebSocketServer = require('websocket').server;
 function WebSocketDataServer(manager, config) {
 	WebSocketDataServer.super_.call(this);
 	config = this.setup(manager, WebSocketDataServerConfigDefaults, config);
-	if (config.port <= 0) { 
-		return false; // BUG: ?
-	}
 	
-	this.serv = new WebSocketServer({ port: config.port });
-	// Fix for ws encapsulation
-	this.serv.address = function () { return this._server.address(); };
-	this.hook();
-	this.serv.on('connection', function(c) {
-		c.send(JSON.stringify(this.dserv.manager.data));
+	this.serv = new WebSocketServer({
+		httpServer: serv_http.serv, // XXX
+		autoAcceptConnection: false
+	});
+	this.server_hook();
+	this.serv.on('request', function(req) {
+		/*
+		if (!originIsAllowed(req.origin)) {
+			req.reject();
+			return;
+		}
+		*/
+		var c = req.accept(null, req.origin);
+		this.dserv.client_hook(c);
 	});
 
 	return this;
 }
 util.inherits(WebSocketDataServer, DataServer);
-WebSocketDataServer.prototype.broadcast = function(data) {
-	this.serv.clients.forEach(function each(client) {
-		try {
-			client.send(JSON.stringify(data));
-		} catch (e) { // TODO: XXX:
-			console.log('ERROR: Sending to client.');
-		}
-	});
-};
-
 
 /*
  * TCP Server
@@ -571,11 +636,11 @@ WebSocketDataServer.prototype.broadcast = function(data) {
 var TCPDataServerConfigDefaults = {
 	server_name:		'Server_TCP',
 	type:			'server',
-	port:			null,
 	term:			0x0a,	// 0x0A for newline testing w/ telnet
 					// 0x00 for real release
-	mode:			'recv',
-	once:			true	// Disconnect after one update?
+	once:			true,	// Disconnect after one update?
+	send:			true,
+	recv:			false
 };
 var net = require('net');
 function TCPDataServer(manager, config) {
@@ -584,7 +649,6 @@ function TCPDataServer(manager, config) {
 	if (config.port <= 0) { 
 		return false; // BUG: ?
 	}
-	this.clients = [];
 
 	var self = this;
 	this.connection_handler = function(oc) {
@@ -598,7 +662,11 @@ function TCPDataServer(manager, config) {
 			var mb = this.message_buffer;
 			for (var i = 0; i < mb.length; i++) {
 				if (mb[i] === config.term) {
-					var message = mb.toString('utf8', start, i);
+					var message = {
+						type: 'utf8',
+						utf8Data: mb.toString('utf8',
+							start, i)
+					};
 					start = i + 1;
 					this.emit('message', message);
 				}
@@ -615,85 +683,40 @@ function TCPDataServer(manager, config) {
 		};
 
 		// Allow updates on this port
-		if (config.mode == 'recv') {
-			c.on('data', function (data) {
-				this.message_buffer = Buffer.concat(
-					[this.message_buffer, data],
-					this.message_buffer.length + data.length);
-				this.process_buffer();
-			});
-		}
-
-		c.on('timeout', function() {
-			c.close();
+		c.on('data', function (data) {
+			this.message_buffer = Buffer.concat(
+				[this.message_buffer, data],
+				this.message_buffer.length + data.length);
+			this.process_buffer();
 		});
 
-		c.on('message', function(message) {
-			var data = '';
-			try {
-				data = JSON.parse(message);
-			} catch (e) {
-				var error = '[JSON Parse Error!]'; // XXX: e
-				this.dserv.log(this.client_string + ' Message',
-					message, error);
-				return;
-			}
-			this.dserv.log(this.client_string + ' Message'/*, data*/);
-			this.dserv.manager.update(data, this.dserv, this.info);
-		});
+		c.send = function(data) {
+			this.write(JSON.stringify(data) + String.fromCharCode(config.term));
+		};
 
-		c.on('close', function() {
-			var index = this.dserv.clients.indexOf(this);
-			if (index >= 0) {
-				this.dserv.clients.splice(index, 1);
-			}
-		});
+		c.close = function() {
+			this.end();
+		};
 	};
 
 	if (config.type == 'client') {
-		this.serv = net.createConnection(config.port, config.host, this.connection_handler);
+		this.serv = net.createConnection(config.port, config.host,
+			this.connection_handler);
 		this.serv.info = { net: { host: config.host, port: config.port }};
-		this.serv.client_string = '';
+		this.serv.client_string = config.host;
+		this.server_hook();
+		this.client_hook(this.serv);
 	} else if (config.type == 'server') {
 		this.serv = net.createServer(this.connection_handler);
+		this.server_hook();
+		this.serv.listen(config.port);
 	} else {
 		// BUG: XXX:
 	}
 
-	this.hook();
-
-	// Send latest data on this port
-	if (config.mode == 'send') {
-		this.serv.on('connection', function (c) {
-			var data = JSON.stringify(this.dserv.manager.data) + String.fromCharCode(config.term);
-			if (config.once) {
-				c.end(data);
-			} else {
-				this.dserv.clients.push(c);
-				c.write(data);
-			}
-		});
-	}
-
-	if (config.type == 'server') {
-		this.serv.listen(config.port);
-	}
 	return this;
 }
 util.inherits(TCPDataServer, DataServer);
-TCPDataServer.prototype.broadcast = function (data) {
-	var config = this.config;
-	if (config.mode == 'send') {
-		this.clients.forEach(function each(client) {
-			try {
-				client.write(JSON.stringify(data) + String.fromCharCode(config.term)); // BUG
-			} catch (e) { // TODO: XXX:
-				console.log('ERROR: Sending to dead client.');
-			}
-		});
-	}
-};
-
 
 /*
  * Process Command Line Options
@@ -710,16 +733,20 @@ var config = {	server_http: {
 		},
 		recv_tcp: {
 			port: 1230,
-			mode: 'recv'
+			send: false,
+			recv: true,
+			once: true
 		},
 		send_tcp: {
 			port: 1231,
-			mode: 'send',
+			send: true,
+			recv: false,
 			once: true
 		},
 		server_tcp: {
 			port: 1337,
-			mode: 'send',
+			send: true,
+			recv: false,
 			once: false
 		}
 };
@@ -840,7 +867,7 @@ var getopt = require('node-getopt').create([
 			process.exit(false);
 		}
 	}
-	config.client_tcp = { type: 'client', host: host, port: port };
+	config.client_tcp = { type: 'client', recv: true, send: false, once: false, host: host, port: port };
 })
 //.setHelp
 .bindHelp();
