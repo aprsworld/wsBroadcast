@@ -56,7 +56,7 @@ Currently two TCP Servers are run, one on port 1229 which is for input, and one 
 ## Quick and Dirty Install
 
 * Install Node.js
-* `git clone http://github.com/aprsworld/wsBroadcast`
+* `git clone --recursive http://github.com/aprsworld/wsBroadcast`
 * `npm install node-getopt` _(LIKELY BE REPLACED)_
 * `npm install memcache` _(LIKELY BE REMOVED)_
 * `npm install websocket`
