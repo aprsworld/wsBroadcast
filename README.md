@@ -1,6 +1,6 @@
 # wsBroadcast
 
-Node.js Broadcast System with HTTP, WebSockets, and TCP Servers.  Currently in heavy refactoring and development.  At this time the code base contains many "style" issues and lacks adequate comments, but before initial release all of that will be cleaned up.
+Node.js Broadcast System with HTTP, WebSockets, and TCP Servers.  Currently in heavy development.  At this time the code base contains some "style" issues and lacks good comments, but before initial release all of that will be cleaned up.
 
 The initial release should also be standards compliant except where commented where a deviation was made for compatiblity reasons.
 
@@ -58,8 +58,8 @@ Currently two TCP Servers are run, one on port 1229 which is for input, and one 
 * Install Node.js
 * `git clone http://github.com/aprsworld/wsBroadcast`
 * `npm install node-getopt` _(LIKELY BE REPLACED)_
-* `npm install memcache` _(LIKELY BE REPLACED)_
-* `npm install ws` _(WILL BE REPLACED)_
+* `npm install memcache` _(LIKELY BE REMOVED)_
+* `npm install websocket`
 * `npm install serve-static`
 * `npm install serve-index`
 * `npm install finalhandler`
@@ -72,7 +72,7 @@ To execute:
 * `node ws-broadcast.js -x 60 --webdir WebClient  --tcp-client [server]` to mirror an existing server.
 
 ## Using wscat
-* `wscat -c http://hostname:8889` to receive continuous updates of the data in JSON format.
+* `wscat -c http://hostname:8888` to receive continuous updates of the data in JSON format.
 
 ## Using nc
 * `cat data.json | nc hostname 1230` to update the data with JSON. *(The file MUST be terminated with the terminator character.  Currently: '\n'.)*
