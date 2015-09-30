@@ -590,6 +590,7 @@ function HTTPDataServer(manager, config) {
 	this.serv.listen(config.port);
 }
 util.inherits(HTTPDataServer, DataServer);
+
 HTTPDataServer.prototype.config_default = om.object_merge({}, DataServer.config_default, {
 	server_name:	'Server_HTTP',
 	port:		8888,
@@ -624,12 +625,14 @@ function WebSocketDataServer(manager, config) {
 	return this;
 }
 util.inherits(WebSocketDataServer, DataServer);
+
 WebSocketDataServer.prototype.config_default = om.object_merge({}, DataServer.config_default, {
 	server_name:	'Server_WS',
 	send: 		true,
 	recv: 		false,
 	once: 		false
 });
+
 
 /*
  * TCP Server
@@ -709,6 +712,7 @@ function TCPDataServer(manager, config) {
 	return this;
 }
 util.inherits(TCPDataServer, DataServer);
+
 TCPDataServer.prototype.config_default = om.object_merge({}, DataServer.config_default, {
 	server_name:	'Server_TCP',
 	type:		'server',
@@ -718,6 +722,7 @@ TCPDataServer.prototype.config_default = om.object_merge({}, DataServer.config_d
 	send:		true,
 	recv:		false
 });
+
 
 /*
  * Process Command Line Options
