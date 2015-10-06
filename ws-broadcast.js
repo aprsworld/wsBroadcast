@@ -31,6 +31,18 @@ function decPad (num, size) {
 
 /*
  * Data Manager
+ *
+ * Update {
+ *	subscription: 	"URI",["URI"...]	(Node Location)
+ *	epoch_ms:	Natural			(Last Update Time)
+ *	data: 		{...}			(Relative New/Updated Data)
+ *	expiration:	Natural			(0 or Experiation in seconds)
+ *	prune:		"URI",["URI"...]	(Relative Nodes to Prune)
+ *	meta:		{...}			(Meta Data for Propogation)
+ *	// Internal Fields
+ *	ts:		Date("Generation Timestamp")
+ *	expire_ts:	Date("Remove After Timestamp"),null
+ * }
  */
 var fs = require('fs');
 function DataManager(config) {
@@ -95,23 +107,18 @@ DataManager.prototype.data_log = function(data, ts, dserv, source) {
 	return true;
 };
 
-// XXX: DOES NOT PRUNE PRIMATIVES, ONLY OBJECTS
-DataManager.prototype.prune = function(ts_current) {
-
-	// No expiration of data
-	if (!this.config.expire) {
-		return false;
-	}
+// XXX BUG: DOES NOT PRUNE PRIMATIVES, ONLY OBJECTS
+DataManager.prototype.prune = function(ts) {
 
 	// Current time was not passed in
-	if (ts_current === undefined) {
-		ts_current = new Date();
+	if (ts === undefined) {
+		ts = new Date();
 	}
 
-	var ts = new Date(ts_current.getTime() - this.config.expire * 1000);
 	var updates = this.updates;
 	var i, j;
 	var update;
+	var prune = [];
 	var links = [];
 
 	// Find all data to be pruned
@@ -120,10 +127,13 @@ DataManager.prototype.prune = function(ts_current) {
 		update = updates[i];
 
 		// Don't prune if new enough
-		if (update.ts > ts) {
-			break;
+		if (!update.expire_ts || update.expire_ts > ts) {
+			continue;
 		}
-		
+
+		// Prune this update
+		prune.push(update);
+
 		// Collect data to be pruned
 		for (j in update.links) {
 			link = update.links[j];
@@ -134,22 +144,26 @@ DataManager.prototype.prune = function(ts_current) {
 		}
 	}
 
-	// How much to prune, if nothing return immediately
-	if (i === 0) {
+	// If nothing to prune, return immediately
+	if (prune.length === 0) {
 		return 0;
 	}
-	var pruned = i;
 
 	// Make sure we don't prune new data
 	var index, p;
-	for (i = i; i < updates.length; i++) {
+	for (i = 0; i < updates.length; i++) {
 		update = updates[i];
+
+		// This update is being pruned, skip
+		if (prune.indexOf(update) >= 0) {
+			continue;
+		}
 
 		// Check all new data
 		for (j in update.links) {
 			link = update.links[j];
 			index = links.indexOf(link);
-			
+
 			// We don't want to prune this data
 			if (index >= 0) {
 				delete links[index];
@@ -158,50 +172,94 @@ DataManager.prototype.prune = function(ts_current) {
 	}
 
 	// Nuke the actual data to be pruned
+	var remove_node = function(obj) {
+		if (!obj || typeof obj !== 'object') {
+			return;
+		}
+
+		for (p in obj) {
+			if (obj[p] === link) {
+				delete obj[p];
+			}
+		}
+		return;
+	};
 	for (i in links) {
 		link = links[i];
-		om.object_traverse(this.data, function(obj) {
-			if (!obj || typeof obj !== 'object') {
-				return;
-			}
-
-			for (p in obj) {
-				if (obj[p] === link) {
-					delete obj[p];
-				}
-			}
-			return;
-		});
+		om.object_traverse(this.data, remove_node);
 	}
 
 	// Nuke the update references
-	this.updates = updates.slice(i);
+	this.updates = updates.filter(function filter(update, index, prune) {
+		// This update was pruned, remove it
+		if (prune.indexOf(update) >= 0) {
+			return false;
+		}
+		// Not pruned, keep it
+		return true;
+	});
 
 	// Return the number of updates pruned
-	return pruned;
+	return prune.length;
 };
 
-DataManager.prototype.update = function(data, dserv, source) {
+DataManager.prototype.remove = function(links) {
+	var i, p;
+	var remove = function(obj) {
+		if (!obj || typeof obj !== 'object') {
+			return false;
+		}
+
+		for (p in obj) {
+			if (obj[p] === link[j]) {
+				if (j == link.length) {
+					delete obj[p];
+					return true;
+				}
+				return om.object_traverse(obj[p], remove);
+			}
+		}
+
+		return false;
+	};
+
+	var errors = 0;
+	for (i = 0; i < links.length; i++) {
+		var link = links[i];
+		var j = 0;
+		if (!om.object_traverse(this.data, remove)) {
+			errors++;
+		}
+	}
+	return links.length - errors;
+};
+
+// XXX: update not validated!!!
+DataManager.prototype.update = function(update, dserv, source) {
+
+	var ts = new Date();
 
 	// compose update
-	var ts = new Date();
-	var update = {
-		ts: ts,
-		data: data,
-		dserv: dserv,
-		source: source,
-		links: []
-	};
+	if (update.expire === false || update.expire === 0) {
+		// Never expire
+	} else if (update.expire > 0) {
+		update.expire_ts = new Date(ts.getTime() + update.expire * 1000);
+	} else {
+		update.expire_ts = new Date(ts.getTime() + this.config.expire * 1000);
+	}
+	update.ts = new Date(update.epoch_ms);
+	update.source = [ {serv: dserv.info, client: source}, update.source ];
+	update.links = [];
 	this.updates.push(update);
 
 	// prune old data
 	this.prune(ts);
 
-	// Handle meta data
-	if (data._bserver_) {
-		data._bserver_.source = dserv.info;
-		this.meta.updated._bserver_ = data._bserver_;
-		delete data._bserver_;
+	// Remove data specified in update
+	// BUG: XXX: Does not remove stale updates
+	// XXX: array
+	if (update.prune && typeof update.prune === 'object') {
+		this.remove(update.prune);
 	}
 
 	// merge update hook... XXX
@@ -211,31 +269,41 @@ DataManager.prototype.update = function(data, dserv, source) {
 			om.object_traverse(src, function(obj) {
 				if (obj && typeof obj === 'object') {
 					// XXX: Keep track of old updates
-					Object.defineProperty(obj, '_bserver_', { value: update, enumerable: false, configurable: true });
+					//Object.defineProperty(obj, '_bserver_', { value: [update], enumerable: false, configurable: true });
 					update.links.push(obj);
 				}
 			});
 		} else {
 			// XXX: Keep track of old updates
-			Object.defineProperty(dst, '_bserver_', { value: update, enumerable: false, configurable: true });
+			//Object.defineProperty(dst, '_bserver_', { value: dst._bserver_.unshift(update), enumerable: false, configurable: true });
 			update.links.push(dst);
 		}
 		return src;
 	};
 
 	// merge data
-	this.meta.updated.epoch_ms = ts.getTime();
-	this.meta.updated.iso8601 = ts.toISOString();
-	this.meta.updated.str = ts.toUTCString();
-	om.object_merge(this.data, data, { _bserver_: this.meta });
+	om.object_merge(this.data, update.data, { _bserver_: this.meta });
 
 	// Reset hook... XXX
 	om.object_merge_hooks.before = function(prop, dst, src) {
 		return src;
 	};
 
+	// Handle meta data
+	this.meta.updated = {
+		epoch_ms:	ts.getTime(),
+		iso8601:	ts.toISOString(),
+		str:		ts.toUTCString(),
+		update:		{
+					epoch_ms:	update.epoch_ms,
+					expire:		update.expire,
+					source:		update.source,
+					meta:		update.meta
+				}
+	};
+
 	// log the data
-	this.data_log(data, ts, dserv.info, source);
+	this.data_log(update.data, ts, dserv.info, source);
 
 	// broadcast updated data
 	var mdata = this.data;
@@ -331,14 +399,14 @@ DataServer.prototype.client_hook = function(c) {
 			this.dserv.log(c.client_string + ' Close');
 		}
 	});
-		
+
 	c.on('error', function(e) {
 		// XXX: BUG: Unclear if safe to JSON e
 		this.dserv.log(c.client_string + ' Error',
 			this.info, e);
 	});
 
-	// XXX: Different formats
+	// XXX: Different formats (XML, bXML)
 	c.on('message', function(message) {
 		var config = this.dserv.config;
 
@@ -375,6 +443,11 @@ DataServer.prototype.client_hook = function(c) {
 	c.on('timeout', function() {
 		this.close();
 	});
+
+	// XXX: Different formats (XML, bXML)
+	c.message_send = function (data) {
+		this.send(JSON.stringify(data));
+	};
 };
 
 DataServer.prototype.server_hook = function() {
@@ -398,7 +471,7 @@ DataServer.prototype.server_hook = function() {
 	});
 
 	// XXX: this.serv..on('error',
-	
+
 	this.serv.on('connection', function (c) {
 		var config = this.dserv.config;
 
@@ -407,8 +480,7 @@ DataServer.prototype.server_hook = function() {
 
 		// Send Updates?
 		if (config.send) {
-			// XXX: Different formats
-			c.send(JSON.stringify(this.dserv.manager.data));
+			c.message_send(this.dserv.manager.data);
 
 			if (config.once) {
 				// XXX: BUG:
@@ -418,13 +490,12 @@ DataServer.prototype.server_hook = function() {
 	});
 };
 
-// XXX: Different formats
 DataServer.prototype.broadcast = function(data) {
 	var config = this.config;
 	if (config.send) {
 		this.clients.forEach(function each(client) {
 			try {
-				client.send(JSON.stringify(data));
+				client.message_send(data);
 			} catch (e) {
 				this.log(client.name + ' Error Sending Message');
 				client.close(); // XXX: Needed?
@@ -446,7 +517,7 @@ var memcache = require('memcache');
 function HTTPDataServer(manager, config) {
 	HTTPDataServer.super_.call(this);
 	config = this.setup(manager, config);
-	if (config.port <= 0) { 
+	if (config.port <= 0) {
 		return false; // BUG: ?
 	}
 
@@ -467,7 +538,7 @@ function HTTPDataServer(manager, config) {
 		}
 		if (rurl.pathname == '/.data' || rurl.pathname == '/.data.json' || rurl.pathname == '/.data.dat') {
 			if (req.method == 'GET') {
-				// Work-around for IE problems with 'application/json' mimetype
+				// XXX: Work-around for IE problems with 'application/json' mimetype
 				if (rurl.pathname == '/.data.dat') {
 					res.writeHead(200, {
 						'Content-Type': 'text/plain',
@@ -605,7 +676,7 @@ var WebSocketServer = require('websocket').server;
 function WebSocketDataServer(manager, config) {
 	WebSocketDataServer.super_.call(this);
 	config = this.setup(manager, config);
-	
+
 	this.serv = new WebSocketServer({
 		httpServer: serv_http.serv, // XXX
 		autoAcceptConnection: false
@@ -641,7 +712,7 @@ var net = require('net');
 function TCPDataServer(manager, config) {
 	TCPDataServer.super_.call(this);
 	config = this.setup(manager, config);
-	if (config.port <= 0) { 
+	if (config.port <= 0) {
 		return false; // BUG: ?
 	}
 
@@ -686,7 +757,7 @@ function TCPDataServer(manager, config) {
 		});
 
 		c.send = function(data) {
-			this.write(JSON.stringify(data) + String.fromCharCode(config.term));
+			this.write(data + String.fromCharCode(config.term));
 		};
 
 		c.close = function() {
@@ -879,7 +950,7 @@ var getopt = require('node-getopt').create([
 .bindHelp();
 
 // Parse the command line
-var opt = getopt.parseSystem(); 
+var opt = getopt.parseSystem();
 
 // Manditory options...
 if (!config.expire) {
