@@ -34,7 +34,7 @@ function decPad (num, size) {
  *
  * Update {
  *	*wsb_update:	[Version]		(protocol version)
- *	subscription: 	"URI",["URI"...]	(Node Location)
+ *	uri: 		"URI",["URI"...]	(Node Location)
  *	epoch_ms:	Natural			(Last Update Time)
  *	data: 		{...}			(Relative New/Updated Data)
  *	expiration:	Natural			(0 or Experiation in seconds)
@@ -346,7 +346,6 @@ DataManager.prototype.update = function(update, dserv, source) {
 		update.expire_ts = new Date(ts.getTime() + update.expire * 1000);
 	} else {
 		update.expire_ts = new Date(ts.getTime() + this.config.expire * 1000);
-		console.log(update.expire_ts.toISOString());
 	}
 	update.ts = new Date(update.epoch_ms);
 	// XXX:
@@ -392,7 +391,33 @@ DataManager.prototype.update = function(update, dserv, source) {
 	};
 
 	// merge data
-	om.object_merge(this.data, update.data, { _bserver_: this.meta });
+	if (update.uri) {
+		var node = this.data;
+		var prop = null;
+		var links = update.uri.split('/');
+		for (var i = 0; i < links.length - 1; i++) {
+			var prop = links[i];
+			if (prop == '') {
+				continue;
+			}
+			if (node[prop] && typeof node[prop] === 'object') {
+				node = node[prop];
+			} else {
+				node = node[prop] = {};
+			}
+		}
+		prop = links[i];
+		if (prop == '') {
+			om.object_merge(node, update.data);
+		} else {
+			var temp = {};
+			temp[prop] = update.data;
+			om.object_merge(node, temp);
+		}
+	} else {
+		om.object_merge(this.data, update.data);
+	}
+	om.object_merge(this.data, { _bserver_: this.meta });
 
 	// Reset hook... XXX
 	om.object_merge_hooks.before = function(prop, dst, src) {
@@ -701,8 +726,12 @@ function HTTPDataServer(manager, config) {
 					// XXX: Proper mimetype handling
 					// XXX: Error handling
 					var update = JSON.parse(data);
-					this.dserv.manager.update(update, this.dserv);
-					req.end();
+					if (!update.uri) {
+						update.uri = key;
+					}
+					this.socket.dserv.manager.update(update, this.dserv);
+					res.write(JSON.stringify(update));
+					res.end();
 				});
 				return;
 			} else if (req.method == 'GET') {
