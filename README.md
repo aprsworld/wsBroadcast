@@ -58,7 +58,6 @@ Currently two TCP Servers are run, one on port 1229 which is for input, and one 
 * Install Node.js
 * `git clone --recursive http://github.com/aprsworld/wsBroadcast`
 * `npm install node-getopt` _(LIKELY BE REPLACED)_
-* `npm install memcache` _(LIKELY BE REMOVED)_
 * `npm install websocket`
 * `npm install serve-static`
 * `npm install serve-index`
@@ -72,12 +71,12 @@ To execute:
 * `node ws-broadcast.js -x 60 --webdir WebClient  --tcp-client [server]` to mirror an existing server.
 
 ## Using wscat
-* `wscat -c http://hostname:8888` to receive continuous updates of the data in JSON format.
+* `wscat -c http://hostname:8888/.data/` to receive continuous updates of the data in JSON format.
 
 ## Using nc
-* `cat data.json | nc hostname 1230` to update the data with JSON. *(The file MUST be terminated with the terminator character.  Currently: '\n'.)*
-* `nc hostname 1231` to receive the latest data in JSON format.
-* `nc hostname 1337` to receive continuous updates of the data in JSON format.
+* `cat data.json | nc hostname 1230` or `echo [JSON] | nc hostname 1230` to update the data with JSON. *(The file MUST be terminated with the terminator character and most only contain one terminator character.  Currently: '\n'.)*
+* `nc hostname 1231` to receive the latest data in JSON format. _(DO NOT USE)_
+* `nc hostname 1337` to receive continuous updates of the data in JSON format. _(DO NOT USE)_
 
 ---
 Copyright (C) APRS World, LLC. 2015  

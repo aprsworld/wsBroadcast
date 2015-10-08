@@ -33,12 +33,14 @@ function decPad (num, size) {
  * Data Manager
  *
  * Update {
+ *	*wsb_update:	[Version]		(protocol version)
  *	subscription: 	"URI",["URI"...]	(Node Location)
  *	epoch_ms:	Natural			(Last Update Time)
  *	data: 		{...}			(Relative New/Updated Data)
  *	expiration:	Natural			(0 or Experiation in seconds)
  *	prune:		"URI",["URI"...]	(Relative Nodes to Prune)
  *	meta:		{...}			(Meta Data for Propogation)
+ *	source:		...
  *	// Internal Fields
  *	ts:		Date("Generation Timestamp")
  *	expire_ts:	Date("Remove After Timestamp"),null
@@ -59,16 +61,104 @@ function DataManager(config) {
 			epoch_ms: ts.getTime()
 		}
 	};
-	this.data = { _bserver_: this.meta };
 	this.servers = [];
 	this.servers_count = 0;
 	this.updates = [];
 	this.config = om.object_merge({}, this.config_default, config);
+	this.data = {};
+	this.data._bserver_ = this.meta;
+	this.data_initial();
 }
 
 DataManager.prototype.config_default = {
 	expire:		null,
-	log:		null
+	log:		null,
+	persist:	'persist.json'
+};
+
+DataManager.prototype.data_get = function(uri) {
+	var node = this.data;
+
+	// Parse URI
+	var links = uri;
+	if (!(links instanceof Array)) {
+		links = links.split('/');
+	}
+
+	// Traverse to find node
+	for (var i = 0; i < links.length; i++) {
+		var link = links[i];
+		node = node[link];
+
+		// We are done, return the node
+		if (i+1 == links.length) {
+			// XXX: Ensure it's not an object?
+			return node;
+		}
+		if (i+2 == links.length && links[i+1] === '') {
+			// XXX: Ensure it's an object?
+			return node;
+		}
+
+		// Can't traverse
+		if (node === null || typeof node !== 'object') {
+			return undefined;
+		}
+	}
+};
+
+// XXX:
+DataManager.prototype.data_persist = function() {
+	var data = {};
+	for (var i = 0; i < this.updates.length; i++) {
+		var update = this.updates[i];
+		if (update.expire_ts) {
+			continue;
+		}
+		om.object_merge(data, update.data);
+	}
+	data._bserver_ = this.data._bserver_;
+	try {
+		fs.writeFileSync(this.config.persist, JSON.stringify(data));
+	} catch (e) {
+		console.log("# Persist: Could not write initialization file!");
+		return false;
+	}
+	return true;
+};
+
+DataManager.prototype.data_initial = function() {
+
+	// Get data on file
+	var fs_stat = null;
+	try {
+		fs_stat  = fs.statSync(this.config.persist);
+	} catch (e) {
+		console.log("# Initialize: Could not read initialization file!");
+		return false;
+	}
+	if (!fs_stat.isFile()) {
+		console.log("# Initialize: Could not read initialization file!");
+		return false;
+	}
+
+	// Compose update
+	var update = {
+		initial:	true,
+		epoch_ms:	fs_stat.mtime.getTime(),
+		expire:		0
+	};
+
+	// Read file
+	try {
+		update.data = JSON.parse(fs.readFileSync(this.config.persist, 'utf8'));
+	} catch (e) {
+		console.log("# Initialize: Could not read initialization file!");
+		return false;
+	}
+
+	this.update(update, null, { file: this.config.persist });
+	return true;
 };
 
 DataManager.prototype.data_log = function(data, ts, dserv, source) {
@@ -203,24 +293,25 @@ DataManager.prototype.prune = function(ts) {
 	return prune.length;
 };
 
+// XXX: TODO: BOBDOLE
+// Does not prune obsolete updates
 DataManager.prototype.remove = function(links) {
 	var i, p;
 	var remove = function(obj) {
 		if (!obj || typeof obj !== 'object') {
-			return false;
+			return;
 		}
 
 		for (p in obj) {
 			if (obj[p] === link[j]) {
 				if (j == link.length) {
 					delete obj[p];
-					return true;
+					return false;
 				}
-				return om.object_traverse(obj[p], remove);
 			}
 		}
 
-		return false;
+		return;
 	};
 
 	var errors = 0;
@@ -235,9 +326,13 @@ DataManager.prototype.remove = function(links) {
 };
 
 // XXX: update not validated!!!
+// XXX: BUG: TODO: BOBDOLE: update.wsb_update means it's an update packet, otherwise generate a default update packet.
 DataManager.prototype.update = function(update, dserv, source) {
 
 	var ts = new Date();
+
+	// prune old data
+	this.prune(ts);
 
 	// compose update
 	if (update.expire === false || update.expire === 0) {
@@ -246,17 +341,23 @@ DataManager.prototype.update = function(update, dserv, source) {
 		update.expire_ts = new Date(ts.getTime() + update.expire * 1000);
 	} else {
 		update.expire_ts = new Date(ts.getTime() + this.config.expire * 1000);
+		console.log(update.expire_ts.toISOString());
 	}
 	update.ts = new Date(update.epoch_ms);
-	update.source = [ {serv: dserv.info, client: source}, update.source ];
+	// XXX:
+	var usource = {
+		serv: dserv ? dserv.info : null,
+		client: source
+	};
+	if (update.source) {
+		update.source.unshift(usource);
+	} else {
+		update.source = [ usource ];
+	}
 	update.links = [];
 	this.updates.push(update);
 
-	// prune old data
-	this.prune(ts);
-
 	// Remove data specified in update
-	// BUG: XXX: Does not remove stale updates
 	// XXX: array
 	if (update.prune && typeof update.prune === 'object') {
 		this.remove(update.prune);
@@ -265,16 +366,20 @@ DataManager.prototype.update = function(update, dserv, source) {
 	// merge update hook... XXX
 	om.object_merge_hooks.before = function(prop, dst, src) {
 		if (!dst || typeof dst !== 'object') {
-			// Update all sub-objects for pruning
-			om.object_traverse(src, function(obj) {
-				if (obj && typeof obj === 'object') {
-					// XXX: Keep track of old updates
-					//Object.defineProperty(obj, '_bserver_', { value: [update], enumerable: false, configurable: true });
-					update.links.push(obj);
-				}
-			});
+			if (src && typeof src === 'object') {
+				// XXX:
+				update.links.push(src);
+				// Update all sub-objects for pruning
+				om.object_traverse(src, function(obj) {
+					if (obj && typeof obj === 'object') {
+						// XXX: Keep track of updates
+						//Object.defineProperty(obj, '_bserver_', { value: [update], enumerable: false, configurable: true });
+						update.links.push(obj);
+					}
+				});
+			}
 		} else {
-			// XXX: Keep track of old updates
+			// XXX: Keep track of updates
 			//Object.defineProperty(dst, '_bserver_', { value: dst._bserver_.unshift(update), enumerable: false, configurable: true });
 			update.links.push(dst);
 		}
@@ -303,13 +408,18 @@ DataManager.prototype.update = function(update, dserv, source) {
 	};
 
 	// log the data
-	this.data_log(update.data, ts, dserv.info, source);
+	this.data_log(update.data, ts, dserv ? dserv.info : null, source);
 
 	// broadcast updated data
 	var mdata = this.data;
 	this.servers.forEach(function(serv) {
 		serv.broadcast(mdata);
 	});
+
+	// Persist Data
+	if (!update.expire_ts && !update.initial) {
+		this.data_persist();
+	}
 
 	// All done
 	return true;
@@ -382,12 +492,11 @@ DataServer.prototype.client_hook = function(c) {
 	this.log(c.client_string + ' Open', c.info);
 	this.clients.push(c);
 
-	// XXX: arguments
+	// XXX: arguments (WebSockets)
 	c.on('close', function(reason, description) {
 		// unlink client from server
 		var index = this.dserv.clients.indexOf(this);
 		if (index >= 0) {
-			// XXX: Do this more efficiently
 			this.dserv.clients.splice(index, 1);
 		}
 
@@ -423,9 +532,9 @@ DataServer.prototype.client_hook = function(c) {
 		}
 
 		// Parse
-		var data = '';
+		var update = null;
 		try {
-			data = JSON.parse(message.utf8Data);
+			update = JSON.parse(message.utf8Data);
 		} catch (e) {
 			var error = '[JSON Parse Error!]'; // XXX: e
 			this.dserv.log(this.client_string + ' INVALID Message',
@@ -437,10 +546,11 @@ DataServer.prototype.client_hook = function(c) {
 		this.dserv.log(this.client_string + ' Message');
 
 		// Update
-		this.dserv.manager.update(data, this.dserv, this.info);
+		this.dserv.manager.update(update, this.dserv, this.info);
 	});
 
 	c.on('timeout', function() {
+		// XXX: BUG: BOBDOLE:
 		this.close();
 	});
 
@@ -448,6 +558,13 @@ DataServer.prototype.client_hook = function(c) {
 	c.message_send = function (data) {
 		this.send(JSON.stringify(data));
 	};
+
+	if (c.dserv.config.send) {
+		c.message_send(c.subscription ? this.manager.data_get(c.subscription) : this.manager.data);
+		if (c.dserv.config.once) {
+			c.close();
+		}
+	}
 };
 
 DataServer.prototype.server_hook = function() {
@@ -483,7 +600,7 @@ DataServer.prototype.server_hook = function() {
 			c.message_send(this.dserv.manager.data);
 
 			if (config.once) {
-				// XXX: BUG:
+				// XXX: BUG?
 				c.close();
 			}
 		}
@@ -495,7 +612,7 @@ DataServer.prototype.broadcast = function(data) {
 	if (config.send) {
 		this.clients.forEach(function each(client) {
 			try {
-				client.message_send(data);
+				client.message_send(client.subscription ? client.dserv.manager.data_get(client.subscription) : client.dserv.manager.data);
 			} catch (e) {
 				this.log(client.name + ' Error Sending Message');
 				client.close(); // XXX: Needed?
@@ -513,7 +630,6 @@ var url = require('url');
 var serveIndex = require('serve-index');
 var serveStatic = require('serve-static');
 var finalhandler = require('finalhandler');
-var memcache = require('memcache');
 function HTTPDataServer(manager, config) {
 	HTTPDataServer.super_.call(this);
 	config = this.setup(manager, config);
@@ -536,113 +652,64 @@ function HTTPDataServer(manager, config) {
 			var refurl = url.parse(req.headers.referer);
 			refhost = refurl.protocol + "//" + refurl.host;
 		}
-		if (rurl.pathname == '/.data' || rurl.pathname == '/.data.json' || rurl.pathname == '/.data.dat') {
-			if (req.method == 'GET') {
-				// XXX: Work-around for IE problems with 'application/json' mimetype
-				if (rurl.pathname == '/.data.dat') {
-					res.writeHead(200, {
-						'Content-Type': 'text/plain',
-						'Cache-Control': 'no-cache, no-store, must-revalidate',
-						'Expires': '0',
-						'Access-Control-Allow-Origin': refhost
-					});
-				} else {
-					res.writeHead(200, {
-						'Content-Type': 'application/json',
-						'Cache-Control': 'no-cache, no-store, must-revalidate',
-						'Expires': '0',
-						'Access-Control-Allow-Origin': refhost
-					});
-				}
-				res.write(JSON.stringify(
-					this.dserv.manager.data
-				));
-				res.end();
-			}
-			return;
-		} else if (rurl.pathname.substr(0, 8) == '/.config') {
+
+		if (rurl.pathname.substr(0, 6) == '/.data') {
 			res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
 			res.setHeader('Expires', '0');
 			res.setHeader('Access-Control-Allow-Origin', refhost);
 			res.setHeader('Content-Type', 'application/json');
-			var key = rurl.pathname.substr(8);
-			if (key.charAt(0) != '/') {
+
+			// Hack for IE
+			var agent = req.headers['user-agent'];
+			if (agent.search('MSIE') > 0 || agent.search('Trident') > 0) {
+				res.setHeader('Content-Type', 'text/plain');
+			}
+
+			// Determine URI
+			// XXX: Handle .json, .xml, .dat, extensions?
+			// XXX: Differentiate between leafs and nodes based on trailing /
+			var key = rurl.pathname.substr(6);
+			if (key.length > 0 && key.charAt(0) != '/') {
 				res.statusCode = 404;	// Not Found
 				res.end();
 				return;
+			} else if (key.length > 0) {
+				key = key.substr(1);
 			}
-			key = key.substr(1);
-			if (key.indexOf('/') >= 0 || key.trim() === '') {
-				res.statusCode = 501;	// Not Implemented
-				res.statusMessage = 'Not Implemeted (Yet)';
-				res.write('{"error": "Invalid Key"}');
-				res.end();
-				return;
-			}
-			key = decodeURIComponent(key);
-			if (key.search('\s') >= 0) {
-				res.statusCode = 501;	// Not Implemented
-				res.statusMessage = 'Invalid Key Name';
-				res.write('{"error": "Invalid Key Name"}');
-				res.end();
-				return;
-			}
-			var mc_client = new memcache.Client(config.memcache.port, config.memcache.host);
-			mc_client.on('close', function() {
-				res.end();
-			});
-			mc_client.on('timeout', function() {
-				res.statusCode = 504;	// Gateway Timeout
-				res.statusMessage = 'memcached Timed-Out';
-				res.write('{"error": "memcached Timeout"}');
-			});
-			mc_client.on('error', function(e) {
-				res.statusCode = 500;	// Internal Server Error
-				res.statusMessage = 'memcached Error';
-				res.write('{"error": "memcached Error"}');
-			});
 
-			if (req.method == 'GET') {
-				mc_client.on('connect', function() {
-					mc_client.get(key, function(error, result) {
-						if (error) {
-							res.statusCode = 500;
-							res.statusMessage = 'memcached Error';
-							res.write('{"error": "memcached get error!"}');
-						} else {
-							// XXX: result could in theory be bunk... Check it
-							res.write('{"result": ' + result + '}');
-						}
-						mc_client.close();
-					});
-				});
-				mc_client.connect();
-			} else if (req.method == 'POST') {
+			var node;
+			if (key.length === 0) {
+				node = this.dserv.manager.data;
+			} else {
+				key = decodeURIComponent(key);
+				node = this.dserv.manager.data_get(key);
+			}
+			if (req.method == 'POST') {
 				var data = '';
 				req.on('data', function(chunk) {
-					data = data + chunk;
+					data += chunk;
 				});
 				req.on('end', function() {
-					mc_client.connect();
+					// XXX: Proper mimetype handling
+					// XXX: Error handling
+					var update = JSON.parse(data);
+					this.dserv.manager.update(update, this.dserv);
+					req.end();
 				});
-				mc_client.on('connect', function() {
-					mc_client.set(key, data, function(error, result) {
-						if (error) {
-							res.statusCode = 500;
-							res.statusMessage = 'memcached Error';
-							res.write('{"error": "memcached Error"}');
-						} else if (result == 'STORED') {
-							res.statusCode = 201;
-							res.write('{"result": "' + result + '"}');
-						} else {
-							res.statusCode = 500;
-							res.statusMessage = 'memcached Error';
-							res.write('{"error": "' + result + '"}');
-						}
-						mc_client.close();
-					});
-				});
+				return;
+			} else if (req.method == 'GET') {
+				if (node === undefined) {
+					res.statusCode = 404;
+					res.end();
+					return;
+				}
+				// XXX: Proper mimetype handling
+				res.write(JSON.stringify(node));
+				res.end();
+				return;
 			}
+			res.statusCode = 404;
+			res.end();
 			return;
 		}
 
@@ -683,13 +750,22 @@ function WebSocketDataServer(manager, config) {
 	});
 	this.server_hook();
 	this.serv.on('request', function(req) {
+		if (req.resource.substr(0, 6) != '/.data') {
+			req.reject();
+			return;
+		}
 		/*
 		if (!originIsAllowed(req.origin)) {
 			req.reject();
 			return;
 		}
 		*/
+		//req.requestedProtocols[0];
 		var c = req.accept(null, req.origin);
+		c.subscription = req.resource.substr(7);
+		c.httpRequest = req.httpRequest;
+		c.origin = req.origin;
+		c.requestedExtensions = req.requestedExtensions;
 		this.dserv.client_hook(c);
 	});
 
