@@ -331,10 +331,13 @@ DataManager.prototype.remove = function(links) {
 };
 
 // XXX: update not validated!!!
-// XXX: BUG: TODO: BOBDOLE: update.wsb_update means it's an update packet, otherwise generate a default update packet.
 DataManager.prototype.update = function(update, dserv, source) {
 
 	var ts = new Date();
+
+	if (!update.wsb_update) {
+		update = { wsb_update: 0, data: update };
+	}
 
 	// prune old data
 	this.prune(ts);
