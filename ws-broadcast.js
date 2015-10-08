@@ -79,6 +79,11 @@ DataManager.prototype.config_default = {
 DataManager.prototype.data_get = function(uri) {
 	var node = this.data;
 
+	// Send it all!
+	if (!uri) {
+		return node;
+	}
+
 	// Parse URI
 	var links = uri;
 	if (!(links instanceof Array)) {
@@ -550,8 +555,8 @@ DataServer.prototype.client_hook = function(c) {
 	});
 
 	c.on('timeout', function() {
-		// XXX: BUG: BOBDOLE:
-		this.close();
+		// XXX:
+		//this.close();
 	});
 
 	// XXX: Different formats (XML, bXML)
@@ -560,7 +565,10 @@ DataServer.prototype.client_hook = function(c) {
 	};
 
 	if (c.dserv.config.send) {
-		c.message_send(c.subscription ? this.manager.data_get(c.subscription) : this.manager.data);
+		var data = this.manager.data_get(c.subscription);
+		if (data !== undefined) {
+			c.message_send(data);
+		}
 		if (c.dserv.config.once) {
 			c.close();
 		}
