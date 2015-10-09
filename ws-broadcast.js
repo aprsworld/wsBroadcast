@@ -968,7 +968,7 @@ var getopt = require('node-getopt').create([
 	config.log = opt.log;
 })
 .on('expire', function (argv, opt) {
-	var expire = Number.parseInt(opt.expire, 10);
+	var expire = parseInt(opt.expire, 10);
 	if (Number.isNaN(expire) || expire <= 0) {
 		console.log('ERROR: Invalid data expiration specified!');
 		getopt.showHelp();
