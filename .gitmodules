@@ -4,3 +4,6 @@
 [submodule "jsUtils"]
 	path = jsUtils
 	url = https://github.com/aprsworld/jsUtils
+[submodule "WebDisplay"]
+	path = WebDisplay
+	url = https://github.com/aprsworld/wsWebDisplay
