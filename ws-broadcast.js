@@ -420,12 +420,14 @@ DataManager.prototype.update = function(update, dserv, source) {
 	} else {
 		om.object_merge(this.data, update.data);
 	}
-	om.object_merge(this.data, { _bserver_: this.meta });
 
 	// Reset hook... XXX
 	om.object_merge_hooks.before = function(prop, dst, src) {
 		return src;
 	};
+
+	// Replace meta data
+	om.object_merge(this.data, { _bserver_: this.meta });
 
 	// Handle meta data
 	this.meta.updated = {
