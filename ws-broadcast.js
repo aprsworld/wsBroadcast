@@ -114,17 +114,20 @@ DataManager.prototype.data_get = function(uri) {
 
 // XXX:
 DataManager.prototype.data_persist = function() {
-	var data = {};
+	var updates = [];
 	for (var i = 0; i < this.updates.length; i++) {
 		var update = this.updates[i];
 		if (update.expire_ts) {
 			continue;
 		}
-		om.object_merge(data, update.data);
+		update = om.object_merge({}, update);
+		delete update.expire_ts;
+		delete update.ts;
+		delete update.links;
+		updates.push(update);
 	}
-	data._bserver_ = this.data._bserver_;
 	try {
-		fs.writeFileSync(this.config.persist, JSON.stringify(data));
+		fs.writeFileSync(this.config.persist, JSON.stringify(updates));
 	} catch (e) {
 		console.log("# Persist: Could not write initialization file!");
 		return false;
@@ -147,22 +150,27 @@ DataManager.prototype.data_initial = function() {
 		return false;
 	}
 
-	// Compose update
-	var update = {
-		initial:	true,
-		epoch_ms:	fs_stat.mtime.getTime(),
-		expire:		0
+	// Create templates 
+	var updates = null;
+	var template = {
+		initial:	true
 	};
 
 	// Read file
 	try {
-		update.data = JSON.parse(fs.readFileSync(this.config.persist, 'utf8'));
+		updates = JSON.parse(fs.readFileSync(this.config.persist, 'utf8'));
 	} catch (e) {
 		console.log("# Initialize: Could not read initialization file!");
 		return false;
 	}
 
-	this.update(update, null, { file: this.config.persist });
+	// Update the data
+	var manager = this;
+	updates.forEach(function(update) {
+		manager.update(om.object_merge({}, update, template), null, { file: manager.config.persist, modified_ms: template.epoch_ms });
+	});
+
+	// All done
 	return true;
 };
 
