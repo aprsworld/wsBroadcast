@@ -335,7 +335,7 @@ DataManager.prototype.update = function(update, dserv, source) {
 
 	var ts = new Date();
 
-	if (!update.wsb_update) {
+	if (update.wsb_update == undefined) {
 		update = { wsb_update: 0, data: update };
 	}
 
@@ -731,6 +731,13 @@ function HTTPDataServer(manager, config) {
 					// XXX: Proper mimetype handling
 					// XXX: Error handling
 					var update = JSON.parse(data);
+					if (update.wsb_update == undefined) {
+						update = {
+							wsb_update: 0,
+							data: update,
+							uri: key
+						};
+					}
 					if (!update.uri) {
 						update.uri = key;
 					}
