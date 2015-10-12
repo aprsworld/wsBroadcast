@@ -659,7 +659,10 @@ DataServer.prototype.broadcast = function(data) {
 	if (config.send) {
 		this.clients.forEach(function each(client) {
 			try {
-				client.message_send(client.subscription ? client.dserv.manager.data_get(client.subscription) : client.dserv.manager.data);
+				var sdata = client.dserv.manager.data_get(client.subscription);
+				if (sdata) {
+					client.message_send(sdata);
+				}
 			} catch (e) {
 				ds.log(client.name + ' Error Sending Message');
 				client.close(); // XXX: Needed?
