@@ -655,12 +655,13 @@ DataServer.prototype.server_hook = function() {
 
 DataServer.prototype.broadcast = function(data) {
 	var config = this.config;
+	var ds = this;
 	if (config.send) {
 		this.clients.forEach(function each(client) {
 			try {
 				client.message_send(client.subscription ? client.dserv.manager.data_get(client.subscription) : client.dserv.manager.data);
 			} catch (e) {
-				this.log(client.name + ' Error Sending Message');
+				ds.log(client.name + ' Error Sending Message');
 				client.close(); // XXX: Needed?
 			}
 		});
