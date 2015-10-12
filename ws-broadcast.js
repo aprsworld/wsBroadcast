@@ -129,7 +129,6 @@ DataManager.prototype.data_persist = function() {
 	try {
 		fs.writeFileSync(this.config.persist, JSON.stringify(updates));
 	} catch (e) {
-		console.log("# Persist: Could not write initialization file!");
 		return false;
 	}
 	return true;
@@ -973,7 +972,8 @@ var getopt = require('node-getopt').create([
 	['w',	'ws-server=PORT', 'Port to run WebSockets HTTP server on. [DEPRECIATED][DEFAULT: 8889]'],
 	['',	'tcp-client=HOST[:PORT]', 'Mirror data from a remote TCP Broadcast Server.'],
 	['',	'memcache=HOST[:PORT]', 'Use HOST and PORT for memcache Connections. [DEFAULT: localhost:11211]'],
-	['',	'webdir=DIR', 'Root directory of the HTTP Server'],
+	['',	'webdir=DIR', 'Root directory of the HTTP Server.'],
+	['',	'persist=DIR', 'JSON file used for persistent data.'],
 	['l',	'log=DIR',	'Directory to log data into.'],
 	['h',	'help',		'Display this help.'],
 	['v',	'version',	'Display the version number.']
@@ -1007,6 +1007,9 @@ var getopt = require('node-getopt').create([
 })
 .on('webdir', function(argv, opt) {
 	config.server_http.root_dir = opt.webdir;
+})
+.on('persist', function(argv, opt) {
+	config.persist = opt.persist;
 })
 .on('tcp-server', function(argv, opt) {
 	var port = opt['tcp-server'];
@@ -1110,5 +1113,14 @@ if (config.client_tcp) {
 var tcp_recv = new TCPDataServer(dm, config.recv_tcp);
 var tcp_send = new TCPDataServer(dm, config.send_tcp);
 
+/*
+ * Process Signals
+ */
+process.on('SIGHUP', function() {
+	console.log('# SIGHUP Received: Persisting Data.');
+	if (!dm.data_persist()) {
+		console.log("# Error: Could not write initialization file!");
+	}
+});
 
 /* EOF */
