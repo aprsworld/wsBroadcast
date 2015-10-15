@@ -68,6 +68,20 @@ function DataManager(config) {
 	this.data = {};
 	this.data._bserver_ = this.meta;
 	this.data_initial();
+	var self = this;
+	this.timer_handle = setInterval(function() { self.timer() }, 1000);
+}
+
+DataManager.prototype.timer = function() {
+	var time = {
+		epoch_ms: new Date().getTime()
+	};
+
+	// broadcast updated data
+	this.servers.forEach(function(serv) {
+		//serv.broadcast({ _bserver_: { time: time } });
+	});
+
 }
 
 DataManager.prototype.config_default = {
@@ -658,6 +672,10 @@ DataServer.prototype.broadcast = function(data) {
 	if (config.send) {
 		this.clients.forEach(function each(client) {
 			try {
+				if (data && data._bserver_ && data._bserver_.time) {
+					client.message_send(data);
+					return;
+				}
 				var sdata = client.dserv.manager.data_get(client.subscription);
 				if (sdata) {
 					client.message_send(sdata);
@@ -740,8 +758,15 @@ function HTTPDataServer(manager, config) {
 				});
 				req.on('end', function() {
 					// XXX: Proper mimetype handling
-					// XXX: Error handling
-					var update = JSON.parse(data);
+					var update;
+					try {
+						update = JSON.parse(data);
+					} catch (e) {
+						console.log(util.inspect(data));
+						res.statusCode = 400;
+						res.end();
+						return;
+					}
 					if (update.wsb_update == undefined) {
 						update = {
 							wsb_update: 0,
