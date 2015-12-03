@@ -1,0 +1,12 @@
+{
+  "name": "wsbroadcast",
+  "version": "0.1.0",
+  "description": "web socket broadcast server",
+  "dependencies" :
+  { "http" : "*",
+    "url" : "*",
+    "serve-index" : "*",
+    "serve-static" : "*"
+
+  }
+}

@@ -16,7 +16,7 @@ var version = {
 	refs: '$Format:%d$'
 };
 var util = require('util');
-var om = require('./jsUtils');
+var om = require('./Object');
 
 function decPad (num, size) {
 	var ret = '';
@@ -298,7 +298,6 @@ DataManager.prototype.prune = function(ts) {
 				delete obj[p];
 			}
 		}
-		return;
 	};
 	for (i in links) {
 		link = links[i];
@@ -697,6 +696,7 @@ var url = require('url');
 var serveIndex = require('serve-index');
 var serveStatic = require('serve-static');
 var finalhandler = require('finalhandler');
+
 function HTTPDataServer(manager, config) {
 	HTTPDataServer.super_.call(this);
 	config = this.setup(manager, config);
@@ -989,22 +989,22 @@ var config = {	server_http: {
 		}
 };
 var getopt = require('node-getopt').create([
-	['x',	'expire=SECS',	'Number of seconds to expire old data. [REQUIRED]'],
-	['p',	'http-server=PORT', 'Port to run HTTP server on. [DEFAULT: 8888]'],
-	['t',	'tcp-server=PORT', 'Port for TCP Broadcast Server. [DEFAULT: 1337]'],
-	['r',	'tcp-recv=PORT', 'Port to run simple TCP Server on to update data on. [DEFAULT: 1230]'],
-	['s',	'tcp-send=PORT', 'Port to run simple TCP Server on to retrive data on. [DEFAULT: 1231]'],
-	['w',	'ws-server=PORT', 'Port to run WebSockets HTTP server on. [DEPRECIATED][DEFAULT: 8889]'],
-	['',	'tcp-client=HOST[:PORT]', 'Mirror data from a remote TCP Broadcast Server.'],
-	['',	'memcache=HOST[:PORT]', 'Use HOST and PORT for memcache Connections. [DEFAULT: localhost:11211]'],
-	['',	'webdir=DIR', 'Root directory of the HTTP Server.'],
-	['',	'persist=DIR', 'JSON file used for persistent data.'],
-	['l',	'log=DIR',	'Directory to log data into.'],
+	['',	'expire=seconds',	'Number of seconds to expire old data. [REQUIRED]'],
+	['',	'http-server=port', 'Port to run HTTP server on. [DEFAULT: 8888]'],
+	['',	'tcp-server=port', 'Port for TCP Broadcast Server. [DEFAULT: 1337]'],
+	['',	'tcp-recv=port', 'Port to run simple TCP Server on to update data on. [DEFAULT: 1230]'],
+	['',	'tcp-send=port', 'Port to run simple TCP Server on to retrive data on. [DEFAULT: 1231]'],
+	['',	'ws-server=port', 'Port to run WebSockets HTTP server on. [DEPRECIATED][DEFAULT: 8889]'],
+	['',	'tcp-client=host[:port]', 'Mirror data from a remote TCP Broadcast Server.'],
+	['',	'memcache=host[:port]', 'Use HOST and PORT for memcache Connections. [DEFAULT: localhost:11211]'],
+	['',	'webdir=dir', 'Root directory of the HTTP Server. [REQUIRED]'],
+	['',	'persist=dir', 'JSON file used for persistent data.'],
+	['',	'log=dir',	'Directory to log data into.'],
 	['h',	'help',		'Display this help.'],
 	['v',	'version',	'Display the version number.']
 ])
 .on('version', function(argv, opt) {
-	console.log('v0.0.1');	// XXX
+	console.log('v0.1.0');	// XXX
 	process.exit(false);
 })
 .on('log', function (argv, opt) {
@@ -1032,6 +1032,11 @@ var getopt = require('node-getopt').create([
 })
 .on('webdir', function(argv, opt) {
 	config.server_http.root_dir = opt.webdir;
+	if ( ! fs.exists(config.server_http.root_dir) ) {
+		console.log('ERROR: Web doument root does not exist!');
+		getopt.showHelp();
+		process.exit(false);
+	}
 })
 .on('persist', function(argv, opt) {
 	config.persist = opt.persist;
@@ -1117,13 +1122,18 @@ var getopt = require('node-getopt').create([
 // Parse the command line
 var opt = getopt.parseSystem();
 
-// Manditory options...
-if (!config.expire) {
+// Mandatory options...
+if (!config.expire  ) {
 	console.log('ERROR: Data Expiration MUST be specified!');
 	getopt.showHelp();
 	process.exit(false);
 }
 
+/* print out our current configuration before starting */
+console.log("-----------------------------------------------------");
+console.log("# Starting with configuration:");
+console.log(config);
+console.log("-----------------------------------------------------");
 
 /*
  * Start everything up.
@@ -1143,6 +1153,7 @@ var tcp_send = new TCPDataServer(dm, config.send_tcp);
  */
 process.on('SIGHUP', function() {
 	console.log('# SIGHUP Received: Persisting Data.');
+
 	if (!dm.data_persist()) {
 		console.log("# Error: Could not write initialization file!");
 	}
