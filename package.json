@@ -6,7 +6,9 @@
   { "http" : "*",
     "url" : "*",
     "serve-index" : "*",
-    "serve-static" : "*"
-
+    "serve-static" : "*",
+    "finalhandler"  : "*",
+    "node-getopt" : "*",
+    "websocket" : "*"
   }
 }
