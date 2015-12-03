@@ -1,8 +1,39 @@
 # wsBroadcast
 
-Node.js Broadcast System with HTTP, WebSockets, and TCP Servers.  Currently in heavy development.  At this time the code base contains some "style" issues and lacks good comments, but before initial release all of that will be cleaned up.
+Broadcast data system. Receives data via TCP and broadcasts data via TCP, HTTP, and WebSockets.
 
-The initial release should also be standards compliant except where commented where a deviation was made for compatiblity reasons.
+Data is JSON object based with a global namespace. Objects can be made to expire, not-expire, or to be persistent between reboots.
+
+Written in node.js.
+
+
+## Installation
+
+* Install Node.js as required by your platform.
+* `npm install finalhandler http node-getopt serve-index serve-static url websocket`
+* `git clone  http://github.com/aprsworld/wsBroadcast`
+
+
+To execute:
+
+* `node ws-broadcast.js --help` for usage and option information.
+* `node ws-broadcast.js -x 60 --webdir WebClient` and point a web-browser at http://hostname:8888/test.html.
+* `node ws-broadcast.js -x 60 --webdir WebClient  --tcp-client [server]` to mirror an existing server.
+
+## Debugging / dumping data using wscat
+If wscat is not on your system, install with:
+* `npm install -g wscat`
+The `-g` flag will do a global install and hopefully make it so wscat can be run from the commend line.
+
+Dump data with:
+* `wscat -c http://hostname:8888/.data/` to receive continuous updates of the data in JSON format.
+
+## Using nc
+* `cat data.json | nc hostname 1230` or `echo [JSON] | nc hostname 1230` to update the data with JSON. *(The file MUST be terminated with the terminator character and most only contain one terminator character.  Currently: '\n'.)*
+* `nc hostname 1231` to receive the latest data in JSON format. _(DO NOT USE)_
+* `nc hostname 1337` to receive continuous updates of the data in JSON format. _(DO NOT USE)_
+
+
 
 ## Data Manager
 
@@ -52,33 +83,3 @@ _THIS DOCUMENTATION IS OUT OF DATE_
 The TCP Server allows updating the dynamic data via standard JSON messages.  The protocol is a very simple input only terminated (At this time it is terminated with a '\n', 0x0A character though in the future may use the traditional null, '\0', 0x00 terminator) message passing system with each message being a JSON object with absolutely no handshake.  It may be extended in the future.
 
 Currently two TCP Servers are run, one on port 1229 which is for input, and one on port 1230 for a single output of the current data.
-
-## Quick and Dirty Install
-
-* Install Node.js
-* `git clone --recursive http://github.com/aprsworld/wsBroadcast`
-* `npm install node-getopt` _(LIKELY BE REPLACED)_
-* `npm install websocket`
-* `npm install serve-static`
-* `npm install serve-index`
-* `npm install finalhandler`
-* `npm install -g wscat` _(OPTIONAL FOR DEBUGGING)_
-
-To execute:
-
-* `node ws-broadcast.js --help` for usage and option information.
-* `node ws-broadcast.js -x 60 --webdir WebClient` and point a web-browser at http://hostname:8888/test.html.
-* `node ws-broadcast.js -x 60 --webdir WebClient  --tcp-client [server]` to mirror an existing server.
-
-## Using wscat
-* `wscat -c http://hostname:8888/.data/` to receive continuous updates of the data in JSON format.
-
-## Using nc
-* `cat data.json | nc hostname 1230` or `echo [JSON] | nc hostname 1230` to update the data with JSON. *(The file MUST be terminated with the terminator character and most only contain one terminator character.  Currently: '\n'.)*
-* `nc hostname 1231` to receive the latest data in JSON format. _(DO NOT USE)_
-* `nc hostname 1337` to receive continuous updates of the data in JSON format. _(DO NOT USE)_
-
----
-Copyright (C) APRS World, LLC. 2015  
-ALL RIGHTS RESERVED!  
-david@aprsworld.com
