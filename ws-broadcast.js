@@ -69,7 +69,7 @@ function DataManager(config) {
 	this.data._bserver_ = this.meta;
 	this.data_initial();
 	var self = this;
-	this.timer_handle = setInterval(function() { self.timer() }, 1000);
+	this.timer_handle = setInterval(function() { self.timer(); }, 1000);
 }
 
 DataManager.prototype.timer = function() {
@@ -82,7 +82,7 @@ DataManager.prototype.timer = function() {
 		//serv.broadcast({ _bserver_: { time: time } });
 	});
 
-}
+};
 
 DataManager.prototype.config_default = {
 	expire:		null,
@@ -355,7 +355,7 @@ DataManager.prototype.update = function(update, dserv, source) {
 
 	var ts = new Date();
 
-	if (update.wsb_update == undefined) {
+	if (update.wsb_update === undefined) {
 		update = { wsb_update: 0, data: update };
 	}
 
@@ -414,13 +414,14 @@ DataManager.prototype.update = function(update, dserv, source) {
 	};
 
 	// merge data
+	// XXX:  Clean this mess
 	if (update.uri) {
 		var node = this.data;
 		var prop = null;
 		var links = update.uri.split('/');
 		for (var i = 0; i < links.length - 1; i++) {
 			var prop = links[i];
-			if (prop == '') {
+			if (prop === '') {
 				continue;
 			}
 			if (node[prop] && typeof node[prop] === 'object') {
@@ -430,7 +431,7 @@ DataManager.prototype.update = function(update, dserv, source) {
 			}
 		}
 		prop = links[i];
-		if (prop == '') {
+		if (prop === '') {
 			om.object_merge(node, update.data);
 		} else {
 			var temp = {};
@@ -767,7 +768,7 @@ function HTTPDataServer(manager, config) {
 						res.end();
 						return;
 					}
-					if (update.wsb_update == undefined) {
+					if (update.wsb_update === undefined) {
 						update = {
 							wsb_update: 0,
 							data: update,
