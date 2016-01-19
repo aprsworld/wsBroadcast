@@ -1032,7 +1032,11 @@ var getopt = require('node-getopt').create([
 })
 .on('webdir', function(argv, opt) {
 	config.server_http.root_dir = opt.webdir;
-	if ( ! fs.exists(config.server_http.root_dir) ) {
+	var valid = false;
+	try {
+		valid = fs.statSync(config.server_http.root_dir).isDirectory();
+	} catch (e) {}
+	if (!valid) {
 		console.log('ERROR: Web doument root does not exist!');
 		getopt.showHelp();
 		process.exit(false);
@@ -1123,7 +1127,7 @@ var getopt = require('node-getopt').create([
 var opt = getopt.parseSystem();
 
 // Mandatory options...
-if (!config.expire  ) {
+if (!config.expire) {
 	console.log('ERROR: Data Expiration MUST be specified!');
 	getopt.showHelp();
 	process.exit(false);
