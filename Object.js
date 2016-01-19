@@ -29,7 +29,7 @@
 function object_traverse(obj, callback) {
 
     // If the callback returns false, return.
-    if (callback(obj) == false) {
+    if (callback(obj) === false) {
         return;
     }
 
