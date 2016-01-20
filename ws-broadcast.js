@@ -420,7 +420,7 @@ DataManager.prototype.update = function(update, dserv, source) {
 		var prop = null;
 		var links = update.uri.split('/');
 		for (var i = 0; i < links.length - 1; i++) {
-			var prop = links[i];
+			prop = links[i];
 			if (prop === '') {
 				continue;
 			}
