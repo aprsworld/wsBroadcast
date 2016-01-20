@@ -949,8 +949,7 @@ util.inherits(TCPDataServer, DataServer);
 TCPDataServer.prototype.config_default = om.object_merge({}, DataServer.config_default, {
 	server_name:	'Server_TCP',
 	type:		'server',
-	term:		0x0a,	// 0x0A for newline testing w/ telnet
-				// 0x00 for real release
+	term:		0x0A,
 	once:		true,	// Disconnect after one update?
 	send:		true,
 	recv:		false
@@ -961,14 +960,7 @@ TCPDataServer.prototype.config_default = om.object_merge({}, DataServer.config_d
  * Process Command Line Options
  */
 var config = {	server_http: {
-			port: 8888,
-			memcache: {
-				port: 11211,
-				host: 'localhost'
-			}
-		},
-		server_ws: {
-			port: 8889
+			port: process.env.npm_package_config_http_port // 8888
 		},
 		recv_tcp: {
 			port: 1230,
@@ -995,9 +987,7 @@ var getopt = require('node-getopt').create([
 	['',	'tcp-server=port', 'Port for TCP Broadcast Server. [DEFAULT: 1337]'],
 	['',	'tcp-recv=port', 'Port to run simple TCP Server on to update data on. [DEFAULT: 1230]'],
 	['',	'tcp-send=port', 'Port to run simple TCP Server on to retrive data on. [DEFAULT: 1231]'],
-	['',	'ws-server=port', 'Port to run WebSockets HTTP server on. [DEPRECIATED][DEFAULT: 8889]'],
 	['',	'tcp-client=host[:port]', 'Mirror data from a remote TCP Broadcast Server.'],
-	['',	'memcache=host[:port]', 'Use HOST and PORT for memcache Connections. [DEFAULT: localhost:11211]'],
 	['',	'webdir=dir', 'Root directory of the HTTP Server. [REQUIRED]'],
 	['',	'persist=dir', 'JSON file used for persistent data.'],
 	['',	'log=dir',	'Directory to log data into.'],
@@ -1065,24 +1055,6 @@ var getopt = require('node-getopt').create([
 		process.exit(false);
 	}
 	config.server_ws.port = port;
-})
-.on('memcache', function(argv, opt) {
-	var str = opt.memcache;
-	var index = str.indexOf(':');
-	var port = 11211;
-	var host = str;
-	if (index >= 0) {
-		host = str.substr(0, index);
-		port = str.substr(index+1);
-		port = Number.parseInt(port, 10);
-		if (Number.isNaN(port) || port <= 0) {
-			console.log('ERROR: Invalid memcache port specified!');
-			getopt.showHelp();
-			process.exit(false);
-		}
-	}
-	config.server_http.memcache.host = host;
-	config.server_http.memcache.port = port;
 })
 .on('tcp-recv', function(argv, opt) {
 	var port = opt['tcp-recv'];

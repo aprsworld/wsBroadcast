@@ -10,5 +10,13 @@
     "finalhandler"  : "*",
     "node-getopt" : "*",
     "websocket" : "*"
+  },
+  "config" :
+  {
+    "http" : { "port" : 8888 }
+  },
+  "scripts" :
+  {
+    "start" : "node ws-broadcast.js --expire=60 --tcp-client=cam.aprsworld.com --webdir=../wsWebDisplay/"
   }
 }
