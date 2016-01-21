@@ -403,16 +403,27 @@ DataManager.prototype.update = function(update, dserv, source) {
 				// Update all sub-objects for pruning
 				om.object_traverse(src, function(obj) {
 					if (obj && typeof obj === 'object') {
-						// XXX: Keep track of updates
-						//Object.defineProperty(obj, '_bserver_', { value: [update], enumerable: false, configurable: true });
 						update.links.push(obj);
+
+						/* TODO: Update Tracking
+						Object.defineProperty(obj, '_updates_', { value: [update], enumerable: false, configurable: false, writable: true });
+						*/
 					}
 				});
 			}
 		} else {
-			// XXX: Keep track of updates
-			//Object.defineProperty(dst, '_bserver_', { value: dst._bserver_.unshift(update), enumerable: false, configurable: true });
-			update.links.push(dst);
+			// Update object for pruning
+			if (!(update.links.indexOf(dst) >= 0)) {
+				update.links.push(dst);
+			}
+
+			/* TODO: Update Tracking
+			if (!dst._updates_) {
+				Object.defineProperty(dst, '_updates_', { value: [update], enumerable: false, configurable: false, writable: true });
+			} else if (!(dst._updates_.indexOf(update) >= 0)) {
+				dst._updates_.unshift(update);
+			}
+			*/
 		}
 		return src;
 	};
