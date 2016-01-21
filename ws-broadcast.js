@@ -37,7 +37,7 @@ function decPad (num, size) {
  *	uri: 		"URI",["URI"...]	(Node Location)
  *	epoch_ms:	Natural			(Last Update Time)
  *	data: 		{...}			(Relative New/Updated Data)
- *	expiration:	Natural			(0 or Experiation in seconds)
+ *	expire:	i	Natural			(0 or Experiation in seconds)
  *	prune:		"URI",["URI"...]	(Relative Nodes to Prune)
  *	meta:		{...}			(Meta Data for Propogation)
  *	source:		...
@@ -359,6 +359,10 @@ DataManager.prototype.update = function(update, dserv, source) {
 		update = { wsb_update: 0, data: update };
 	}
 
+	if (!update.epoch_ms) {
+		update.epoch_ms = ts.getTime();
+	}
+
 	// prune old data
 	this.prune(ts);
 
@@ -366,9 +370,10 @@ DataManager.prototype.update = function(update, dserv, source) {
 	if (update.expire === false || update.expire === 0) {
 		// Never expire
 	} else if (update.expire > 0) {
-		update.expire_ts = new Date(ts.getTime() + update.expire * 1000);
+		update.expire_ts = new Date(update.epoch_ms + update.expire * 1000);
 	} else {
-		update.expire_ts = new Date(ts.getTime() + this.config.expire * 1000);
+		update.expire = this.config.expire;
+		update.expire_ts = new Date(update.epoch_ms + this.config.expire * 1000);
 	}
 	update.ts = new Date(update.epoch_ms);
 	// XXX:
@@ -394,8 +399,6 @@ DataManager.prototype.update = function(update, dserv, source) {
 	om.object_merge_hooks.before = function(prop, dst, src) {
 		if (!dst || typeof dst !== 'object') {
 			if (src && typeof src === 'object') {
-				// XXX:
-				update.links.push(src);
 				// Update all sub-objects for pruning
 				om.object_traverse(src, function(obj) {
 					if (obj && typeof obj === 'object') {
@@ -724,12 +727,12 @@ function HTTPDataServer(manager, config) {
 		if (rurl.pathname.substr(0, 6) == '/.data') {
 			res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
 			res.setHeader('Expires', '0');
-			res.setHeader('Access-Control-Allow-Origin', refhost);
+			//res.setHeader('Access-Control-Allow-Origin', refhost);
 			res.setHeader('Content-Type', 'application/json');
 
 			// Hack for IE
 			var agent = req.headers['user-agent'];
-			if (agent.search('MSIE') > 0 || agent.search('Trident') > 0) {
+			if (agent && (agent.search('MSIE') > 0 || agent.search('Trident') > 0)) {
 				res.setHeader('Content-Type', 'text/plain');
 			}
 
@@ -779,7 +782,18 @@ function HTTPDataServer(manager, config) {
 						update.uri = key;
 					}
 					this.socket.dserv.manager.update(update, this.dserv);
-					res.write(JSON.stringify(update));
+					var update_clean = {
+						wsb_update: update.wsb_update,
+						uri: update.uri,
+						error: update.error,
+						data: update.data,
+						prune: update.prune,
+						epoch_ms: update.epoch_ms,
+						expire: update.expire,
+						meta: update.meta,
+						source: update.source
+					};
+					res.write(JSON.stringify(update_clean));
 					res.end();
 				});
 				return;
