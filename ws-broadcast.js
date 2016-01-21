@@ -223,7 +223,7 @@ DataManager.prototype.data_log = function(data, ts, dserv, source) {
 	return true;
 };
 
-// XXX BUG: DOES NOT PRUNE PRIMATIVES, ONLY OBJECTS
+// TODO: DOES NOT PRUNE PRIMATIVES, ONLY OBJECTS
 DataManager.prototype.prune = function(ts) {
 
 	// Current time was not passed in
@@ -236,9 +236,9 @@ DataManager.prototype.prune = function(ts) {
 	var update;
 	var prune = [];
 	var links = [];
+	var link;
 
 	// Find all data to be pruned
-	var link;
 	for (i = 0; i < updates.length; i++) {
 		update = updates[i];
 
@@ -299,13 +299,14 @@ DataManager.prototype.prune = function(ts) {
 			}
 		}
 	};
+
 	for (i in links) {
 		link = links[i];
 		om.object_traverse(this.data, remove_node);
 	}
 
 	// Nuke the update references
-	this.updates = updates.filter(function filter(update, index, prune) {
+	this.updates = updates.filter(function filter(update, index, updates) {
 		// This update was pruned, remove it
 		if (prune.indexOf(update) >= 0) {
 			return false;

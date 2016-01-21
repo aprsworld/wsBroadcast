@@ -111,7 +111,7 @@ function object_merge () {
         }
 
         // Call hook before processing object
-        //extension = hooks.before(extension); // XXX: Seperate hook?
+	extension = hooks.before(null, target, extension); // XXX: Separaate hook?
 
         // Handle extensions that are not objects
         if (!extension || typeof extension !== 'object') {
@@ -159,7 +159,7 @@ function object_merge () {
         }
 
         // Call hook after processing object
-        //last = hooks.after(extension); // XXX: Seperate hook?
+        last = hooks.after(null, last, extension); // XXX: Seperate hook?
     }
 
     // The last extension was not an object, so return that value
