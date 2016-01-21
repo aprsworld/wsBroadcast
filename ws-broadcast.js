@@ -1,5 +1,5 @@
 /*
- * THAR BE DRAGONS
+ * THAR BE DRAGONS :(
  */
 var version = {
 	commit: {
