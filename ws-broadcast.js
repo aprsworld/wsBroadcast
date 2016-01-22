@@ -705,6 +705,25 @@ DataServer.prototype.broadcast = function(data) {
 
 
 /*
+ * Data Serialization
+ */
+var data_serialize = [
+{
+	mimetype:	"application/json",
+	extension:	"json",
+	encode:		undefined,
+	decode:		undefined
+},
+{
+	mimetype:	"application/xml",
+	extension:	"xml",
+	encode:		undefined,
+	decode:		undefined
+}
+];
+
+
+/*
  * HTTP Server
  */
 var http = require('http');
@@ -736,28 +755,24 @@ function HTTPDataServer(manager, config) {
 			refhost = refurl.protocol + "//" + refurl.host;
 		}
 
-		if (rurl.pathname.substr(0, 6) == '/.data') {
+		if (rurl.pathname.substr(0, 7) == '/.data/') {
 			res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
 			res.setHeader('Expires', '0');
-			//res.setHeader('Access-Control-Allow-Origin', refhost);
+			res.setHeader('Access-Control-Allow-Origin', refhost);
 			res.setHeader('Content-Type', 'application/json');
 
-			// Hack for IE
-			var agent = req.headers['user-agent'];
-			if (agent && (agent.search('MSIE') > 0 || agent.search('Trident') > 0)) {
-				res.setHeader('Content-Type', 'text/plain');
-			}
-
 			// Determine URI
-			// XXX: Handle .json, .xml, .dat, extensions?
-			// XXX: Differentiate between leafs and nodes based on trailing /
-			var key = rurl.pathname.substr(6);
-			if (key.length > 0 && key.charAt(0) != '/') {
-				res.statusCode = 404;	// Not Found
-				res.end();
-				return;
-			} else if (key.length > 0) {
-				key = key.substr(1);
+			// TODO: Handle .json and .xml type extensions?
+			// TODO: Handle .gz and other compression extensions
+			// TODO: Differentiate between leafs and nodes based on trailing /
+			var key = rurl.pathname.substr(7);
+			var txt_hack = key.search(/.txt$/);
+			if (txt_hack < 0) {
+				txt_hack = false;
+			} else {
+				key = key.substring(0, txt_hack);
+				res.setHeader('Content-Type', 'text/plain');
+				txt_hack = true;
 			}
 
 			var node;
