@@ -1,7 +1,17 @@
 /*
  * Data Manager
  */
-var jsUtils = require('@aprsworld/jsUtils');
+var jsUtils = require('@aprsworld/jsutils');
+
+function decPad (num, size) {
+	var ret = '';
+	while (Math.pow(10, --size) > num) {
+		ret = ret + '0';
+	}
+	ret = ret + num;
+	return ret;
+}
+
 function DataManager(config) {
 	this.config = {}.merge(this.config_default, config);
 	var ts = new Date();
