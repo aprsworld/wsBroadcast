@@ -1,0 +1,209 @@
+/*
+ * Data Manager
+ */
+function DataManager(config) {
+	this.config = {}.merge(this.config_default, config);
+	var ts = new Date();
+	this.meta = {
+		start: {
+			epoch_ms:	ts.getTime()
+			iso8601:	ts.toISOString(),
+			str:		ts.toUTCString()
+		},
+		updated: {
+			//source:		null,
+			epoch_ms: 	0,
+			iso8601:	'',
+			str:		''
+		}
+	};
+	this.servers = [];
+	this.servers_count = 0;
+	this.data = { _bserver_: this.meta };
+}
+
+DataManager.prototype.config_default = {
+	expire:		null,
+	log:		null,
+	persist:	'persist.json'
+};
+
+DataManager.prototype.uri_parse = function(uri) {
+
+	// Already parsed?
+	if (uri instanceof Array) {
+		return uri;
+	}
+
+	// Split URI into links
+	var links = links.split('/');
+	//var leaf = true;
+
+	// Remove empty link in case absolute URI was given
+	if (links.length > 1 && links[0] === '') {
+		links.shift();
+	}
+
+	// Remove empty link for trailing / in URI
+	if (links[links.length-1] === '') {
+		links.pop();
+		//leaf = false;
+	}
+
+	// Decode the URI links
+	for (var i = 0; i < links.length; i++) {
+		links[i] = decodeURI(links[i]);
+	}
+
+	// Return the parsed URI
+	return links;
+};
+
+DataManager.prototype.data_get = function(uri) {
+	var node = this.data;
+
+	// No URI, send it all!
+	if (!uri) {
+		return node;
+	}
+
+	// Parse URI
+	var links = this.uri_parse(uri);
+
+	// Traverse to find node
+	for (var i = 0; i < links.length; i++) {
+		var link = links[i];
+		node = node[link];
+
+		// Can't traverse
+		if (node == null || typeof node !== 'object') {
+			return undefined;
+		}
+	}
+
+	// TODO: Ensure it's a leaf or a node?
+	return node;
+};
+
+DataManager.prototype.data_wrap = function(uri, data) {
+
+	// Nothing to do
+	if (!uri) {
+		return data;
+	}
+
+	// Wrap the data in URI objects
+	var links = this.uri_parse(uri);
+	for (var i = links.length-1; i >= 0; i--) {
+		data = {}[links[i]] = data;
+	}
+
+	// Return wrapped data
+	return data;
+};
+
+DataManager.prototype.data_update = function(uri, data, client) {
+
+	// Get update time
+	var ts = new Date();
+
+	// Wrap data if needed
+	var wrap = this.data_wrap(uri, data);
+
+	// TODO: RX Data, Expire/Persist MetaData
+
+	// Merge data in
+	this.data.merge(wrap);
+
+	// Replace meta data
+	this.meta.updated = {
+		//source:		client,
+		epoch_ms:	ts.getTime(),
+		iso8601:	ts.toISOString(),
+		str:		ts.toUTCString()
+	};
+	this.data.merge({ _bserver_: this.meta });
+
+	// Log the data
+	if (this.config.log instanceof String) {
+		this.data_log(uri, data, client.info, ts);
+	}
+
+	// Broadcast updated data
+	this.servers.forEach(function(serv) {
+		serv.broadcast(uri, data, client.info, ts);
+	});
+
+	// All done
+	return true;
+};
+
+DataManager.prototype.data_log = function(uri, data, client_info, ts) {
+
+	// Nowhere to log
+	if (!this.config.log) {
+		return false;
+	}
+
+	// Get string representation of date
+	var log_date = ts.getUTCFullYear.toString() + decPad(ts.getUTCMonth(), 2) + decPad(ts.getUTCDate(), 2);
+
+	// Open log file
+	var log_fd = -1;
+	try {
+		log_fd = fs.openSync(this.config.log + '/' + log_date + '.json',
+				'a', 0644);
+	} finally {
+		if (log_fd < 0) {
+			console.log('# DataLog: ERROR: Could not open log file - data not logged!');
+			return false;
+		}
+	}
+
+	// Write to log file
+	var res = true;
+	var log_data = JSON.stringify([ts.getTime(), client_info, uri, data]);
+	var log_datasize = Buffer.byteLength(log_data, 'UTF-8');
+	var log_written = fs.writeSync(log_fd, log_data, null, 'UTF-8');
+	if (log_written <= 0) {
+		console.log('# DataLog: ERROR: Could not write to log file!');
+		res = false;
+	} else if (log_written != lot_datasize) {
+		console.log('# DataLog: ERROR: Could not write to log file!');
+		console.log('# DataLog: ERROR: File likely corrupted!');
+		res = false;
+	}
+
+	// Close the log file
+	fs.closeSync(log_fd);
+
+	// All done
+	return res;
+};
+
+// TODO: data_save(filename), data_load(filename)
+// TODO: data_prune
+
+DataManager.prototype.server_attach = function(serv) {
+	if (this.servers.indexOf(serv) >= 0) {
+		console.log('# ERROR: DataManager: Attaching already attached server - ' + JSON.stringify(serv.info));
+		return false;
+	}
+	this.server.push(serv);
+	serv.info.server = ++this.servers_count;
+	return true;
+};
+
+DataManager.prototype.server_detach = function(serv) {
+	if (this.servers.indexOf(serv) < 0) {
+		console.log('# ERROR: DataManager: Detaching a server that was never attached - ' + JSON.stringify(serv.info));
+		return false;
+	}
+	this.servers = this.servers.filter(function(serv_cur, serv_index, servers) {
+		if (serv_cur == serv) {
+			return false;
+		}
+		return true;
+	});
+	return true;
+};
