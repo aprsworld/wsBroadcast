@@ -37,8 +37,6 @@ Dump data with:
 
 ## Data Manager
 
-_THIS DOCUMENTATION IS OUT OF DATE_
-
 This is the main object in this project despite being the simplest.  It basically just stores data that is to be broadcast and handles the broadcasting of this data to the servers which can be attached to it.
 
 ## Servers
@@ -51,35 +49,24 @@ At this time the data is always input and output as a JSON object.  In the futur
 
 ### HTTP Server
 
-_THIS DOCUMENTATION IS OUT OF DATE_
+The HTTP Server currently just serves static file content and the dynamic data (under '/.data/') as a fallback for AJAX HTTP Polling and for other uses.  It also allows updates via HTTP POSTS as well.
 
-The HTTP Server currently just serves static file content and the dynamic data (under '/.data') as a fallback for AJAX HTTP Polling and for other uses.  It is possible it may be extended to allow updates via HTTP as well.
-
-'/.data' serves the JSON data with a mime-type of 'application/json', though in the future may do some content negotation.
-
-'/.data.json' serves the JSON data with a mime-type of 'application/json'.
-
-'/.data.dat' serves the JSON data, but with a mime-type of 'text/plain' for compatibility with IE.
-
-The HTTP Server requires the 'serve-static', 'serve-index', and 'finalhandler' npm modules.
+The data is served in JSON with a mime-type of 'application/json', though in the future may do some content negotation.  If there is a trailing '.txt.' in the URI, the server will send a mime-type of 'text/plain' for compatibility with IE.
 
 Currently the HTTP server defaults to running on port 8888.
 
 ### WebSockets Server
 
-_THIS DOCUMENTATION IS OUT OF DATE_
+The WebSockets Server currently uses a simple protocol to subscribe and unsubscribe from receiving updates from parts of the data tree.
 
-The WebSockets Server currently broadcasts the dynamic data to all connected clients.  In the future it may support updating the data as well.
+_(DOCUMENTATION FOR PROTOCOL COMMING SOON)_
 
-The WebSockets Server requires the 'ws' npm module.  (`npm install ws`)
 For diagnostic and debugging the 'wscat' module is recommended.  (`npm install -g wscat`)
 
 Currently the WebSocket server defaults to running on port 1228.
 
 ### TCP Server
 
-_THIS DOCUMENTATION IS OUT OF DATE_
+The TCP Server allows updating the dynamic data via standard JSON messages.  The protocol is a very simple input only terminated (The '\n' or 0x0A ASCII character) message passing system with each message being a JSON object with absolutely no handshake.  It may be extended in the future.
 
-The TCP Server allows updating the dynamic data via standard JSON messages.  The protocol is a very simple input only terminated (At this time it is terminated with a '\n', 0x0A character though in the future may use the traditional null, '\0', 0x00 terminator) message passing system with each message being a JSON object with absolutely no handshake.  It may be extended in the future.
-
-Currently two TCP Servers are run, one on port 1229 which is for input, and one on port 1230 for a single output of the current data.
+Currently two TCP Servers are run, one on port 1230 which is for input, and one on port 1231 for a single output of the current data.
