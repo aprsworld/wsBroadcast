@@ -1,15 +1,25 @@
 {
-  "name": "wsbroadcast",
+  "name": "@aprsworld/wsBroadcast",
   "version": "0.1.0",
-  "description": "web socket broadcast server",
+  "description": "Web Socket Broadcast Server",
+  "keywords": [
+    "WebSocket", "Broadcast", "Server", "wsBroadcast",
+    "APRS World", "APRSWorld", "APRS"
+  ],
+  "bugs": { "url": "https://github.com/aprsworld/wsBroadcast/issues" },
+  "license": { "license": "UNLICENSED" },
+  "author": {"name": "David A. Russell", "url": "https://github.com/davarus" },
+  "repository": { "type": "git", "url": "https://github.com/aprsworld/wsBroadcast.git" },
+  "private": true,
   "dependencies" :
-  { "http" : "*",
-    "url" : "*",
-    "serve-index" : "*",
-    "serve-static" : "*",
-    "finalhandler"  : "*",
-    "node-getopt" : "*",
-    "websocket" : "*"
+  { "@aprsworld/jsUtils" : "aprsworld/jsUtils.git",
+    "http" : "^0.0.0",
+    "url" : "^0.11.0",
+    "serve-index" : "^1.7.3",
+    "serve-static" : "^1.10.2",
+    "finalhandler"  : "^0.4.1",
+    "node-getopt" : "^0.2.3",
+    "websocket" : "^1.0.22"
   },
   "config" :
   {

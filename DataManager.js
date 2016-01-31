@@ -1,12 +1,13 @@
 /*
  * Data Manager
  */
+var jsUtils = require('@aprsworld/jsUtils');
 function DataManager(config) {
 	this.config = {}.merge(this.config_default, config);
 	var ts = new Date();
 	this.meta = {
 		start: {
-			epoch_ms:	ts.getTime()
+			epoch_ms:	ts.getTime(),
 			iso8601:	ts.toISOString(),
 			str:		ts.toUTCString()
 		},
@@ -23,9 +24,7 @@ function DataManager(config) {
 }
 
 DataManager.prototype.config_default = {
-	expire:		null,
-	log:		null,
-	persist:	'persist.json'
+	log:		null
 };
 
 DataManager.prototype.uri_parse = function(uri) {
