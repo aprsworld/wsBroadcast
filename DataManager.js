@@ -91,17 +91,10 @@ DataManager.prototype.data_get = function(uri) {
 
 DataManager.prototype.data_wrap = function(uri, data, client, ts) {
 
-	// Prepare Meta Data
-	var meta = {"_bserver_": {
-		"epoch_ms": ts.getTime(),
-		"client": client.info
-	}};
-
 	// Nothing to do
 	if (!uri) {
-		return {}.merge(data, meta);
+		return data;
 	}
-
 
 	// Wrap the data in URI objects
 	var links = this.uri_parse(uri);
@@ -109,7 +102,7 @@ DataManager.prototype.data_wrap = function(uri, data, client, ts) {
 		links.pop();
 	}
 	for (var i = links.length-1; i >= 0; i--) {
-		data = {}.merge(meta)[links[i]];
+		data = {}[links[i]] = data;
 	}
 
 	// Return wrapped data
