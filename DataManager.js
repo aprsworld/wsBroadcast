@@ -89,12 +89,19 @@ DataManager.prototype.data_get = function(uri) {
 	return { node: node, prop: prop, uri: uri };
 };
 
-DataManager.prototype.data_wrap = function(uri, data) {
+DataManager.prototype.data_wrap = function(uri, data, client, ts) {
+
+	// Prepare Meta Data
+	var meta = {"_bserver_": {
+		"epoch_ms": ts.getTime(),
+		"client": client.info
+	}};
 
 	// Nothing to do
 	if (!uri) {
-		return data;
+		return {}.merge(data, meta);
 	}
+
 
 	// Wrap the data in URI objects
 	var links = this.uri_parse(uri);
@@ -102,7 +109,7 @@ DataManager.prototype.data_wrap = function(uri, data) {
 		links.pop();
 	}
 	for (var i = links.length-1; i >= 0; i--) {
-		data = {}[links[i]] = data;
+		data = {}.merge(meta)[links[i]];
 	}
 
 	// Return wrapped data
@@ -115,7 +122,7 @@ DataManager.prototype.data_update = function(uri, data, client) {
 	var ts = new Date();
 
 	// Wrap data if needed
-	var wrap = this.data_wrap(uri, data);
+	var wrap = this.data_wrap(uri, data, client, ts);
 
 	// TODO: RX Data, Expire/Persist MetaData
 
