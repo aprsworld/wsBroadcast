@@ -194,25 +194,44 @@ DataManager.prototype.data_log = function(uri, data, client_info, ts) {
 // TODO: data_prune
 
 DataManager.prototype.server_attach = function(serv) {
+
+	// Ensure this server isn't already linked
 	if (this.servers.indexOf(serv) >= 0) {
 		console.log('# ERROR: DataManager: Attaching already attached server - ' + JSON.stringify(serv.info));
 		return false;
 	}
+
+	// Link this server
 	this.server.push(serv);
+
+	// Update server info
+	serv.dmanager = this;
 	serv.info.server = ++this.servers_count;
+
+	// All done
 	return true;
 };
 
 DataManager.prototype.server_detach = function(serv) {
+
+	// Ensure this server is already linked
 	if (this.servers.indexOf(serv) < 0) {
 		console.log('# ERROR: DataManager: Detaching a server that was never attached - ' + JSON.stringify(serv.info));
 		return false;
 	}
+
+	// Remove server from linking
 	this.servers = this.servers.filter(function(serv_cur, serv_index, servers) {
 		if (serv_cur == serv) {
 			return false;
 		}
 		return true;
 	});
+
+	// Update server info
+	serv.dmanager = null;
+	serv.info.server = null;
+
+	// All done
 	return true;
 };
