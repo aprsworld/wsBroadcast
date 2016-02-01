@@ -53,12 +53,6 @@ DataManager.prototype.uri_parse = function(uri) {
 		links.shift();
 	}
 
-	// Remove empty link for trailing / in URI
-	if (links[links.length-1] === '') {
-		links.pop();
-		//leaf = false;
-	}
-
 	// Decode the URI links
 	for (var i = 0; i < links.length; i++) {
 		links[i] = decodeURI(links[i]);
@@ -78,6 +72,7 @@ DataManager.prototype.data_get = function(uri) {
 
 	// Parse URI
 	var links = this.uri_parse(uri);
+	var prop = links.pop();
 
 	// Traverse to find node
 	for (var i = 0; i < links.length; i++) {
@@ -90,8 +85,8 @@ DataManager.prototype.data_get = function(uri) {
 		}
 	}
 
-	// TODO: Ensure it's a leaf or a node?
-	return node;
+	// Return results
+	return { node: node, prop: prop, uri: uri };
 };
 
 DataManager.prototype.data_wrap = function(uri, data) {
@@ -103,6 +98,9 @@ DataManager.prototype.data_wrap = function(uri, data) {
 
 	// Wrap the data in URI objects
 	var links = this.uri_parse(uri);
+	if (links[links.length-1] === '') {
+		links.pop();
+	}
 	for (var i = links.length-1; i >= 0; i--) {
 		data = {}[links[i]] = data;
 	}
@@ -126,7 +124,7 @@ DataManager.prototype.data_update = function(uri, data, client) {
 
 	// Replace meta data
 	this.meta.updated = {
-		//source:		client,
+		source:		client.info,
 		epoch_ms:	ts.getTime(),
 		iso8601:	ts.toISOString(),
 		str:		ts.toUTCString()
@@ -135,19 +133,19 @@ DataManager.prototype.data_update = function(uri, data, client) {
 
 	// Log the data
 	if (this.config.log instanceof String) {
-		this.data_log(uri, data, client.info, ts);
+		this.data_log(uri, data, client, ts);
 	}
 
 	// Broadcast updated data
 	this.servers.forEach(function(serv) {
-		serv.broadcast(uri, data, client.info, ts);
+		serv.broadcast(uri, data, client, ts);
 	});
 
 	// All done
 	return true;
 };
 
-DataManager.prototype.data_log = function(uri, data, client_info, ts) {
+DataManager.prototype.data_log = function(uri, data, client, ts) {
 
 	// Nowhere to log
 	if (!this.config.log) {
@@ -171,7 +169,7 @@ DataManager.prototype.data_log = function(uri, data, client_info, ts) {
 
 	// Write to log file
 	var res = true;
-	var log_data = JSON.stringify([ts.getTime(), client_info, uri, data]);
+	var log_data = JSON.stringify([ts.getTime(), client.info, uri, data]);
 	var log_datasize = Buffer.byteLength(log_data, 'UTF-8');
 	var log_written = fs.writeSync(log_fd, log_data, null, 'UTF-8');
 	if (log_written <= 0) {
