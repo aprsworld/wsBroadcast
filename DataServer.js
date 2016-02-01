@@ -173,3 +173,5 @@ DataServer.prototype.broadcast = function(uri, data, client) {
 		});
 	}
 };
+
+module.exports = DataServer;
