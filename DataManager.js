@@ -17,13 +17,13 @@ function DataManager(config) {
 	var ts = new Date();
 	this.meta = {
 		start: {
-			epoch_ms:	ts.getTime(),
+			ts:		ts.getTime(),
 			iso8601:	ts.toISOString(),
 			str:		ts.toUTCString()
 		},
 		updated: {
-			//source:		null,
-			epoch_ms: 	0,
+			source:		null,
+			ts: 		0,
 			iso8601:	'',
 			str:		''
 		}
@@ -89,7 +89,7 @@ DataManager.prototype.data_get = function(uri) {
 	return { node: node, prop: prop, uri: uri };
 };
 
-DataManager.prototype.data_wrap = function(uri, data, client, ts) {
+DataManager.prototype.data_wrap = function(uri, data) {
 
 	// Nothing to do
 	if (!uri) {
@@ -111,25 +111,26 @@ DataManager.prototype.data_wrap = function(uri, data, client, ts) {
 
 DataManager.prototype.data_update = function(uri, data, client) {
 
+	// TODO: MetaData tracking
+
 	// Get update time
 	var ts = new Date();
 
 	// Wrap data if needed
-	var wrap = this.data_wrap(uri, data, client, ts);
-
-	// TODO: RX Data, Expire/Persist MetaData
+	var wrap = this.data_wrap(uri, data);
 
 	// Merge data in
 	this.data.merge(wrap);
 
-	// Replace meta data
+	// Update meta data
 	this.meta.updated = {
+		uri:		uri,
 		source:		client.info,
-		epoch_ms:	ts.getTime(),
+		ts:		ts.getTime(),
 		iso8601:	ts.toISOString(),
 		str:		ts.toUTCString()
 	};
-	this.data.merge({ _bserver_: this.meta });
+	this.data.merge({ _bserver_: this.meta }); // Just in case
 
 	// Log the data
 	if (this.config.log instanceof String) {
