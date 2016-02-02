@@ -27,6 +27,6 @@
   },
   "scripts" :
   {
-    "start" : "node ws-broadcast.js --expire=60 --tcp-client=cam.aprsworld.com --webdir=../wsWebDisplay/"
+    "start" : "node server.js --expire=60 --tcp-client=cam.aprsworld.com --webdir=../wsWebDisplay/"
   }
 }

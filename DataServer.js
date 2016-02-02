@@ -105,7 +105,6 @@ DataServer.prototype.client_hook = function(c) {
 	// Send a Message to Client
 	c.update_send = function(uri, data, client) {
 		var update = { uri: uri, data: data };
-		// TODO: URI
 		this.send(JSON.stringify(update));
 	};
 
@@ -151,15 +150,6 @@ DataServer.prototype.server_hook = function() {
 
 		// Hook client
 		this.dserv.client_hook(c);
-
-		// Send updates?
-		if (config.send) {
-			c.update_send(null, this.dserv.manager.data, null);
-
-			if (config.once) {
-				c.close(); // XXX: Will this close before data?
-			}
-		}
 	});
 };
 
