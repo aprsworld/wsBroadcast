@@ -2,6 +2,7 @@
  * Data Server Base
  */
 var jsUtils = require('@aprsworld/jsutils');
+var util = require('util');
 
 function DataServer() {
 	this.config = null;
@@ -11,15 +12,17 @@ function DataServer() {
 	this.info = { name: '0xDEADBABE', server: null };
 	this.clients = [];
 	this.client_count = 0;
+	return this;
 }
 
-DataServer.prototype.setup = function(config, manager) {
+DataServer.prototype.setup = function(manager, config) {
 	this.config = {}.merge(this.config_default, config);
 	this.dserv = this;
 	this.info = {
-		config: this.config,
+		name: this.config.server_name,
+		config: this.config
 	};
-	this.manager.server_attach(this);
+	manager.server_attach(this);
 	return this.config;
 }
 
@@ -48,6 +51,7 @@ DataServer.prototype.client_hook = function(c) {
 
 		// Log
 		if (reason) {
+			// XXX: reason, description
 			this.dserv.log('Client Died!', this.info);
 		} else {
 			this.dserv.log('Client Disconnected', this.info);
@@ -56,8 +60,8 @@ DataServer.prototype.client_hook = function(c) {
 
 	// Client Error
 	c.on('error', function(e) {
-		// XXX: Unclear if safe to JSON
-		this.dserv.log('Client Error!', this.info, e);
+		// XXX: Unclear if safe to JSON e
+		this.dserv.log('Client Error!', this.info);
 	});
 
 	c.on('message', function(message) {
@@ -80,7 +84,8 @@ DataServer.prototype.client_hook = function(c) {
 		try {
 			update = JSON.parse(message.utf8Data);
 		} catch (e) {
-			var error = ['JSON Parse Error!'/*, e TODO */];
+			// XXX: Unclear if safe to JSON e
+			var error = ['JSON Parse Error!'];
 			this.dserv.log('Client Sent Invalid Message!', this.info, message, error);
 			return;
 		}
@@ -108,7 +113,7 @@ DataServer.prototype.client_hook = function(c) {
 	if (c.dserv.config.send) {
 		c.update_send(null, this.manager.data, null);
 		if (c.dserv.config.once) {
-			c.close();
+			c.end();
 		}
 	}
 };
@@ -141,7 +146,7 @@ DataServer.prototype.server_hook = function() {
 	// TODO: this.serv.on('error', ...
 
 	// Client connected
-	this.nserve.on('connection', function(c) {
+	this.nserv.on('connection', function(c) {
 		var config = this.dserv.config;
 
 		// Hook client
@@ -156,6 +161,16 @@ DataServer.prototype.server_hook = function() {
 			}
 		}
 	});
+};
+
+DataServer.prototype.log = function() {
+	var args = arguments || [];
+	var message = '';
+	for (var i = 1; i < args.length; i++) {
+		message += ' - ' + JSON.stringify(args[i]);
+	}
+	console.log('# DS(' + this.info.server + ') "' +
+		this.info.name + '": ' + args[0] + message);
 };
 
 // Broadcast update to all clients

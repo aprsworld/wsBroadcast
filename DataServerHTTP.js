@@ -14,7 +14,7 @@ function HTTPDataServer(manager, config) {
 	HTTPDataServer.super_.call(this);
 	config = this.setup(manager, config);
 	if (config.port <= 0) {
-		return false;	// XXX: BUG?
+		return false;
 	}
 
 	// Create Server
@@ -25,7 +25,7 @@ function HTTPDataServer(manager, config) {
 	this.nserv = http.createServer(function(req, res) {
 
 		// Log Request
-		req.socket.dserv.log(req.socket.client_string + ' Request',
+		req.socket.dserv.log('Client Request', req.socket.info,
 			req.method, req.url);
 
 		var rurl = url.parse(req.url);
@@ -35,7 +35,7 @@ function HTTPDataServer(manager, config) {
 			refhose = refurl.protocol + "//" + refurl.host;
 		}
 
-		if (rurl.pathname.substr(0,7) == "./data/") {
+		if (rurl.pathname.substr(0,7) == "/.data/") {
 			res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
 			res.setHeader('Expires', '0');
 			res.setHeader('Access-Control-Allow-Origin', refhost);
@@ -45,7 +45,7 @@ function HTTPDataServer(manager, config) {
 			// TODO: Handle .json and .xml extensions
 			// TODO: Handle .gz and other compression extensions
 			// TODO: Differentiate between leafs and nodes
-			var uri = rurl.pathname.substr(7);
+			var uri = rurl.pathname.substr(6);
 			var txt_hack = uri.search(/.txt$/);
 			if (txt_hack < 0) {
 				txt_hack = false;
@@ -56,7 +56,7 @@ function HTTPDataServer(manager, config) {
 			}
 
 			// Get Data Node
-			var data = this.manager.data_get(uri);
+			var data = this.dserv.manager.data_get(uri);
 
 			// Handle a GET
 			if (req.method == 'GET') {
@@ -139,6 +139,7 @@ function HTTPDataServer(manager, config) {
 	this.wserv = new WebSocketDataServer(manager, config.ws, this.nserv);
 
 	this.nserv.listen(config.port);
+	return this;
 }
 util.inherits(HTTPDataServer, DataServer);
 
@@ -187,3 +188,5 @@ WebSocketDataServer.prototype.config_default = {}.merge(DataServer.config_defaul
 	recv:		false,
 	once:		false
 });
+
+module.exports = HTTPDataServer;

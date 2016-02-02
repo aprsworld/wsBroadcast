@@ -31,6 +31,7 @@ function DataManager(config) {
 	this.servers = [];
 	this.servers_count = 0;
 	this.data = { _bserver_: this.meta };
+	return this;
 }
 
 DataManager.prototype.config_default = {
@@ -45,7 +46,7 @@ DataManager.prototype.uri_parse = function(uri) {
 	}
 
 	// Split URI into links
-	var links = links.split('/');
+	var links = uri.split('/');
 	//var leaf = true;
 
 	// Remove empty link in case absolute URI was given
@@ -67,7 +68,7 @@ DataManager.prototype.data_get = function(uri) {
 
 	// No URI, send it all!
 	if (!uri) {
-		return node;
+		return { node: node, prop: null, uri: null };
 	}
 
 	// Parse URI
@@ -201,10 +202,10 @@ DataManager.prototype.server_attach = function(serv) {
 	}
 
 	// Link this server
-	this.server.push(serv);
+	this.servers.push(serv);
 
 	// Update server info
-	serv.dmanager = this;
+	serv.manager = this;
 	serv.info.server = ++this.servers_count;
 
 	// All done
@@ -234,3 +235,5 @@ DataManager.prototype.server_detach = function(serv) {
 	// All done
 	return true;
 };
+
+module.exports = DataManager;
