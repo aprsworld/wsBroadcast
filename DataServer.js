@@ -74,7 +74,7 @@ DataServer.prototype.client_hook = function(c) {
 		}
 
 		// Sanity
-		if (message.type != 'ut8') {
+		if (message.type != 'utf8') {
 			this.dserv.log('Client Sent Invalid Message!', this.info, message);
 			return;
 		}
