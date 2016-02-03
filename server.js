@@ -107,16 +107,6 @@ var getopt = require('node-getopt').create([
 	}
 	config.server_tcp.port = port;
 })
-.on('ws-server', function(argv, opt) {
-	var port = opt['ws-server'];
-	port = Number.parseInt(port, 10);
-	if (Number.isNaN(port) || port <= 0) {
-		console.log('ERROR: Invalid ws-server port specified!');
-		getopt.showHelp();
-		process.exit(false);
-	}
-	config.server_ws.port = port;
-})
 .on('tcp-recv', function(argv, opt) {
 	var port = opt['tcp-recv'];
 	port = Number.parseInt(port, 10);
