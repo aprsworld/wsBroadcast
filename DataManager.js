@@ -123,10 +123,6 @@ DataManager.prototype.data_update = function(uri, data, client) {
 	// Wrap data if needed
 	var wrap = this.data_wrap(uri, data);
 
-	console.log('----');
-	console.log(util.inspect(wrap));
-	console.log('----');
-
 	// Merge data in
 	this.data.merge(wrap);
 
