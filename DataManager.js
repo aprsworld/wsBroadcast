@@ -2,6 +2,7 @@
  * Data Manager
  */
 var jsUtils = require('@aprsworld/jsutils');
+var util = require('util');
 
 function decPad (num, size) {
 	var ret = '';
@@ -103,7 +104,9 @@ DataManager.prototype.data_wrap = function(uri, data) {
 		links.pop();
 	}
 	for (var i = links.length-1; i >= 0; i--) {
-		data = {}[links[i]] = data;
+		var tmp = {};
+		tmp[links[i]] = data;
+		data = tmp;
 	}
 
 	// Return wrapped data
@@ -119,6 +122,10 @@ DataManager.prototype.data_update = function(uri, data, client) {
 
 	// Wrap data if needed
 	var wrap = this.data_wrap(uri, data);
+
+	console.log('----');
+	console.log(util.inspect(wrap));
+	console.log('----');
 
 	// Merge data in
 	this.data.merge(wrap);

@@ -91,10 +91,14 @@ DataServer.prototype.client_hook = function(c) {
 		}
 
 		// Log
-		this.dserv.log('Client Sent Message', this.info, this.message);
+		this.dserv.log('Client Sent Message', this.info, update);
 
 		// Update
-		// XXX: this.dserv.manager.data_update();
+		if (update.data && update.uri) {
+			this.dserv.manager.data_update(update.uri, update.data, this);
+		} else {
+			this.dserv.manager.data_update(null, update, this);
+		}
 	});
 
 	// Client Timed-out
