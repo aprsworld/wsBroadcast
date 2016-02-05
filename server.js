@@ -86,7 +86,7 @@ var getopt = require('node-getopt').create([
 	config.server_http.root_dir = opt.webdir;
 	var valid = false;
 	try {
-		valid = fs.statSync(config.server_http.root_dir).isDirectory();
+		valid = fs.lstatSync(config.server_http.root_dir).isDirectory();
 	} catch (e) {}
 	if (!valid) {
 		console.log('ERROR: Web doument root does not exist!');
