@@ -63,6 +63,11 @@ DataManager.prototype.grimreaper = function() {
 				continue;
 			}
 
+			// Perminantely persist this data
+			if (data._bserver_[p].persist) {
+				continue;
+			}
+
 			// Anything to prune in here?
 			if (data._bserver_[p].ts < expire) {
 				data._bserver_[p] = null;

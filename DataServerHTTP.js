@@ -28,7 +28,7 @@ function HTTPDataServer(manager, config) {
 		req.socket.dserv.log('Client Request', req.socket.info,
 			req.method, req.url);
 
-		var rurl = url.parse(req.url);
+		var rurl = url.parse(req.url, true);
 		var refhost = "";
 		if (req.headers.referer) {
 			var refurl = url.parse(req.headers.referer);
@@ -97,6 +97,10 @@ function HTTPDataServer(manager, config) {
 			// Handle a POST
 			if (req.method == 'POST') {
 				var data = '';
+				var persist = false;
+				if (rurl.query.persist) {
+					persist = true;
+				}
 
 				req.on('data', function(chunk) {
 					data += chunk;
@@ -111,7 +115,7 @@ function HTTPDataServer(manager, config) {
 						res.end();
 						return;
 					}
-					this.socket.dserv.manager.data_update(uri, update, this.dserv);	// XXX dserv is wrong?
+					this.socket.dserv.manager.data_update(uri, update, this.dserv, persist);	// XXX dserv is wrong?
 					res.write(JSON.stringify(update));
 					res.end();
 				});

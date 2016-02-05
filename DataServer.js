@@ -95,9 +95,9 @@ DataServer.prototype.client_hook = function(c) {
 
 		// Update
 		if (update.data && update.uri) {
-			this.dserv.manager.data_update(update.uri, update.data, this);
+			this.dserv.manager.data_update(update.uri, update.data, this, update.persist);
 		} else {
-			this.dserv.manager.data_update(null, update, this);
+			this.dserv.manager.data_update(null, update, this, false);
 		}
 	});
 
