@@ -178,7 +178,7 @@ DataManager.prototype.data_meta_inject = function(data, meta) {
 			continue;
 		}
 		data._bserver_[p] = meta;
-		if (typeof data[p] === 'object') {
+		if (data[p] && typeof data[p] === 'object') {
 			this.data_meta_inject(data[p], meta);
 		}
 	}
