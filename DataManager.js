@@ -31,12 +31,84 @@ function DataManager(config) {
 	};
 	this.servers = [];
 	this.servers_count = 0;
-	this.data = { _bserver_: this.meta };
+	this.data = { /*_bserver_: this.meta*/ };
+	var self = this;
+	this.timer = setInterval(function() { self.grimreaper(); },
+			this.config.expire * 1000);
 	return this;
 }
 
 DataManager.prototype.config_default = {
 	log:		null
+};
+
+DataManager.prototype.grimreaper = function() {
+	var ts = new Date().getTime();
+	var ts_expire = ts - (this.config.expire * 1000);
+	var update = {};
+
+	function prune (update, data, expire) {
+
+		// Prune stuff
+		var pruned = false;
+		if (typeof data !== 'object') {
+			return pruned;
+		}
+
+		// Do it...
+		for (var p in data._bserver_) {
+
+			// Ignore
+			if (p == '_bserver_') {
+				continue;
+			}
+
+			// Anything to prune in here?
+			if (data._bserver_[p].ts < expire) {
+				data._bserver_[p] = null;
+				data[p] = null;
+				pruned = true;
+				update[p] = null;
+				continue;
+			}
+
+			// Recurse and remember if we prune something...
+			update[p] = {};
+			if (!prune(update[p], data[p], expire)) {
+				delete update[p];
+			} else {
+				pruned = true;
+			}
+		}
+
+		// All done
+		return pruned;
+	}
+
+	function reap (data) {
+		if (typeof data !== 'object') {
+			return;
+		}
+		for (var p in data) {
+			if (data[p] === null) {
+				delete data[p];
+				continue;
+			}
+			reap(data[p]);
+		}
+	}
+
+	// Prune old data and send update
+	var update = {};
+	if (prune(update, this.data, ts_expire)) {
+		// Broadcast updated data
+		this.servers.forEach(function(serv) {
+			serv.broadcast(update);
+		});
+	}
+
+	// Reap old data
+	reap(this.data);
 };
 
 DataManager.prototype.uri_parse = function(uri) {
