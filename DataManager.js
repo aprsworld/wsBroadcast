@@ -63,6 +63,12 @@ DataManager.prototype.grimreaper = function() {
 				continue;
 			}
 
+			// This has been manually pruned...
+			if (data[p] === null) {
+				data._bserver_[p] = null;
+				continue;
+			}
+
 			// Perminantely persist this data
 			if (data._bserver_[p].persist) {
 				continue;
@@ -222,6 +228,8 @@ DataManager.prototype.data_update = function(uri, data, client, persist) {
 	var meta = { ts: ts };
 	if (persist) {
 		meta.persist = true;
+	} else {
+		meta.persist = false;
 	}
 
 	// Wrap data if needed
