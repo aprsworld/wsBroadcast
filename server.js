@@ -16,6 +16,7 @@ var version = {
 var DataManager = require('./DataManager');
 var TCPDataServer = require('./DataServerTCP');
 var HTTPDataServer = require('./DataServerHTTP');
+var fs = require('fs');
 
 /*
  * Process Command Line Options
