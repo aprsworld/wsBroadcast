@@ -31,7 +31,7 @@ DataServer.prototype.client_hook = function(c) {
 	// Update various info and links
 	c.dserv = this;
 	c.info = { client: ++this.dserv.client_count, net: {} };
-	if (c.remoteAddress) { // XXX: Better test
+	if (c.remoteAddress) { // TODO: Better test
 		c.info.net.address = c.remoteAddress;
 		c.info.net.port = c.remotePort;
 		c.info.net.family = c.remoteFamily;
@@ -107,14 +107,13 @@ DataServer.prototype.client_hook = function(c) {
 	});
 
 	// Send a Message to Client
-	c.update_send = function(uri, data, client) {
-		var update = { uri: uri, data: data };
-		this.send(JSON.stringify(update));
+	c.update_send = function(data) {
+		this.send(JSON.stringify(data));
 	};
 
 	// Send initial update
 	if (c.dserv.config.send) {
-		c.update_send(null, this.manager.data, null);
+		c.update_send(this.manager.data);
 		if (c.dserv.config.once) {
 			c.end();
 		}
@@ -168,13 +167,13 @@ DataServer.prototype.log = function() {
 };
 
 // Broadcast update to all clients
-DataServer.prototype.broadcast = function(uri, data, client) {
+DataServer.prototype.broadcast = function(data) {
 	var config = this.config;
 	var self = this;
 	if (config.send) {
 		this.clients.forEach(function(client) {
 			try {
-				client.update_send(uri, data, client);
+				client.update_send(data);
 			} catch (e) {
 				self.log('Client Error!', 'Could not send message!');
 				client.close(); // XXX: Needed?

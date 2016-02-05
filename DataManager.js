@@ -91,7 +91,26 @@ DataManager.prototype.data_get = function(uri) {
 	return { node: node, prop: prop, uri: uri };
 };
 
-DataManager.prototype.data_wrap = function(uri, data) {
+DataManager.prototype.data_meta_inject = function(data, meta) {
+	if (typeof data !== 'object') {
+		return;
+	}
+	data._bserver_ = {};
+	for (var p in data) {
+		if (p == '_bserver_') {
+			continue;
+		}
+		data._bserver_[p] = meta;
+		if (typeof data[p] === 'object') {
+			this.data_meta_inject(data[p], meta);
+		}
+	}
+};
+
+DataManager.prototype.data_wrap = function(uri, data, meta) {
+
+	// Inject meta-data
+	this.data_meta_inject(data, meta);
 
 	// Nothing to do
 	if (!uri) {
@@ -106,6 +125,12 @@ DataManager.prototype.data_wrap = function(uri, data) {
 	for (var i = links.length-1; i >= 0; i--) {
 		var tmp = {};
 		tmp[links[i]] = data;
+
+		// Inject meta-data...
+		tmp._bserver_ = {};
+		tmp._bserver_[links[i]] = meta;
+
+		// Up one level...
 		data = tmp;
 	}
 
@@ -113,44 +138,43 @@ DataManager.prototype.data_wrap = function(uri, data) {
 	return data;
 };
 
-DataManager.prototype.data_update = function(uri, data, client) {
+DataManager.prototype.data_update = function(uri, data, client, persist) {
 
-	// TODO: MetaData tracking
-
-	// Get update time
-	var ts = new Date();
+	// MetaData tracking
+	var ts = new Date().getTime();
+	var meta = { ts: ts };
+	if (persist) {
+		meta.persist = true;
+	}
 
 	// Wrap data if needed
-	var wrap = this.data_wrap(uri, data);
+	var wrap = this.data_wrap(uri, data, meta);
 
 	// Merge data in
 	this.data.merge(wrap);
 
-	// Update meta data
-	this.meta.updated = {
-		uri:		uri,
-		source:		client.info,
-		ts:		ts.getTime(),
-		iso8601:	ts.toISOString(),
-		str:		ts.toUTCString()
-	};
-	this.data.merge({ _bserver_: this.meta }); // Just in case
-
 	// Log the data
 	if (this.config.log instanceof String) {
-		this.data_log(uri, data, client, ts);
+		this.data_log(uri, data, client, ts, persist);
 	}
 
 	// Broadcast updated data
 	this.servers.forEach(function(serv) {
-		serv.broadcast(uri, data, client, ts);
+		serv.broadcast(wrap);
 	});
 
 	// All done
 	return true;
 };
 
-DataManager.prototype.data_log = function(uri, data, client, ts) {
+DataManager.prototype.data_log = function(uri, data, client, ts, persist) {
+
+	// Clean up output of persist
+	if (persist) {
+		persist = true;
+	} else {
+		persist = false;
+	}
 
 	// Nowhere to log
 	if (!this.config.log) {
@@ -174,7 +198,7 @@ DataManager.prototype.data_log = function(uri, data, client, ts) {
 
 	// Write to log file
 	var res = true;
-	var log_data = JSON.stringify([ts.getTime(), client.info, uri, data]);
+	var log_data = JSON.stringify([ts, client.info, persist, uri, data]);
 	var log_datasize = Buffer.byteLength(log_data, 'UTF-8');
 	var log_written = fs.writeSync(log_fd, log_data, null, 'UTF-8');
 	if (log_written <= 0) {
