@@ -115,7 +115,7 @@ function HTTPDataServer(manager, config) {
 						res.end();
 						return;
 					}
-					this.socket.dserv.manager.data_update(uri, update, this.socket, persist);	// XXX socket is wrong?
+					this.socket.dserv.manager.data_update(uri, update, this.socket, persist);
 					res.write(JSON.stringify(update));
 					res.end();
 				});
