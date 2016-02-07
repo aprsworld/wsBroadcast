@@ -24,7 +24,7 @@ DataServer.prototype.setup = function(manager, config) {
 	};
 	manager.server_attach(this);
 	return this.config;
-}
+};
 
 DataServer.prototype.client_hook = function(c) {
 

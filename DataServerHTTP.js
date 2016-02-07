@@ -96,20 +96,20 @@ function HTTPDataServer(manager, config) {
 
 			// Handle a POST
 			if (req.method == 'POST') {
-				var data = '';
+				var post_data = '';
 				var persist = false;
 				if (rurl.query.persist) {
 					persist = true;
 				}
 
 				req.on('data', function(chunk) {
-					data += chunk;
+					post_data += chunk;
 				});
 
 				req.on('end', function() {
 					var update;
 					try {
-						update = JSON.parse(data);
+						update = JSON.parse(post_data);
 					} catch (e) {
 						res.statusCode = 400;
 						res.end();

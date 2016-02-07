@@ -110,7 +110,7 @@ DataManager.prototype.grimreaper = function() {
 	}
 
 	// Prune old data and send update
-	var update = {};
+	update = {};
 	if (prune(update, this.data, ts_expire)) {
 		// Broadcast updated data
 		this.servers.forEach(function(serv) {
@@ -165,7 +165,7 @@ DataManager.prototype.data_get = function(uri) {
 		node = node[link];
 
 		// Can't traverse
-		if (node == null || typeof node !== 'object') {
+		if (node === null || typeof node !== 'object') {
 			return undefined;
 		}
 	}
