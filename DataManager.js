@@ -223,8 +223,6 @@ DataManager.prototype.data_update = function(uri, data, client, persist) {
 	var meta = { ts: ts };
 	if (persist) {
 		meta.p = 1;
-	} else {
-		meta.p = 0;
 	}
 
 	// Wrap data if needed
