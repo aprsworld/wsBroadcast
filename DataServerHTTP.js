@@ -115,7 +115,7 @@ function HTTPDataServer(manager, config) {
 						res.end();
 						return;
 					}
-					this.socket.dserv.manager.data_update(uri, update, this.dserv, persist);	// XXX dserv is wrong?
+					this.socket.dserv.manager.data_update(uri, update, this.socket, persist);	// XXX socket is wrong?
 					res.write(JSON.stringify(update));
 					res.end();
 				});
@@ -124,7 +124,7 @@ function HTTPDataServer(manager, config) {
 			}
 
 			// We are trying to do something not supported
-			res.statusCode = 400; // XXX
+			res.statusCode = 405;
 			res.end();
 			return;
 		}
