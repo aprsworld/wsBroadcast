@@ -303,7 +303,6 @@ DataManager.prototype.data_log = function(uri, data, client, ts, persist) {
 };
 
 // TODO: data_save(filename), data_load(filename)
-// TODO: data_prune
 
 DataManager.prototype.server_attach = function(serv) {
 
