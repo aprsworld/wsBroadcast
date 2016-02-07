@@ -70,7 +70,7 @@ DataManager.prototype.grimreaper = function() {
 			}
 
 			// Perminantely persist this data
-			if (data._bserver_[p].persist) {
+			if (data._bserver_[p].p) {
 				continue;
 			}
 
@@ -227,9 +227,9 @@ DataManager.prototype.data_update = function(uri, data, client, persist) {
 	var ts = new Date().getTime();
 	var meta = { ts: ts };
 	if (persist) {
-		meta.persist = true;
+		meta.p = 1;
 	} else {
-		meta.persist = false;
+		meta.p = 0;
 	}
 
 	// Wrap data if needed
