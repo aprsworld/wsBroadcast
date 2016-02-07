@@ -40,7 +40,6 @@ DataServer.prototype.client_hook = function(c) {
 	this.clients.push(c);
 
 	// Client Closed Connection
-	// XXX: arguments for WebSockets
 	c.on('close', function(reason, description) {
 
 		// Unlink client from server
@@ -50,9 +49,12 @@ DataServer.prototype.client_hook = function(c) {
 		}
 
 		// Log
-		if (reason) {
-			// XXX: reason, description
-			this.dserv.log('Client Died!', this.info);
+		if (reason && reason != 1000) {
+			if (description) {
+				this.dserv.log('Client Died!', this.info, reason, description);
+			} else {
+				this.dserv.log('Client Died!', this.info);
+			}
 		} else {
 			this.dserv.log('Client Disconnected', this.info);
 		}
@@ -60,7 +62,7 @@ DataServer.prototype.client_hook = function(c) {
 
 	// Client Error
 	c.on('error', function(e) {
-		// XXX: Unclear if safe to JSON e
+		// TODO: Unclear if safe to JSON e
 		this.dserv.log('Client Error!', this.info);
 	});
 
@@ -84,7 +86,7 @@ DataServer.prototype.client_hook = function(c) {
 		try {
 			update = JSON.parse(message.utf8Data);
 		} catch (e) {
-			// XXX: Unclear if safe to JSON e
+			// TODO: Unclear if safe to JSON e
 			var error = ['JSON Parse Error!'];
 			this.dserv.log('Client Sent Invalid Message!', this.info, message, error);
 			return;
@@ -141,7 +143,10 @@ DataServer.prototype.server_hook = function() {
 
 	// Update info when this server stops
 	this.nserv.on('close', function() {
-		// XXX: WS
+		// WebSockets Hack
+		if (arguments.length == 3) {
+			return;
+		}
 		this.dserv.log('Stopped', this.dserv.info);
 	});
 
