@@ -61,8 +61,16 @@ var getopt = require('node-getopt').create([
 	process.exit(false);
 })
 .on('log', function (argv, opt) {
-	// XXX: console.log(util.inspect(fs.readdirSync(opt.log)));
 	config.log = opt.log;
+	var valid = false;
+	try {
+		valid = fs.statSync(config.log).isDirectory();
+	} catch (e) {}
+	if (!valid) {
+		console.log('ERROR: Log directory does not exist!');
+		getopt.showHelp();
+		process.exit(false);
+	}
 })
 .on('expire', function (argv, opt) {
 	var expire = parseInt(opt.expire, 10);
