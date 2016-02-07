@@ -69,13 +69,8 @@ DataManager.prototype.grimreaper = function() {
 				continue;
 			}
 
-			// Perminantely persist this data
-			if (data._bserver_[p].p) {
-				continue;
-			}
-
 			// Anything to prune in here?
-			if (data._bserver_[p].ts < expire) {
+			if (!data._bserver_[p].p && data._bserver_[p].ts < expire) {
 				data._bserver_[p] = null;
 				data[p] = null;
 				pruned = true;
@@ -183,7 +178,7 @@ DataManager.prototype.data_meta_inject = function(data, meta) {
 		if (p == '_bserver_') {
 			continue;
 		}
-		data._bserver_[p] = meta;
+		data._bserver_[p] = {}.merge(meta); // XXX: clone
 		if (data[p] && typeof data[p] === 'object') {
 			this.data_meta_inject(data[p], meta);
 		}
@@ -211,7 +206,7 @@ DataManager.prototype.data_wrap = function(uri, data, meta) {
 
 		// Inject meta-data...
 		tmp._bserver_ = {};
-		tmp._bserver_[links[i]] = meta;
+		tmp._bserver_[links[i]] = {}.merge(meta); // XXX: clone
 
 		// Up one level...
 		data = tmp;
