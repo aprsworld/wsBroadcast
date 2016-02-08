@@ -224,7 +224,7 @@ DataManager.prototype.data_get = function(uri) {
 
 		// Can't traverse
 		if (node === null || typeof node !== 'object') {
-			return undefined;
+			return { node: undefined, prop: undefined, uri: undefined };
 		}
 	}
 
