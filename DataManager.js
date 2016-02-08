@@ -295,7 +295,7 @@ DataManager.prototype.data_update = function(uri, data, client, persist) {
 	this.data.merge(wrap);
 
 	// Log the data
-	if (this.config.log instanceof String) {
+	if (this.config.log) {
 		this.data_log(uri, data, client, ts, persist);
 	}
 
@@ -313,7 +313,7 @@ DataManager.prototype.data_update = function(uri, data, client, persist) {
 	return true;
 };
 
-DataManager.prototype.data_log = function(uri, data, client, ts, persist) {
+DataManager.prototype.data_log = function(uri, data, client, ts_epoch, persist) {
 
 	// Clean up output of persist
 	if (persist) {
@@ -322,13 +322,15 @@ DataManager.prototype.data_log = function(uri, data, client, ts, persist) {
 		persist = false;
 	}
 
+	var ts = new Date(ts_epoch);
+
 	// Nowhere to log
 	if (!this.config.log) {
 		return false;
 	}
 
 	// Get string representation of date
-	var log_date = ts.getUTCFullYear.toString() + decPad(ts.getUTCMonth(), 2) + decPad(ts.getUTCDate(), 2);
+	var log_date = ts.getUTCFullYear().toString() + decPad(ts.getUTCMonth(), 2) + decPad(ts.getUTCDate(), 2);
 
 	// Open log file
 	var log_fd = -1;
@@ -350,7 +352,7 @@ DataManager.prototype.data_log = function(uri, data, client, ts, persist) {
 	if (log_written <= 0) {
 		console.log('# DataLog: ERROR: Could not write to log file!');
 		res = false;
-	} else if (log_written != lot_datasize) {
+	} else if (log_written != log_datasize) {
 		console.log('# DataLog: ERROR: Could not write to log file!');
 		console.log('# DataLog: ERROR: File likely corrupted!');
 		res = false;
