@@ -190,7 +190,7 @@ var tcp_send = new TCPDataServer(dm, config.send_tcp);
 process.on('SIGHUP', function() {
 	console.log('# SIGHUP Received: Persisting Data.');
 
-	if (!dm.data_persist()) {
+	if (config.persists && !dm.data_save(config.persist)) {
 		console.log("# Error: Could not write initialization file!");
 	}
 });
