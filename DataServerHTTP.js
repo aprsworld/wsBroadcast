@@ -32,7 +32,7 @@ function HTTPDataServer(manager, config) {
 		var refhost = "";
 		if (req.headers.referer) {
 			var refurl = url.parse(req.headers.referer);
-			refhose = refurl.protocol + "//" + refurl.host;
+			refhost = refurl.protocol + "//" + refurl.host;
 		}
 
 		if (rurl.pathname.substr(0,7) == "/.data/") {
