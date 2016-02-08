@@ -3,6 +3,7 @@
  */
 var jsUtils = require('@aprsworld/jsutils');
 var util = require('util');
+var fs = require('fs');
 
 function decPad (num, size) {
 	var ret = '';
@@ -31,7 +32,10 @@ function DataManager(config) {
 	};
 	this.servers = [];
 	this.servers_count = 0;
-	this.data = { /*_bserver_: this.meta*/ };
+	this.data = { };
+	if (this.config.persist) {
+		this.data_load(this.config.persist);
+	}
 	var self = this;
 	this.timer = setInterval(function() { self.grimreaper(); },
 			this.config.expire * 1000);
@@ -116,6 +120,64 @@ DataManager.prototype.grimreaper = function() {
 
 	// Reap old data
 	reap(this.data);
+};
+
+DataManager.prototype.data_load = function(filename) {
+	var saved = fs.readFileSync(filename);
+	saved = JSON.parse(saved);
+	this.data.merge(saved);
+};
+
+DataManager.prototype.data_save_recurse = function(saved, data) {
+	if (!saved._bserver_) {
+		saved._bserver_ = {};
+	}
+	for (var p in data._bserver_) {
+		if (data._bserver_[p].p) {
+			saved[p] = data[p];
+			saved._bserver_[p] = data._bserver_[p];
+			this.data_save_recurse(saved[p], data[p]);
+		} else {
+			delete saved[p];
+			delete saved._bserver_[p];
+		}
+	}
+	return saved;
+};
+
+DataManager.prototype.data_save = function(filename) {
+	var saved = this.data_save_recurse({}, this.data);
+
+	// Open file
+	var save_fd = -1;
+	try {
+		save_fd = fs.openSync(filename, 'w', 0644);
+	} finally {
+		if (save_fd < 0) {
+			console.log('# DataSave: ERROR: Could not open save file - data not saved!');
+			return false;
+		}
+	}
+
+	// Write to file
+	var res = true;
+	var save_data = JSON.stringify(saved);
+	var save_datasize = Buffer.byteLength(save_data, 'UTF-8');
+	var save_written = fs.writeSync(save_fd, save_data, null, 'UTF-8');
+	if (save_written <= 0) {
+		console.log('# DataSave: ERROR: Could not write to save file!');
+		res = false;
+	} else if (save_written != save_datasize) {
+		console.log('# DataSave: ERROR: Could not write to save file!');
+		console.log('# DataSave: ERROR: File likely corrupted!');
+		res = false;
+	}
+
+	// Close the file
+	fs.closeSync(save_fd);
+
+	// All done
+	return res;
 };
 
 DataManager.prototype.uri_parse = function(uri) {
@@ -241,6 +303,11 @@ DataManager.prototype.data_update = function(uri, data, client, persist) {
 	this.servers.forEach(function(serv) {
 		serv.broadcast(wrap);
 	});
+
+	// Save data to disk if persistent
+	if (persist && this.config.persist) {
+		this.data_save(this.config.persist);
+	}
 
 	// All done
 	return true;
