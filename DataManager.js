@@ -93,7 +93,7 @@ DataManager.prototype.grimreaper = function() {
 	}
 
 	function reap (data) {
-		if (typeof data !== 'object') {
+		if (!data || typeof data !== 'object') {
 			return;
 		}
 		for (var p in data) {
