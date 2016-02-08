@@ -25,13 +25,13 @@ var config = {	server_http: {
 			port: process.env.npm_package_config_http_port // 8888
 		},
 		recv_tcp: {
-			port: 1230,
+			port: 1229,
 			send: false,
 			recv: true,
 			once: true
 		},
 		send_tcp: {
-			port: 1231,
+			port: 1230,
 			send: true,
 			recv: false,
 			once: true
@@ -47,8 +47,8 @@ var getopt = require('node-getopt').create([
 	['',	'expire=seconds',	'Number of seconds to expire old data. [REQUIRED]'],
 	['',	'http-server=port', 'Port to run HTTP server on. [DEFAULT: 8888]'],
 	['',	'tcp-server=port', 'Port for TCP Broadcast Server. [DEFAULT: 1337]'],
-	['',	'tcp-recv=port', 'Port to run simple TCP Server on to update data on. [DEFAULT: 1230]'],
-	['',	'tcp-send=port', 'Port to run simple TCP Server on to retrive data on. [DEFAULT: 1231]'],
+	['',	'tcp-recv=port', 'Port to run simple TCP Server on to update data on. [DEFAULT: 1229]'],
+	['',	'tcp-send=port', 'Port to run simple TCP Server on to retrive data on. [DEFAULT: 1230]'],
 	['',	'tcp-client=host[:port]', 'Mirror data from a remote TCP Broadcast Server.'],
 	['',	'webdir=dir', 'Root directory of the HTTP Server. [REQUIRED]'],
 	['',	'persist=dir', 'JSON file used for persistent data.'],
