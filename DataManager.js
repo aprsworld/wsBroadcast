@@ -60,6 +60,7 @@ DataManager.prototype.grimreaper = function() {
 
 			// Ignore
 			if (p == '_bserver_') {
+				delete data._bserver_._bserver_;
 				continue;
 			}
 
@@ -98,6 +99,7 @@ DataManager.prototype.grimreaper = function() {
 		for (var p in data) {
 			if (data[p] === null) {
 				delete data[p];
+				delete data._bserver_[p];
 				continue;
 			}
 			reap(data[p]);
