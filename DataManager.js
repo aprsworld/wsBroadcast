@@ -99,7 +99,6 @@ DataManager.prototype.grimreaper = function() {
 		for (var p in data) {
 			if (data[p] === null) {
 				delete data[p];
-				delete data._bserver_[p];
 				continue;
 			}
 			reap(data[p]);
