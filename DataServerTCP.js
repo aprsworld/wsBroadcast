@@ -48,7 +48,9 @@ function TCPDataServer(manager, config) {
 			this.message_buffer = Buffer.concat(
 				[this.message_buffer, data],
 				this.message_buffer.length + data.length);
-			//this.process_buffer();
+			if (!this.dserv.config.once) {
+				this.process_buffer();
+			}
 		});
 
 		c.on('close', function (had_error) {
