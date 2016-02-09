@@ -131,7 +131,8 @@ function HTTPDataServer(manager, config) {
 		}
 
 		// remap
-		if (rurl.pathname.match(/^\/[\w\s]+?$/)) {
+		var pathname = decodeURI(rurl.pathname);
+		if (pathname.match(/^\/[\w\s]+?$/)) {
 			send(req, config.remap, { root: config.root_dir }).pipe(res);
 			return;
 		}
