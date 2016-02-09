@@ -5,6 +5,7 @@ var util = require('util');
 var DataServer = require('./DataServer');
 var http = require('http');
 var url = require('url');
+var send = require('send');
 var serveIndex = require('serve-index');
 var serveStatic = require('serve-static');
 var finalhandler = require('finalhandler');
@@ -129,6 +130,12 @@ function HTTPDataServer(manager, config) {
 			return;
 		}
 
+		// remap
+		if (rurl.pathname.match(/^\/[\w\s]+?$/)) {
+			send(req, config.remap, { root: config.root_dir }).pipe(res);
+			return;
+		}
+
 		// Not trying to get data
 		var done = finalhandler(req, res);
 		staticserv(req, res, function onNext(err) {
@@ -151,7 +158,8 @@ util.inherits(HTTPDataServer, DataServer);
 HTTPDataServer.prototype.config_default = {}.merge(DataServer.config_default, {
 	server_name:	'Server_HTTP',
 	port:		8888,
-	root_dir:	'www'
+	root_dir:	'www',
+	remap:		'index.html'
 });
 
 function WebSocketDataServer(manager, config, http) {
