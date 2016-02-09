@@ -4,6 +4,7 @@
 var DataServer = require('./DataServer');
 var util = require('util');
 var net = require('net');
+var zlib = require('zlib');
 function TCPDataServer(manager, config) {
 	TCPDataServer.super_.call(this);
 	config = this.setup(manager, config);
@@ -47,7 +48,21 @@ function TCPDataServer(manager, config) {
 			this.message_buffer = Buffer.concat(
 				[this.message_buffer, data],
 				this.message_buffer.length + data.length);
-			this.process_buffer();
+			//this.process_buffer();
+		});
+
+		c.on('close', function (had_error) {
+			if (had_error) {
+				return;
+			}
+			if (this.message_buffer[0] == 0x1F && this.message_buffer[1] == 0x8B) {
+				this.message_buffer = zlib.gunzipSync(this.message_buffer);
+			}
+			var message = {
+				type: 'utf8',
+				utf8Data: this.message_buffer.toString('utf8')
+			};
+			this.emit('message', message);
 		});
 
 		c.send = function(data) {
