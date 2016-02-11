@@ -132,21 +132,19 @@ function HTTPDataServer(manager, config) {
 
 		// Not trying to get data
 		var done = finalhandler(req, res);
-		staticserv(req, res, function onNext(err) {
+		staticserv(req, res, function (err) {
 			if (err) {
 				return done(err);
 			}
-			indexserv(req, res, function onNext(err) {
-				if (err) {
-					return done(err);
-				}
-				// remap
-				var pathname = decodeURI(rurl.pathname);
-				if (pathname.match(/^\/[\w\s]+?$/)) {
-					send(req, config.remap, { root: config.root_dir }).pipe(res);
-					return;
-				}
-			});
+
+			// remap
+			var pathname = decodeURI(rurl.pathname);
+			if (pathname.match(/^\/[\w\s]+?$/)) {
+				send(req, config.remap, { root: config.root_dir }).pipe(res);
+				return;
+			}
+
+			indexserv(req, res, done);
 		});
 	});
 
