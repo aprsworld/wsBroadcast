@@ -37,13 +37,13 @@ and save persistent data to that file.  It will attempt to load it, and die horr
 
 ## HTTP Interface
 
-Any GET request to '/.data/*' will return only the portion of the tree specified in the URI.  A POST request to that will replace that portion with the data specified in JSON via POST.  If in that POST the query parameter persist=true is sent, it will persist that data forever.  Setting any value to null will prune that whole portion of the data.
+Any GET request to '/data/now.(json|dat)[/URI]' will return only the portion of the tree specified in the URI.  A POST request to that will replace that portion with the data specified in JSON via POST.  If in that POST the query parameter persist=true is sent, it will persist that data forever.  Setting any value to null will prune that whole portion of the data.
 
 Examples:
 
- * `GET /.data/webdisplay/` will return just the webconfig portion of the tree.
- * `POST /.data/webdisplay/configs/delme` with the body being valid JSON data, will update that part of the tree.
- * `POST /.data/webdisplay/config/dontdelme?persist=true` will do the same as the last but persist the changes forever.
+ * `GET /data/now.json/webdisplay/` will return just the webconfig portion of the tree.
+ * `POST /data/now.json/webdisplay/configs/delme` with the body being valid JSON data, will update that part of the tree.
+ * `POST /data/now.json/webdisplay/config/dontdelme?persist=true` will do the same as the last but persist the changes forever.
 
 
 ## Debugging / dumping data using wscat

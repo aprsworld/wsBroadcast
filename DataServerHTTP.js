@@ -36,22 +36,25 @@ function HTTPDataServer(manager, config) {
 			refhost = refurl.protocol + "//" + refurl.host;
 		}
 
-		if (rurl.pathname.substr(0,7) == "/.data/") {
+		var regex = rurl.pathname.match(/^\/data\/now.((json)|(dat))(\/[\w\W]*)?$/);
+		//if (rurl.pathname.substr(0,6) == "/data/") {
+		if (regex) {
 			res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
 			res.setHeader('Expires', '0');
 			res.setHeader('Access-Control-Allow-Origin', refhost);
 			res.setHeader('Content-Type', 'application/json');
 
 			// Determine URI
-			// TODO: Handle .json and .xml extensions
+			// TODO: Handle .xml extension?
 			// TODO: Handle .gz and other compression extensions
-			// TODO: Differentiate between leafs and nodes
-			var uri = rurl.pathname.substr(6);
-			var txt_hack = uri.search(/.txt$/);
-			if (txt_hack < 0) {
-				txt_hack = false;
-			} else {
-				uri = uri.substring(0, txt_hack);
+			// TODO: Differentiate between leafs and nodes?
+			console.log(util.inspect(regex, { color: true }));
+			uri = '';
+			if (regex[4]) {
+				uri = regex[4].substr(1);
+			}
+			var txt_hack = (regex[1] == 'dat');
+			if (txt_hack) {
 				res.setHeader('Content-Type', 'text/plain');
 				txt_hack = true;
 			}
