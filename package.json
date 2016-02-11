@@ -12,7 +12,7 @@
   "repository": { "type": "git", "url": "https://github.com/aprsworld/wsBroadcast.git" },
   "private": true,
   "dependencies" :
-  { "jsutils" : "aprsworld/jsUtils.git",
+  { "@aprsworld/jsutils" : "aprsworld/jsUtils.git",
     "http" : "^0.0.0",
     "url" : "^0.11.0",
     "serve-index" : "^1.7.3",
