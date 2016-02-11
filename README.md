@@ -21,6 +21,30 @@ To execute:
 * `node server.js --expire 60 --webdir=[WebClient]  --tcp-client=[server]` to mirror an existing server.
 
 
+## Default Ports
+
+* HTTP/WS: 8888
+* Input TCP: 1289
+* One-Time Output TCP: 1230 _(DO NOT USE)_
+* Constant Output TCP: 1337 _(DO NOT USE)_
+
+
+## Persistence
+
+If --persist=[file] is specified on the command line, it will attempt to load
+and save persistent data to that file.  It will attempt to load it, and die horribly if not found.  Everytime it gets a persistent update it will attempt to write to the file and continue on happily if it cant.  When the server receives a SIGHUP signal, it will attempt to write the latest changes to those files as well.
+
+
+## HTTP Interface
+
+Any GET request to '/.data/*' will return only the portion of the tree specified in the URI.  A POST request to that will replace that portion with the data specified in JSON via POST.  If in that POST the query parameter persist=true is sent, it will persist that data forever.  Setting any value to null will prune that whole portion of the data.
+
+Examples:
+
+ * `GET /.data/webdisplay/` will return just the webconfig portion of the tree.
+ * `POST /.data/webdisplay/configs/delme` with the body being valid JSON data, will update that part of the tree.
+ * `POST /.data/webdisplay/config/dontdelme?persist=true` will do the same as the last but persist the changes forever.
+
 
 ## Debugging / dumping data using wscat
 If wscat is not on your system, install with:
