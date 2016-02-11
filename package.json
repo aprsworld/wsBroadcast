@@ -1,5 +1,5 @@
 {
-  "name": "@aprsworld/wsbroadcast",
+  "name": "aprsworld/wsbroadcast",
   "version": "0.1.0",
   "description": "Web Socket Broadcast Server",
   "keywords": [
