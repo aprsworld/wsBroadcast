@@ -17,8 +17,8 @@ Written in node.js.
 To execute:
 
 * `node server.js --help` for usage and option information.
-* `node server.js -x 60 --webdir=../wsBroadcast-WebClient` and point a web-browser at http://hostname:8888/test.html.
-* `node server.js -x 60 --webdir=[WebClient]  --tcp-client=[server]` to mirror an existing server.
+* `node server.js --expire 60 --webdir=../wsBroadcast-WebClient` and point a web-browser at http://hostname:8888/test.html.
+* `node server.js --expire 60 --webdir=[WebClient]  --tcp-client=[server]` to mirror an existing server.
 
 
 
