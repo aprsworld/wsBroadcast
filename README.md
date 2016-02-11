@@ -16,16 +16,16 @@ Written in node.js.
 
 To execute:
 
-* `node ws-broadcast.js --help` for usage and option information.
-* `node ws-broadcast.js -x 60 --webdir WebClient` and point a web-browser at http://hostname:8888/test.html.
-* `node ws-broadcast.js -x 60 --webdir WebClient  --tcp-client [server]` to mirror an existing server.
+* `node server.js --help` for usage and option information.
+* `node server.js --expire 60 --webdir=../wsBroadcast-WebClient` and point a web-browser at http://hostname:8888/test.html.
+* `node server.js --expire 60 --webdir=[WebClient]  --tcp-client=[server]` to mirror an existing server.
 
 
 
 ## Debugging / dumping data using wscat
 If wscat is not on your system, install with:
 * `npm install -g wscat`
-_(The `-g` flag will do a global install and hopefully make it so wscat can be run from the commend line.)_
+_(The `-g` flag will do a global install and hopefully make it so wscat can be run from the command line.)_
 
 Dump data with:
 * `wscat -c http://hostname:8888/.data/` to receive continuous updates of the data in JSON format.
