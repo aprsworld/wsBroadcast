@@ -25,7 +25,7 @@ To execute:
 ## Debugging / dumping data using wscat
 If wscat is not on your system, install with:
 * `npm install -g wscat`
-_(The `-g` flag will do a global install and hopefully make it so wscat can be run from the commend line.)_
+_(The `-g` flag will do a global install and hopefully make it so wscat can be run from the command line.)_
 
 Dump data with:
 * `wscat -c http://hostname:8888/.data/` to receive continuous updates of the data in JSON format.
