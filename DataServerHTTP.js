@@ -130,20 +130,23 @@ function HTTPDataServer(manager, config) {
 			return;
 		}
 
-		// remap
-		var pathname = decodeURI(rurl.pathname);
-		if (pathname.match(/^\/[\w\s]+?$/)) {
-			send(req, config.remap, { root: config.root_dir }).pipe(res);
-			return;
-		}
-
 		// Not trying to get data
 		var done = finalhandler(req, res);
 		staticserv(req, res, function onNext(err) {
 			if (err) {
 				return done(err);
 			}
-			indexserv(req, res, done);
+			indexserv(req, res, function onNext(err) {
+				if (err) {
+					return done(err);
+				}
+				// remap
+				var pathname = decodeURI(rurl.pathname);
+				if (pathname.match(/^\/[\w\s]+?$/)) {
+					send(req, config.remap, { root: config.root_dir }).pipe(res);
+					return;
+				}
+			});
 		});
 	});
 
