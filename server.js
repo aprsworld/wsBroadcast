@@ -51,6 +51,7 @@ var getopt = require('node-getopt').create([
 	['',	'tcp-send=port', 'Port to run simple TCP Server on to retrive data on. [DEFAULT: 1230]'],
 	['',	'tcp-client=host[:port]', 'Mirror data from a remote TCP Broadcast Server.'],
 	['',	'webdir=dir', 'Root directory of the HTTP Server. [REQUIRED]'],
+	['',	'remap=file', 'File to remap 404 root entries. [DEFAULT: index.html]'],
 	['',	'persist=dir', 'JSON file used for persistent data.'],
 	['',	'log=dir',	'Directory to log data into.'],
 	['h',	'help',		'Display this help.'],
@@ -102,6 +103,9 @@ var getopt = require('node-getopt').create([
 		getopt.showHelp();
 		process.exit(false);
 	}
+})
+.on('remap', function(argv, opt) {
+	config.server_http.remap = opt.remap;
 })
 .on('persist', function(argv, opt) {
 	config.persist = opt.persist;
