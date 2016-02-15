@@ -123,9 +123,21 @@ DataManager.prototype.grimreaper = function() {
 };
 
 DataManager.prototype.data_load = function(filename) {
-	var saved = fs.readFileSync(filename);
-	saved = JSON.parse(saved);
+	var saved;
+	try {
+		saved = fs.readFileSync(filename);
+	} catch (e) { 
+		console.log("ERROR:  Can't read persist file!");
+		return false;
+	}
+	try {	
+		saved = JSON.parse(saved);
+	} catch (e) {
+		console.log("ERROR:  Persist file is corrupt!");
+		return false;
+	}
 	this.data.merge(saved);
+	return true;
 };
 
 DataManager.prototype.data_save_recurse = function(saved, data) {
@@ -364,8 +376,6 @@ DataManager.prototype.data_log = function(uri, data, client, ts_epoch, persist) 
 	// All done
 	return res;
 };
-
-// TODO: data_save(filename), data_load(filename)
 
 DataManager.prototype.server_attach = function(serv) {
 
