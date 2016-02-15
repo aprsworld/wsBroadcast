@@ -50,9 +50,9 @@ var getopt = require('node-getopt').create([
 	['',	'tcp-recv=port', 'Port to run simple TCP Server on to update data on. [DEFAULT: 1229]'],
 	['',	'tcp-send=port', 'Port to run simple TCP Server on to retrive data on. [DEFAULT: 1230]'],
 	['',	'tcp-client=host[:port]', 'Mirror data from a remote TCP Broadcast Server.'],
-	['',	'webdir=dir', 'Root directory of the HTTP Server. [REQUIRED]'],
+	['',	'webdir=dir', 'Absolute path to the Root directory of the HTTP Server. [REQUIRED]'],
 	['',	'remap=file', 'File to remap 404 root entries. [DEFAULT: index.html]'],
-	['',	'persist=dir', 'JSON file used for persistent data.'],
+	['',	'persist=file', 'JSON file used for persistent data.'],
 	['',	'log=dir',	'Directory to log data into.'],
 	['h',	'help',		'Display this help.'],
 	['v',	'version',	'Display the version number.']

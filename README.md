@@ -11,14 +11,29 @@ Written in node.js.
 ## Installation
 
 * Install Node.js as required by your platform.
+* Install PHP-CGI as required by your platform (`sudo apt-get install php5-cgi`)
 * `git clone http://github.com/aprsworld/wsBroadcast`
 * `cd wsBroadcast && npm install`
 
 To execute:
 
 * `node server.js --help` for usage and option information.
-* `node server.js --expire 60 --webdir=../wsBroadcast-WebClient` and point a web-browser at http://hostname:8888/test.html.
-* `node server.js --expire 60 --webdir=[WebClient]  --tcp-client=[server]` to mirror an existing server.
+* `node server.js --expire 60 --webdir=[Absolute_Path]` and point a web-browser at http://hostname:8888/test.html.
+* `node server.js --expire 60 --webdir=[Absolute_Path]  --tcp-client=[server]` to mirror an existing server.
+
+
+## Command Line Options
+
+* `--expire=[time]` where [time] is in seconds for objects to expire unless persistent.
+* `--persist=[file]` where [file] is a json file to load and store persistent data in.
+* `--webdir=[Absolute_Path]` where [Absolute_Path] is the path to the root directory to serve via HTTP.
+* `--remap=[Relative_WWW_Path]` where [Relative_WWW_Path] is a file in the web directory to serve in place of a 404 when requested from the root path.
+* `--log=[DIR]` is the directory to log updates to.
+* `--http-server=[PORT]` is the port to run the HTTP Server on.
+* `--tcp-recv=[PORT]` is the port to run the HTTP Receiving Server on.
+* `--tcp-send=[PORT}` is the port to run the HTTP Sending Server on.
+* `--tcp-client=[HOST[:PORT]]` is the server and optional port to connect to in order to mirror an existing server.
+* `--tcp-server=[PORT]` is the port to run the mirroring tcp server on.
 
 
 ## Default Ports
@@ -32,7 +47,7 @@ To execute:
 ## Persistence
 
 If --persist=[file] is specified on the command line, it will attempt to load
-and save persistent data to that file.  It will attempt to load it, and die horribly if not found.  Everytime it gets a persistent update it will attempt to write to the file and continue on happily if it cant.  When the server receives a SIGHUP signal, it will attempt to write the latest changes to those files as well.
+and save persistent data to that file.  Everytime it gets a persistent update it will attempt to write to the file and continue on happily if it cant.  When the server receives a SIGHUP signal, it will attempt to write the latest changes to that file as well.
 
 
 ## HTTP Interface
