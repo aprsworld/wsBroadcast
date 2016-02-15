@@ -9,6 +9,7 @@ var send = require('send');
 var serveIndex = require('serve-index');
 var serveStatic = require('serve-static');
 var finalhandler = require('finalhandler');
+var gateway = require('gateway');
 var wss = require('websocket').server;
 
 function HTTPDataServer(manager, config) {
@@ -23,6 +24,7 @@ function HTTPDataServer(manager, config) {
 	var staticserv = serveStatic(config.root_dir, {
 		'index': ['index.html']
 	});
+	var phpserv = gateway(config.root_dir, {'.php': 'php-cgi'});
 	this.nserv = http.createServer(function(req, res) {
 
 		// Log Request
@@ -34,6 +36,13 @@ function HTTPDataServer(manager, config) {
 		if (req.headers.referer) {
 			var refurl = url.parse(req.headers.referer);
 			refhost = refurl.protocol + "//" + refurl.host;
+		}
+
+		
+		// PHP Handler
+		if (rurl.pathname.match(/\.php$/)) {
+			phpserv(req, res);
+			return;
 		}
 
 		var regex = rurl.pathname.match(/^\/data\/now.((json)|(dat))(\/[\w\W]*)?$/);

@@ -3,31 +3,47 @@
   "version": "0.1.0",
   "description": "Web Socket Broadcast Server",
   "keywords": [
-    "WebSocket", "Broadcast", "Server", "wsBroadcast",
-    "APRS World", "APRSWorld", "APRS"
+    "WebSocket",
+    "Broadcast",
+    "Server",
+    "wsBroadcast",
+    "APRS World",
+    "APRSWorld",
+    "APRS"
   ],
-  "bugs": { "url": "https://github.com/aprsworld/wsBroadcast/issues" },
-  "license": { "license": "UNLICENSED" },
-  "author": {"name": "David A. Russell", "url": "https://github.com/davarus" },
-  "repository": { "type": "git", "url": "https://github.com/aprsworld/wsBroadcast.git" },
+  "bugs": {
+    "url": "https://github.com/aprsworld/wsBroadcast/issues"
+  },
+  "license": {
+    "license": "UNLICENSED"
+  },
+  "author": {
+    "name": "David A. Russell",
+    "url": "https://github.com/davarus"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aprsworld/wsBroadcast.git"
+  },
   "private": true,
-  "dependencies" :
-  { "@aprsworld/jsutils" : "git+https://github.com/aprsworld/jsUtils.git",
-    "http" : "^0.0.0",
-    "url" : "^0.11.0",
-    "serve-index" : "^1.7.3",
-    "serve-static" : "^1.10.2",
-    "finalhandler"  : "^0.4.1",
-    "node-getopt" : "^0.2.3",
-    "websocket" : "^1.0.22",
-    "send": "*"
+  "dependencies": {
+    "@aprsworld/jsutils": "git+https://github.com/aprsworld/jsUtils.git",
+    "finalhandler": "^0.4.1",
+    "gateway": "^1.0.0",
+    "http": "^0.0.0",
+    "node-getopt": "^0.2.3",
+    "send": "*",
+    "serve-index": "^1.7.3",
+    "serve-static": "^1.10.2",
+    "url": "^0.11.0",
+    "websocket": "^1.0.22"
   },
-  "config" :
-  {
-    "http" : { "port" : 8888 }
+  "config": {
+    "http": {
+      "port": 8888
+    }
   },
-  "scripts" :
-  {
-    "start" : "node server.js --expire=600 --tcp-client=cam.aprsworld.com --webdir=../wsWebDisplay/"
+  "scripts": {
+    "start": "node server.js --expire=600 --tcp-client=cam.aprsworld.com --webdir=../wsWebDisplay/"
   }
 }

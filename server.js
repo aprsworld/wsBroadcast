@@ -94,6 +94,11 @@ var getopt = require('node-getopt').create([
 })
 .on('webdir', function(argv, opt) {
 	config.server_http.root_dir = opt.webdir;
+	if (config.server_http.root_dir[0] != '/') {
+		console.log('ERROR: Web document root must be an absolute path!');
+		getopt.showHelp();
+		process.exit(false);
+	}
 	var valid = false;
 	try {
 		valid = fs.statSync(config.server_http.root_dir).isDirectory();
