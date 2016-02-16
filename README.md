@@ -26,8 +26,8 @@ To execute:
 
 * `--expire=[time]` where [time] is in seconds for objects to expire unless persistent.
 * `--persist=[file]` where [file] is a json file to load and store persistent data in.
-* `--webdir=[Absolute_Path]` where [Absolute_Path] is the path to the root directory to serve via HTTP.
-* `--remap=[Relative_WWW_Path]` where [Relative_WWW_Path] is a file in the web directory to serve in place of a 404 when requested from the root path.
+* `--webdir=[AbsolutePath]` where [AbsolutePath] is the path to the root directory to serve via HTTP.
+* `--remap=[RelativeWWWPath]` where [RelativeWWWPath] is a file in the web directory to serve in place of a 404 when requested from the root path.
 * `--log=[DIR]` is the directory to log updates to.
 * `--http-server=[PORT]` is the port to run the HTTP Server on.
 * `--tcp-recv=[PORT]` is the port to run the HTTP Receiving Server on.
@@ -59,6 +59,13 @@ Examples:
  * `GET /data/now.json/webdisplay/` will return just the webconfig portion of the tree.
  * `POST /data/now.json/webdisplay/configs/delme` with the body being valid JSON data, will update that part of the tree.
  * `POST /data/now.json/webdisplay/config/dontdelme?persist=true` will do the same as the last but persist the changes forever.
+
+
+## Copying data from one server to another
+`curl http://192.168.8.2:8888/data/now.json/webdisplay > /tmp/tmp.json && curl --data-binary @/tmp/tmp.json http://cam.aprsworld.com/data/now.json/webdisplay?persist=true && rm /tmp/tmp.json`
+
+Replace webdisplay with the URI of the data you want to copy and remove ?persist=true if you don't want the changes to be persistent.
+
 
 
 ## Debugging / dumping data using wscat
