@@ -114,7 +114,7 @@ DataServer.prototype.client_hook = function(c) {
 		var json = JSON.stringify(data);
 		var send = json;
 		if (this.gzip) {
-			send = pako.deflate(send, { to: 'string' });
+			send = pako.gzip(send, { to: 'string' });
 		}
 		this.send(send);
 	};

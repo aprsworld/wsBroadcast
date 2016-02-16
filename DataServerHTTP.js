@@ -90,7 +90,7 @@ function HTTPDataServer(manager, config) {
 					var json = JSON.stringify(data.node);
 					var send = json;
 					if (gzip) {
-						send = pako.deflate(send, { to: 'string' });
+						send = pako.gzip(send, { to: 'string' });
 					}
 					res.write(send);
 					res.end();
@@ -114,7 +114,7 @@ function HTTPDataServer(manager, config) {
 				var json = JSON.stringify(data.node[data.prop]);
 				var send = json;
 				if (gzip) {
-					send = pako.deflate(send, { to: 'string' });
+					send = pako.gzip(send, { to: 'string' });
 				}
 				res.write(send);
 				res.end();
