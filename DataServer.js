@@ -2,6 +2,7 @@
  * Data Server Base
  */
 var jsUtils = require('@aprsworld/jsutils');
+var pako = require('pako');
 var util = require('util');
 
 function DataServer() {
@@ -110,7 +111,12 @@ DataServer.prototype.client_hook = function(c) {
 
 	// Send a Message to Client
 	c.update_send = function(data) {
-		this.send(JSON.stringify(data));
+		var json = JSON.stringify(data);
+		var send = json;
+		if (this.gzip) {
+			send = pako.deflate(send, { to: 'string' });
+		}
+		this.send(send);
 	};
 
 	// Send initial update

@@ -11,6 +11,7 @@ var serveStatic = require('serve-static');
 var finalhandler = require('finalhandler');
 var gateway = require('gateway');
 var wss = require('websocket').server;
+var pako = require('pako');
 
 function HTTPDataServer(manager, config) {
 	HTTPDataServer.super_.call(this);
@@ -45,7 +46,7 @@ function HTTPDataServer(manager, config) {
 			return;
 		}
 
-		var regex = rurl.pathname.match(/^\/data\/now.((json)|(dat))(\/[\w\W]*)?$/);
+		var regex = rurl.pathname.match(/^\/data\/now.((json)|(dat))(.gz)?(\/[\w\W]*)?$/);
 		//if (rurl.pathname.substr(0,6) == "/data/") {
 		if (regex) {
 			res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -57,10 +58,13 @@ function HTTPDataServer(manager, config) {
 			// TODO: Handle .xml extension?
 			// TODO: Handle .gz and other compression extensions
 			// TODO: Differentiate between leafs and nodes?
-			console.log(util.inspect(regex, { color: true }));
 			uri = '';
+			var gzip = false;
 			if (regex[4]) {
-				uri = regex[4].substr(1);
+				gzip = true;
+			}
+			if (regex[5]) {
+				uri = regex[5].substr(1);
 			}
 			var txt_hack = (regex[1] == 'dat');
 			if (txt_hack) {
@@ -83,7 +87,12 @@ function HTTPDataServer(manager, config) {
 
 				// Return node if that's what we want
 				if (!data.prop || data.prop === '') {
-					res.write(JSON.stringify(data.node));
+					var json = JSON.stringify(data.node);
+					var send = json;
+					if (gzip) {
+						send = pako.deflate(send, { to: 'string' });
+					}
+					res.write(send);
 					res.end();
 					return;
 				}
@@ -102,7 +111,12 @@ function HTTPDataServer(manager, config) {
 					return;
 				} */
 
-				res.write(JSON.stringify(data.node[data.prop]));
+				var json = JSON.stringify(data.node[data.prop]);
+				var send = json;
+				if (gzip) {
+					send = pako.deflate(send, { to: 'string' });
+				}
+				res.write(send);
 				res.end();
 				return;
 			}
@@ -186,9 +200,14 @@ function WebSocketDataServer(manager, config, http) {
 	this.server_hook();
 
 	this.nserv.on('request', function(req) {
-		if (req.resource != '/data/now.json' && req.resource != '/data/now.dat') {
+		var regex = req.resource.match(/\/data\/now.((json)|(dat))(.gz)?$/);
+		if (!regex) {
 			req.reject();
 			return;
+		}
+		var gzip = false;
+		if (regex[4]) {
+			gzip = true;
 		}
 
 		/*
@@ -202,6 +221,7 @@ function WebSocketDataServer(manager, config, http) {
 		c.httpRequest = req.httpRequest;
 		c.origin = req.origin;
 		c.requestedExtensions = req.requestedExtensions;
+		c.gzip = gzip;
 		this.dserv.client_hook(c);
 	});
 
