@@ -186,7 +186,7 @@ function WebSocketDataServer(manager, config, http) {
 	this.server_hook();
 
 	this.nserv.on('request', function(req) {
-		if (req.resource != '/data/now.json' || req.resource != '/data/now.dat') {
+		if (req.resource != '/data/now.json' && req.resource != '/data/now.dat') {
 			req.reject();
 			return;
 		}
