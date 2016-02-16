@@ -88,11 +88,11 @@ function HTTPDataServer(manager, config) {
 				// Return node if that's what we want
 				if (!data.prop || data.prop === '') {
 					var json = JSON.stringify(data.node);
-					var send = json;
+					var data = json;
 					if (gzip) {
-						send = pako.gzip(send, { to: 'string' });
+						data = pako.gzip(data, { to: 'string' });
 					}
-					res.write(send);
+					res.write(data);
 					res.end();
 					return;
 				}
@@ -112,11 +112,11 @@ function HTTPDataServer(manager, config) {
 				} */
 
 				var json = JSON.stringify(data.node[data.prop]);
-				var send = json;
+				var data = json;
 				if (gzip) {
-					send = pako.gzip(send, { to: 'string' });
+					data = pako.gzip(data, { to: 'string' });
 				}
-				res.write(send);
+				res.write(data);
 				res.end();
 				return;
 			}

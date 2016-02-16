@@ -33,7 +33,7 @@
     "http": "^0.0.0",
     "node-getopt": "^0.2.3",
     "pako": "^0.2.8",
-    "send": "*",
+    "send": "^0.13.1",
     "serve-index": "^1.7.3",
     "serve-static": "^1.10.2",
     "url": "^0.11.0",
