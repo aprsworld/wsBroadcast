@@ -39,11 +39,22 @@ function DataManager(config) {
 	var self = this;
 	this.timer = setInterval(function() { self.grimreaper(); },
 			this.config.expire * 1000);
+	this.timer = setInterval(function() { self.ping(); },
+			this.config.ping * 1000);
 	return this;
 }
 
 DataManager.prototype.config_default = {
-	log:		null
+	log:		null,
+	ping:		45
+};
+
+
+DataManager.prototype.ping = function() {
+	// Broadcast updated data
+	this.servers.forEach(function(serv) {
+		serv.broadcast({});
+	});
 };
 
 DataManager.prototype.grimreaper = function() {

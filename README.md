@@ -29,6 +29,7 @@ To execute:
 * `--webdir=[AbsolutePath]` where [AbsolutePath] is the path to the root directory to serve via HTTP.
 * `--remap=[RelativeWWWPath]` where [RelativeWWWPath] is a file in the web directory to serve in place of a 404 when requested from the root path.
 * `--log=[DIR]` is the directory to log updates to.
+* `--ping=[TIME]` to control the default 45 second ping setting.
 * `--http-server=[PORT]` is the port to run the HTTP Server on.
 * `--tcp-recv=[PORT]` is the port to run the HTTP Receiving Server on.
 * `--tcp-send=[PORT}` is the port to run the HTTP Sending Server on.

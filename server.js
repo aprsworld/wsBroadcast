@@ -54,6 +54,7 @@ var getopt = require('node-getopt').create([
 	['',	'remap=file', 'File to remap 404 root entries. [DEFAULT: index.html]'],
 	['',	'persist=file', 'JSON file used for persistent data.'],
 	['',	'log=dir',	'Directory to log data into.'],
+	['',	'ping=time',	'Send a ping every n seconds.'],
 	['h',	'help',		'Display this help.'],
 	['v',	'version',	'Display the version number.']
 ])
@@ -114,6 +115,9 @@ var getopt = require('node-getopt').create([
 })
 .on('persist', function(argv, opt) {
 	config.persist = opt.persist;
+})
+.on('ping', function(argv, opt) {
+	config.ping = opt.ping;
 })
 .on('tcp-server', function(argv, opt) {
 	var port = opt['tcp-server'];
