@@ -39,13 +39,6 @@ function HTTPDataServer(manager, config) {
 			refhost = refurl.protocol + "//" + refurl.host;
 		}
 
-		
-		// PHP Handler
-		if (rurl.pathname.match(/\.php$/)) {
-			phpserv(req, res);
-			return;
-		}
-
 		var regex = rurl.pathname.match(/^\/data\/now.((json)|(dat))(.gz)?(\/[\w\W]*)?$/);
 		//if (rurl.pathname.substr(0,6) == "/data/") {
 		if (regex) {
@@ -158,19 +151,24 @@ function HTTPDataServer(manager, config) {
 
 		// Not trying to get data
 		var done = finalhandler(req, res);
-		staticserv(req, res, function (err) {
+		phpserv(req, res, function (err) {
 			if (err) {
 				return done(err);
 			}
+			staticserv(req, res, function (err) {
+				if (err) {
+					return done(err);
+				}
 
-			// remap
-			var pathname = decodeURI(rurl.pathname);
-			if (pathname.match(/^\/[\w\s]+?$/)) {
-				send(req, config.remap, { root: config.root_dir }).pipe(res);
-				return;
-			}
+				// remap
+				var pathname = decodeURI(rurl.pathname);
+				if (pathname.match(/^\/[\w\s]+?$/)) {
+					send(req, config.remap, { root: config.root_dir }).pipe(res);
+					return;
+				}
 
-			indexserv(req, res, done);
+				indexserv(req, res, done);
+			});
 		});
 	});
 
