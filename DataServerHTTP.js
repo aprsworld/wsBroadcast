@@ -21,7 +21,7 @@ function HTTPDataServer(manager, config) {
 	}
 
 	// Create Server
-	var indexserv = serveIndex(config.root_dir, {'icons': true});
+	var indexserv = serveIndex(config.root_dir, {'icons': true, 'view': 'details'});
 	var staticserv = serveStatic(config.root_dir, {
 		'index': ['index.html']
 	});
