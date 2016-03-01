@@ -86,7 +86,7 @@ var getopt = require('node-getopt').create([
 .on('http-server', function(argv, opt) {
 	var port = opt['http-server'];
 	port = Number.parseInt(port, 10);
-	if (Number.isNaN(port) || port <= 0) {
+	if (Number.isNaN(port) || port < 0) {
 		console.log('ERROR: Invalid http-server port specified!');
 		getopt.showHelp();
 		process.exit(false);
@@ -122,7 +122,7 @@ var getopt = require('node-getopt').create([
 .on('tcp-server', function(argv, opt) {
 	var port = opt['tcp-server'];
 	port = Number.parseInt(port, 10);
-	if (Number.isNaN(port) || port <= 0) {
+	if (Number.isNaN(port) || port < 0) {
 		console.log('ERROR: Invalid tcp-server port specified!');
 		getopt.showHelp();
 		process.exit(false);
@@ -132,7 +132,7 @@ var getopt = require('node-getopt').create([
 .on('tcp-recv', function(argv, opt) {
 	var port = opt['tcp-recv'];
 	port = Number.parseInt(port, 10);
-	if (Number.isNaN(port) || port <= 0) {
+	if (Number.isNaN(port) || port < 0) {
 		console.log('ERROR: Invalid tcp-recv port specified!');
 		getopt.showHelp();
 		process.exit(false);
@@ -142,7 +142,7 @@ var getopt = require('node-getopt').create([
 .on('tcp-send', function(argv, opt) {
 	var port = opt['tcp-send'];
 	port = Number.parseInt(port, 10);
-	if (Number.isNaN(port) || port <= 0) {
+	if (Number.isNaN(port) || port < 0) {
 		console.log('ERROR: Invalid tcp-send port specified!');
 		getopt.showHelp();
 		process.exit(false);
@@ -189,13 +189,25 @@ console.log("-----------------------------------------------------");
  * Start everything up.
  */
 var dm = new DataManager(config);
-var serv_http = new HTTPDataServer(dm, config.server_http);
-var serv_tcp = new TCPDataServer(dm, config.server_tcp);
+var serv_http;
+if (config.server_http.port) {
+	serv_http = new HTTPDataServer(dm, config.server_http);
+}
+var serv_tcp;
+if (config.server_tcp.port) {
+	serv_tcp = new TCPDataServer(dm, config.server_tcp);
+}
 if (config.client_tcp) {
 	var serv_tcp_client = new TCPDataServer(dm, config.client_tcp);
 }
-var tcp_recv = new TCPDataServer(dm, config.recv_tcp);
-var tcp_send = new TCPDataServer(dm, config.send_tcp);
+var tcp_recv;
+if (config.recv_tcp.port) {
+	tcp_recv = new TCPDataServer(dm, config.recv_tcp);
+}
+var tcp_send;
+if (config.send_tcp.port) {
+	tcp_send = new TCPDataServer(dm, config.send_tcp);
+}
 
 /*
  * Process Signals
@@ -207,5 +219,3 @@ process.on('SIGHUP', function() {
 		console.log("# Error: Could not write initialization file!");
 	}
 });
-
-
