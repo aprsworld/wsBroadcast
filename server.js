@@ -1,3 +1,6 @@
+(function () {
+"use strict";
+
 var version = {
 	commit: {
 		sha1: '$Format:%H$',
@@ -219,3 +222,5 @@ process.on('SIGHUP', function() {
 		console.log("# Error: Could not write initialization file!");
 	}
 });
+
+})();

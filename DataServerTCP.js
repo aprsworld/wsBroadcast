@@ -1,6 +1,9 @@
 /*
  * TCP Data Server
  */
+(function () {
+"use strict";
+
 var DataServer = require('./DataServer');
 var util = require('util');
 var net = require('net');
@@ -105,3 +108,5 @@ TCPDataServer.prototype.config_default = {}.merge(DataServer.config_default, {
 });
 
 module.exports = TCPDataServer;
+
+})();

@@ -1,6 +1,9 @@
 /*
  * Data Manager
  */
+(function () {
+"use strict";
+
 var jsUtils = require('@aprsworld/jsutils');
 var util = require('util');
 var fs = require('fs');
@@ -174,7 +177,7 @@ DataManager.prototype.data_save = function(filename) {
 	// Open file
 	var save_fd = -1;
 	try {
-		save_fd = fs.openSync(filename, 'w', 0644);
+		save_fd = fs.openSync(filename, 'w', parseInt('0644',8));
 	} finally {
 		if (save_fd < 0) {
 			console.log('# DataSave: ERROR: Could not open save file - data not saved!');
@@ -359,7 +362,7 @@ DataManager.prototype.data_log = function(uri, data, client, ts_epoch, persist) 
 	var log_fd = -1;
 	try {
 		log_fd = fs.openSync(this.config.log + '/' + log_date + '.json',
-				'a', 0644);
+				'a', parseInt('0644', 8));
 	} finally {
 		if (log_fd < 0) {
 			console.log('# DataLog: ERROR: Could not open log file - data not logged!');
@@ -432,3 +435,5 @@ DataManager.prototype.server_detach = function(serv) {
 };
 
 module.exports = DataManager;
+
+})();

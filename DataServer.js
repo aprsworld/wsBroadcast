@@ -1,6 +1,9 @@
 /*
  * Data Server Base
  */
+(function () {
+"use strict";
+
 var jsUtils = require('@aprsworld/jsutils');
 var pako = require('pako');
 var util = require('util');
@@ -194,3 +197,5 @@ DataServer.prototype.broadcast = function(data) {
 };
 
 module.exports = DataServer;
+
+})();

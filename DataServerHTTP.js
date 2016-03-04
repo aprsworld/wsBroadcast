@@ -1,6 +1,9 @@
 /*
  * HTTP and WebSocket Data Server
  */
+(function () {
+"use strict";
+
 var util = require('util');
 var DataServer = require('./DataServer');
 var http = require('http');
@@ -40,7 +43,6 @@ function HTTPDataServer(manager, config) {
 		}
 
 		var regex = rurl.pathname.match(/^\/data\/now.((json)|(dat))(.gz)?(\/[\w\W]*)?$/);
-		//if (rurl.pathname.substr(0,6) == "/data/") {
 		if (regex) {
 			res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
 			res.setHeader('Expires', '0');
@@ -81,11 +83,11 @@ function HTTPDataServer(manager, config) {
 				// Return node if that's what we want
 				if (!data.prop || data.prop === '') {
 					var json = JSON.stringify(data.node);
-					var data = json;
+					var sdata = json;
 					if (gzip) {
-						data = pako.gzip(data, { to: 'string' });
+						sdata = pako.gzip(sdata, { to: 'string' });
 					}
-					res.write(data);
+					res.write(sdata);
 					res.end();
 					return;
 				}
@@ -104,12 +106,12 @@ function HTTPDataServer(manager, config) {
 					return;
 				} */
 
-				var json = JSON.stringify(data.node[data.prop]);
-				var data = json;
+				var json2 = JSON.stringify(data.node[data.prop]);
+				var data2 = json2;
 				if (gzip) {
-					data = pako.gzip(data, { to: 'string' });
+					data2 = pako.gzip(data2, { to: 'string' });
 				}
-				res.write(data);
+				res.write(data2);
 				res.end();
 				return;
 			}
@@ -235,3 +237,5 @@ WebSocketDataServer.prototype.config_default = {}.merge(DataServer.config_defaul
 });
 
 module.exports = HTTPDataServer;
+
+})();
