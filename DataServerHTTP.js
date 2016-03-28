@@ -53,7 +53,7 @@ function HTTPDataServer(manager, config) {
 			// TODO: Handle .xml extension?
 			// TODO: Handle .gz and other compression extensions
 			// TODO: Differentiate between leafs and nodes?
-			uri = '';
+			var uri = '';
 			var gzip = false;
 			if (regex[4]) {
 				gzip = true;
