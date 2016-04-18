@@ -100,7 +100,11 @@ DataServer.prototype.client_hook = function(c) {
 		this.dserv.log('Client Sent Message', this.info, update);
 
 		// Update
-		if (update.data && update.uri) {
+		if (update.wsb) {
+			if (update.wsb.filters) {
+				this.filters = update.wsb.filters;
+			}
+		} else if (update.data && update.uri) {
 			this.dserv.manager.data_update(update.uri, update.data, this, update.persist);
 		} else {
 			this.dserv.manager.data_update(null, update, this, false);
@@ -180,6 +184,43 @@ DataServer.prototype.log = function() {
 		this.info.name + '": ' + args[0] + message);
 };
 
+DataServer.prototype.data_prune = function(data, filter) {
+	var pruned = {};
+	var pruned_current = pruned, data_current = data;
+	var nodes = filter.split('/');
+	for (var i = 0; i < nodes.length; i++) {
+		if (nodes[i] === '') {
+			continue;
+		}
+		console.log(nodes[i]);
+		if (typeof data_current !== 'object') {
+			return {};
+		}
+		if (data_current[nodes[i]] === undefined) {
+			return {};
+		}
+		if (data_current[nodes[i]] === null) {
+			pruned_current[nodes[i]] = null;
+			return pruned;
+		}
+		pruned_current[nodes[i]] = {};
+		pruned_current = pruned_current[nodes[i]];
+		data_current = data_current[nodes[i]];
+	}
+	pruned_current.merge(data_current);
+	return pruned;
+};
+
+DataServer.prototype.data_filter = function(data, filters) {
+	var self = this;
+	var pruned = {};
+	filters.forEach(function(filter) {
+		console.log(filter);
+		pruned.merge(self.data_prune(data, filter));
+	});
+	return pruned;
+};
+
 // Broadcast update to all clients
 DataServer.prototype.broadcast = function(data) {
 	var config = this.config;
@@ -187,7 +228,11 @@ DataServer.prototype.broadcast = function(data) {
 	if (config.send) {
 		this.clients.forEach(function(client) {
 			try {
-				client.update_send(data);
+				if (!client.filters) {
+					client.update_send(data);
+				} else {
+					client.update_send(self.data_filter(data, client.filters));
+				}
 			} catch (e) {
 				self.log('Client Error!', 'Could not send message!');
 				client.close(); // XXX: Needed?
