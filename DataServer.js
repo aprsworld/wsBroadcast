@@ -73,12 +73,6 @@ DataServer.prototype.client_hook = function(c) {
 	c.on('message', function(message) {
 		var config = this.dserv.config;
 
-		// Ignore?
-		if (!config.recv) {
-			this.dserv.log('Ignoring Client Message!', this.info, message);
-			return;
-		}
-
 		// Sanity
 		if (message.type != 'utf8') {
 			this.dserv.log('Client Sent Invalid Message!', this.info, message);
@@ -104,6 +98,9 @@ DataServer.prototype.client_hook = function(c) {
 			if (update.wsb.filters) {
 				this.filters = update.wsb.filters;
 			}
+		} else if (!config.recv) {
+			this.dserv.log('Ignoring Client Message!', this.info, message);
+			return;
 		} else if (update.data && update.uri) {
 			this.dserv.manager.data_update(update.uri, update.data, this, update.persist);
 		} else {
@@ -192,7 +189,6 @@ DataServer.prototype.data_prune = function(data, filter) {
 		if (nodes[i] === '') {
 			continue;
 		}
-		console.log(nodes[i]);
 		if (typeof data_current !== 'object') {
 			return {};
 		}
@@ -215,7 +211,6 @@ DataServer.prototype.data_filter = function(data, filters) {
 	var self = this;
 	var pruned = {};
 	filters.forEach(function(filter) {
-		console.log(filter);
 		pruned.merge(self.data_prune(data, filter));
 	});
 	return pruned;
