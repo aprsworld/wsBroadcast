@@ -223,10 +223,21 @@ DataServer.prototype.broadcast = function(data) {
 	if (config.send) {
 		this.clients.forEach(function(client) {
 			try {
-				if (!client.filters) {
+				var enumerate = [];
+				for (var p in data) {
+					enumerate.push(p);
+				}
+				if (!client.filters || !enumerate.length) {
 					client.update_send(data);
 				} else {
-					client.update_send(self.data_filter(data, client.filters));
+					var filtered = self.data_filter(data, client.filters);
+					var e2 = [];
+					for (var p2 in filtered) {
+						e2.push(p2);
+					}
+					if (e2.length) {
+						client.update_send(filtered);
+					}
 				}
 			} catch (e) {
 				self.log('Client Error!', 'Could not send message!');
