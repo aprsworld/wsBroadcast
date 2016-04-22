@@ -33,6 +33,9 @@ function TCPDataServer(manager, config) {
 					};
 					start = i + 1;
 					this.emit('message', message);
+					if (this.dserv.config.once) {
+						this.close();
+					}
 				}
 			}
 			if (start !== 0) {
@@ -51,7 +54,7 @@ function TCPDataServer(manager, config) {
 			this.message_buffer = Buffer.concat(
 				[this.message_buffer, data],
 				this.message_buffer.length + data.length);
-			if (!this.dserv.config.once) {
+			if (this.message_buffer.length > 2 && (this.message_buffer[0] != 0x1F || this.message_buffer[1] != 0x8B)) {
 				this.process_buffer();
 			}
 		});
@@ -60,7 +63,10 @@ function TCPDataServer(manager, config) {
 			if (had_error) {
 				return;
 			}
-			if (this.message_buffer[0] == 0x1F && this.message_buffer[1] == 0x8B) {
+			if (!this.message_buffer.length) {
+				return;
+			}
+			if (this.message_buffer.length >= 2 && this.message_buffer[0] == 0x1F && this.message_buffer[1] == 0x8B) {
 				this.message_buffer = zlib.gunzipSync(this.message_buffer);
 			}
 			var message = {

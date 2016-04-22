@@ -305,6 +305,19 @@ DataManager.prototype.data_wrap = function(uri, data, meta) {
 	return data;
 };
 
+DataManager.prototype.data_clean = function(data) {
+	if (typeof data !== 'object') {
+		return;
+	}
+	for (var p in data) {
+		if (Array.isArray(data[p])) {
+			delete data[p];
+			continue;
+		}
+		this.data_clean(data[p]);
+	}
+};
+
 DataManager.prototype.data_update = function(uri, data, client, persist) {
 
 	// MetaData tracking
@@ -313,6 +326,9 @@ DataManager.prototype.data_update = function(uri, data, client, persist) {
 	if (persist) {
 		meta.p = 1;
 	}
+
+	// Clean data (remove arrays)
+	this.data_clean(data);
 
 	// Wrap data if needed
 	var wrap = this.data_wrap(uri, data, meta);
