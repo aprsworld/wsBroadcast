@@ -82,7 +82,16 @@ function HTTPDataServer(manager, config) {
 
 				// Return node if that's what we want
 				if (!data.prop || data.prop === '') {
-					var json = JSON.stringify(data.node);
+					var json = null;
+					if (rurl.query.enumerate) {
+						json = [];
+						for (var p in data.node) {
+							json.push(p);
+						}
+						json = JSON.stringify(json);
+					} else {
+						json = JSON.stringify(data.node);
+					}
 					var sdata = json;
 					if (gzip) {
 						sdata = pako.gzip(sdata, { to: 'string' });
@@ -106,7 +115,22 @@ function HTTPDataServer(manager, config) {
 					return;
 				} */
 
-				var json2 = JSON.stringify(data.node[data.prop]);
+				// Enumerating object that doesn't exist
+				var json2 = null;
+				if (rurl.query.enumerate) {
+					if (typeof data.node[data.prop] !== 'object') {
+						res.statusCode = 404;
+						res.end();
+						return;
+					}
+					var enumerate = [];
+					for (var p2 in data.node[data.prop]) {
+						enumerate.push(p2);
+					}
+					json2 = JSON.stringify(enumerate);
+				} else {
+					json2 = JSON.stringify(data.node[data.prop]);
+				}
 				var data2 = json2;
 				if (gzip) {
 					data2 = pako.gzip(data2, { to: 'string' });
