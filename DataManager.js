@@ -328,7 +328,7 @@ DataManager.prototype.data_update = function(uri, data, client, persist) {
 	}
 
 	// Clean data (remove arrays)
-	this.data_clean(data);
+	//this.data_clean(data);
 
 	// Wrap data if needed
 	var wrap = this.data_wrap(uri, data, meta);
