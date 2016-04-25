@@ -162,7 +162,10 @@ DataManager.prototype.data_save_recurse = function(saved, data) {
 		if (data._bserver_[p].p) {
 			saved[p] = data[p];
 			saved._bserver_[p] = data._bserver_[p];
-			this.data_save_recurse(saved[p], data[p]);
+			if (typeof data[p] === 'object') {
+				saved[p] = {};
+				this.data_save_recurse(saved[p], data[p]);
+			}
 		} else {
 			delete saved[p];
 			delete saved._bserver_[p];
