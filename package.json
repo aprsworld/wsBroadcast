@@ -27,7 +27,6 @@
   },
   "private": true,
   "dependencies": {
-    "@aprsworld/jsutils": "git+https://github.com/aprsworld/jsUtils.git",
     "finalhandler": "^0.4.1",
     "gateway": "^1.0.0",
     "http": "^0.0.0",
@@ -45,6 +44,6 @@
     }
   },
   "scripts": {
-    "start": "node server.js --expire=600 --tcp-client=cam.aprsworld.com --webdir=../wsWebDisplay/"
+    "start": "node server.js --expire=600 --tcp-client=cam.aprsworld.com --webdir=../www/"
   }
 }
