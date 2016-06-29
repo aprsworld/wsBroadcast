@@ -25,7 +25,7 @@ var fs = require('fs');
  * Process Command Line Options
  */
 var config = {	server_http: {
-			port: process.env.npm_package_config_http_port // 8888
+			port: 8888 // process.env.npm_package_config_http_port
 		},
 		recv_tcp: {
 			port: 1229,
