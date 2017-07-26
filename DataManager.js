@@ -266,6 +266,7 @@ DataManager.prototype.data_meta_inject = function(data, meta) {
 		return;
 	}
 	data._bserver_ = {};
+
 	for (var p in data) {
 		if (p == '_bserver_') {
 			continue;
@@ -284,6 +285,7 @@ DataManager.prototype.data_wrap = function(uri, data, meta) {
 
 	// Nothing to do
 	if (!uri) {
+		data['_bserver_'].ts = new Date().getTime();
 		return data;
 	}
 
@@ -305,6 +307,7 @@ DataManager.prototype.data_wrap = function(uri, data, meta) {
 	}
 
 	// Return wrapped data
+	data['_bserver_'].ts = new Date().getTime();
 	return data;
 };
 
