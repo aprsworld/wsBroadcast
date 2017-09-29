@@ -62,7 +62,7 @@ function HTTPDataServer(manager, config) {
 				uri = regex[5].substr(1);
 			}
 			var txt_hack = (regex[1] == 'dat');
-			if (txt_hack) {
+			if (true || txt_hack) {
 				res.setHeader('Content-Type', 'text/plain');
 				txt_hack = true;
 			}
